@@ -47,8 +47,9 @@ namespace FoxMud.Game.Command.Admin
             // create room
             room = new Room()
             {
-                Key = context.ArgumentString,
-                Title = context.ArgumentString
+                Key = context.ArgumentString.ToLower(),
+                Title = context.ArgumentString,
+                Description = "This exitless room has no description."
             };
 
             // save room
@@ -148,23 +149,25 @@ namespace FoxMud.Game.Command.Admin
         {
             callbackCommand = "look";
 
-            var room = RoomHelper.GetRoom(session.Player.Location);
-            if (room != null)
+            var currentRoom = RoomHelper.GetRoom(session.Player.Location);
+            if (currentRoom != null)
             {
                 string direction = context.Arguments[0];
+                context.Arguments.Remove(direction);
                 if (!DirectionHelper.isValidDirection(direction))
                 {
                     session.WriteLine("{0} is not a valid direction", direction);
                     PrintSyntax(session);
                 }
-                if (room.HasExit(direction))
+                if (currentRoom.HasExit(direction))
                 {
                     session.WriteLine("Room already has {0} exit", direction);
                     PrintSyntax(session);
                     return;
                 }
 
-                string dstRoomKey = context.ArgumentString.Replace(direction, string.Empty).Trim();
+                // at this point, direction has been removed. all that remains if the new room key/name
+                string dstRoomKey = string.Join(" ", context.Arguments).Trim().ToLower();
                 var dstRoom = RoomHelper.GetRoom(dstRoomKey);
                 if (dstRoom == null)
                 {
@@ -176,25 +179,19 @@ namespace FoxMud.Game.Command.Admin
                 // fixme: confirm dstRoom doesn't already have the opposite exit e.g. if creating
                 // north exit, dstRoom should not already have south exit
 
-                room.Exits.Add(direction, new RoomExit()
+                currentRoom.Exits.Add(direction, new RoomExit()
                     {
-                        LeadsTo = dstRoomKey,
-                        IsDoor = false,
-                        IsLocked = false,
-                        IsOpen = true
+                        LeadsTo = dstRoomKey
                     });
 
                 string oppositeDirection = DirectionHelper.GetOppositeDirection(direction);
 
                 dstRoom.Exits.Add(oppositeDirection, new RoomExit()
                     {
-                        LeadsTo = room.Key,
-                        IsDoor = false,
-                        IsLocked = false,
-                        IsOpen = true
+                        LeadsTo = currentRoom.Key,
                     });
                 
-                RoomHelper.SaveRoom(room);
+                RoomHelper.SaveRoom(currentRoom);
                 RoomHelper.SaveRoom(dstRoom);
             }
         }

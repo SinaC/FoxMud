@@ -13,9 +13,9 @@ namespace FoxMud.Game.Command.Visual
         public static void WriteNullRoomDescription(Session session)
         {
             session.WriteLine("The Void.");
-            session.WriteLine("Some how you've managed to make it outside of the world.\r\n" +
+            session.WriteLine("Something went terribly wrong and you've ended up in the void.\r\n" +
                               "You're not supposed to be here. Contact a staff member and they'll get you back\r\n" +
-                              "to where you should belong.");
+                              "to where you belong.");
         }
 
         private static void WriteRoomPlayerList(Session session, Room room)

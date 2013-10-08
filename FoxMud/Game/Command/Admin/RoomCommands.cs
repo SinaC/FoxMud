@@ -74,6 +74,9 @@ namespace FoxMud.Game.Command.Admin
 
         public void Execute(Session session, CommandContext context, out string callbackCommand)
         {
+            // make player "look" as cue to show the jump
+            callbackCommand = "look";
+
             var room = RoomHelper.GetRoom(context.ArgumentString);
 
             if (room != null)
@@ -88,9 +91,6 @@ namespace FoxMud.Game.Command.Admin
                 room.AddPlayer(session.Player);
                 session.Player.Location = context.ArgumentString;
             }
-
-            // make player "look" as cue to show the jump
-            callbackCommand = "look";
         }
     }
 
@@ -120,6 +120,82 @@ namespace FoxMud.Game.Command.Admin
                 room.Description = context.ArgumentString;
                 RoomHelper.SaveRoom(room);
                 session.WriteLine("Room description changed...");
+            }
+        }
+    }
+
+    /// <summary>
+    /// creates an exit from the current room
+    /// syntax: createexit direction leadsto
+    /// example: createexit north void
+    /// example: createexit south awesome room
+    /// </summary>
+    [Command("createexit", true)]
+    class CreateExitCommand : CallbackCommand
+    {
+        private void PrintSyntax(Session session)
+        {
+            session.WriteLine("Syntax: createexit north room of awesomeness");
+        }
+
+        public void Execute(Session session, CommandContext context)
+        {
+            string dummyString;
+            Execute(session, context, out dummyString);
+        }
+        
+        public void Execute(Session session, CommandContext context, out string callbackCommand)
+        {
+            callbackCommand = "look";
+
+            var room = RoomHelper.GetRoom(session.Player.Location);
+            if (room != null)
+            {
+                string direction = context.Arguments[0];
+                if (!DirectionHelper.isValidDirection(direction))
+                {
+                    session.WriteLine("{0} is not a valid direction", direction);
+                    PrintSyntax(session);
+                }
+                if (room.HasExit(direction))
+                {
+                    session.WriteLine("Room already has {0} exit", direction);
+                    PrintSyntax(session);
+                    return;
+                }
+
+                string dstRoomKey = context.ArgumentString.Replace(direction, string.Empty).Trim();
+                var dstRoom = RoomHelper.GetRoom(dstRoomKey);
+                if (dstRoom == null)
+                {
+                    session.WriteLine("Room key not found: {0}", dstRoomKey);
+                    PrintSyntax(session);
+                    return;
+                }
+
+                // fixme: confirm dstRoom doesn't already have the opposite exit e.g. if creating
+                // north exit, dstRoom should not already have south exit
+
+                room.Exits.Add(direction, new RoomExit()
+                    {
+                        LeadsTo = dstRoomKey,
+                        IsDoor = false,
+                        IsLocked = false,
+                        IsOpen = true
+                    });
+
+                string oppositeDirection = DirectionHelper.GetOppositeDirection(direction);
+
+                dstRoom.Exits.Add(oppositeDirection, new RoomExit()
+                    {
+                        LeadsTo = room.Key,
+                        IsDoor = false,
+                        IsLocked = false,
+                        IsOpen = true
+                    });
+                
+                RoomHelper.SaveRoom(room);
+                RoomHelper.SaveRoom(dstRoom);
             }
         }
     }

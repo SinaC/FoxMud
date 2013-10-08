@@ -54,8 +54,10 @@
     <Compile Include="Db\Database.cs" />
     <Compile Include="Db\Storable.cs" />
     <Compile Include="Game\Command\ExitCommand.cs" />
+    <Compile Include="Game\Command\Movement\MoveCommand.cs" />
     <Compile Include="Game\Command\SaveCommand.cs" />
     <Compile Include="Game\Command\Visual\LookCommand.cs" />
+    <Compile Include="Game\DirectionHelper.cs" />
     <Compile Include="Game\Player.cs" />
     <Compile Include="Game\State\CreateNewPlayer.cs" />
     <Compile Include="Game\State\EnterWorld.cs" />
@@ -89,7 +91,6 @@
   </ItemGroup>
   <ItemGroup>
     <Folder Include="bin\Debug\" />
-    <Folder Include="Game\Command\Movement\" />
   </ItemGroup>
   <Import Project="$(MSBuildToolsPath)\Microsoft.CSharp.targets" />
   <!-- To modify your build process, add your task inside one of the targets below and uncomment it. 

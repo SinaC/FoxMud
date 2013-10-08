@@ -44,14 +44,27 @@
     <Reference Include="System.Xml" />
   </ItemGroup>
   <ItemGroup>
-    <Compile Include="Command\CommandAttribute.cs" />
-    <Compile Include="Command\CommandBase.cs" />
-    <Compile Include="Command\CommandContext.cs" />
-    <Compile Include="Command\CommandLookup.cs" />
-    <Compile Include="Command\DynamicCommandLookup.cs" />
+    <Compile Include="Game\Command\Admin\RoomCommands.cs" />
+    <Compile Include="Game\Command\CommandAttribute.cs" />
+    <Compile Include="Game\Command\CommandBase.cs" />
+    <Compile Include="Game\Command\CommandContext.cs" />
+    <Compile Include="Game\Command\CommandLookup.cs" />
+    <Compile Include="Game\Command\Communication\SayCommand.cs" />
+    <Compile Include="Game\Command\DynamicCommandLookup.cs" />
     <Compile Include="Db\Database.cs" />
     <Compile Include="Db\Storable.cs" />
+    <Compile Include="Game\Command\ExitCommand.cs" />
+    <Compile Include="Game\Command\SaveCommand.cs" />
+    <Compile Include="Game\Command\Visual\LookCommand.cs" />
     <Compile Include="Game\Player.cs" />
+    <Compile Include="Game\State\CreateNewPlayer.cs" />
+    <Compile Include="Game\State\EnterWorld.cs" />
+    <Compile Include="Game\State\PlayerLogin.cs" />
+    <Compile Include="Game\State\PlayingState.cs" />
+    <Compile Include="Game\State\SplashState.cs" />
+    <Compile Include="Game\State\TextEditor.cs" />
+    <Compile Include="Game\State\TextToken.cs" />
+    <Compile Include="Game\World\Room.cs" />
     <Compile Include="Net\Connection.cs" />
     <Compile Include="Net\ConnectionHandler.cs" />
     <Compile Include="Net\ConnectionListener.cs" />
@@ -63,6 +76,7 @@
     <Compile Include="Session\Session.cs" />
     <Compile Include="Session\SessionMonitor.cs" />
     <Compile Include="Session\SessionStateBase.cs" />
+    <Compile Include="Game\StartupConnectionHandler.cs" />
     <Compile Include="StringHelpers.cs" />
     <Compile Include="Text\OutputTextWriter.cs" />
   </ItemGroup>
@@ -71,7 +85,11 @@
     <None Include="packages.config" />
   </ItemGroup>
   <ItemGroup>
-    <Folder Include="Data\" />
+    <Content Include="Data\splash.txt" />
+  </ItemGroup>
+  <ItemGroup>
+    <Folder Include="bin\Debug\" />
+    <Folder Include="Game\Command\Movement\" />
   </ItemGroup>
   <Import Project="$(MSBuildToolsPath)\Microsoft.CSharp.targets" />
   <!-- To modify your build process, add your task inside one of the targets below and uncomment it. 

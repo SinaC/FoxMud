@@ -18,14 +18,25 @@ namespace FoxMud.Game
 
     class Player : Storable
     {
+        private string _passwordHash;
+
+        [JsonConstructor]
+        private Player(string name, string passwordHash, bool isAdmin, string prompt)
+        {
+            Forename = name;
+            _passwordHash = passwordHash;
+            IsAdmin = isAdmin;
+            Prompt = prompt;
+        }
+
         public Player()
         {
-
+            IsAdmin = false;
         }
 
         public string Key
         {
-            get { return string.Format("players/{0}", Forename.ToLower(); }
+            get { return Forename.ToLower(); }
         }
 
         [JsonIgnore]
@@ -37,7 +48,13 @@ namespace FoxMud.Game
         public string Location { get; set; }
         public PlayerGender Gender { get; set; }
         public bool Approved { get; set; }
-        public string PasswordHash { get; set; }
+        public string PasswordHash
+        {
+            get { return _passwordHash; }
+            set { _passwordHash = Hash(value); }
+        }
+        public bool IsAdmin { get; set; }
+        public string Prompt { get; set; }
 
         private static string Hash(string value)
         {
@@ -58,6 +75,14 @@ namespace FoxMud.Game
 
         // todo bug#30 add ability to change password
 
+        public string GetOtherPlayerDescription(Player subject)
+        {
+            if (subject == this)
+                return this.Forename;
+
+            return subject.ShortDescription;
+        }
+
         public void Send(string format, Player subject)
         {
             Send(format, subject, null);
@@ -66,6 +91,12 @@ namespace FoxMud.Game
         public void Send(string format, Player subject, Player target)
         {
             OutputWriter.WriteLine(StringHelpers.BuildString(format, this, subject, target));
+            WritePrompt();
+        }
+
+        public void WritePrompt()
+        {
+            OutputWriter.WriteLine(Prompt);
         }
 
         public static string NameToKey(string name)

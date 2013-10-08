@@ -6,7 +6,7 @@ using System.Text;
 using System.Threading.Tasks;
 using FoxMud.Game.State;
 
-namespace FoxMud
+namespace FoxMud.Game
 {
     class StartupConnectionHandler : ConnectionHandler
     {

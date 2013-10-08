@@ -9,4 +9,9 @@ namespace FoxMud.Game.Command
     {
         void Execute(Session session, CommandContext context);
     }
+
+    interface CallbackCommand : PlayerCommand
+    {
+        void Execute(Session session, CommandContext context, out string callbackCommand);
+    }
 }

@@ -21,14 +21,16 @@ namespace FoxMud.Game.State
 
         private void changeStateTo(State state)
         {
+            currentState = state;
+
             switch (state)
             {
                 case State.RequestUserName:
-                    Session.Write("Enter Account Name: ");
+                    Session.Write("Username (type any name to create a character): ");
                     break;
                 case State.RequestPassword:
                     // todo bug#28 turn off echo for password input
-                    Session.Write("Enter Account Name: ");
+                    Session.Write("Password: ");
                     break;
             }
         }
@@ -42,6 +44,12 @@ namespace FoxMud.Game.State
 
         public override void OnStateEnter()
         {
+            if (player != null)
+            {
+                // new player has been created, enter world
+                Session.PushState(new EnterWorld(player));
+            }
+
             changeStateTo(State.RequestUserName);
 
             base.OnStateEnter();
@@ -73,7 +81,8 @@ namespace FoxMud.Game.State
                     if (!player.CheckPassword(password))
                     {
                         Session.WriteLine("Invalid password");
-                        Session.End();
+                        changeStateTo(State.RequestPassword);
+                        break;
                     }
 
                     var session = Server.Current.SessionMonitor.GetPlayerSession(player);
@@ -85,7 +94,7 @@ namespace FoxMud.Game.State
                     }
 
                     Session.Player = player;
-                    session.PushState(new EnterWorld(player));
+                    Session.PushState(new EnterWorld(player));
                     break;
             }
 

@@ -27,6 +27,7 @@ namespace FoxMud.Game
             _passwordHash = passwordHash;
             IsAdmin = isAdmin;
             Prompt = prompt;
+            RememberedNames = new Dictionary<string, string>();
         }
 
         public Player()
@@ -42,6 +43,7 @@ namespace FoxMud.Game
         [JsonIgnore]
         public OutputTextWriter OutputWriter { get; set; }
 
+        public Dictionary<string, string> RememberedNames { get; private set; }
         public string Forename { get; set; }
         public string ShortDescription { get; set; }
         public string Description { get; set; }
@@ -79,6 +81,11 @@ namespace FoxMud.Game
         {
             if (subject == this)
                 return this.Forename;
+
+            if (RememberedNames.ContainsKey(subject.Key))
+            {
+                return RememberedNames[subject.Key];
+            }
 
             return subject.ShortDescription;
         }

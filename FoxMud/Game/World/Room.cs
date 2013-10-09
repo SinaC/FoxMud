@@ -118,6 +118,16 @@ namespace FoxMud.Game.World
 
                 possiblePlayerKeywords.AddRange(StringHelpers.GetKeywords(player.ShortDescription));
 
+                if (doLookupFor.RememberedNames.ContainsKey(player.Key))
+                {
+                    string rememberedName = doLookupFor.RememberedNames[player.Key];
+                    possiblePlayerKeywords.AddRange(StringHelpers.GetKeywords(rememberedName));
+                }
+                else
+                {
+                    doLookupFor.RememberedNames.Add(player.Key, player.Forename);
+                }
+
                 bool successful = true;
                 foreach (var keyword in lookUpKeywords)
                 {

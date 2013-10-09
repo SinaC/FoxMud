@@ -16,6 +16,18 @@ namespace FoxMud.Game.Command.Movement
     [Command("west", false, "west")]
     [Command("n", false, "north")]
     [Command("north", false, "north")]
+    [Command("ne", false, "northeast")]
+    [Command("northeast", false, "northeast")]
+    [Command("nw", false, "northwest")]
+    [Command("northwest", false, "northwest")]
+    [Command("sw", false, "southwest")]
+    [Command("southwest", false, "southwest")]
+    [Command("se", false, "southeast")]
+    [Command("southeast", false, "southeast")]
+    [Command("u", false, "up")]
+    [Command("up", false, "up")]
+    [Command("d", false, "down")]
+    [Command("down", false, "down")]
     class MoveCommand : PlayerCommand
     {
         private readonly string direction;

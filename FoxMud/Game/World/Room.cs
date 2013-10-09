@@ -72,6 +72,28 @@ namespace FoxMud.Game.World
             return Exits[exitName];
         }
 
+        public RoomExit FindExitByPartialName(string exitSearch)
+        {
+            foreach (var exit in Exits)
+            {
+                if (exit.Key.StartsWith(exitSearch))
+                    return exit.Value;
+            }
+
+            return null;
+        }
+
+        public RoomExit FindExitByLinkedRoom(string roomKey)
+        {
+            foreach (var exit in Exits)
+            {
+                if (exit.Value.LeadsTo == roomKey)
+                    return exit.Value;
+            }
+
+            return null;
+        }
+
         public void SendPlayers(string format, Player subject, Player target, params Player[] ignore)
         {
             foreach (var player in players)

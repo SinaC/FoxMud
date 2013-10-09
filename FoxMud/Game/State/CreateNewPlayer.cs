@@ -141,7 +141,7 @@ namespace FoxMud.Game.State
             switch (currentState)
             {
                 case State.EnterForename:
-                    forename = input;
+                    forename = capitalizeForename(input);
                     changeStateTo(State.EnterPassword);
                     break;
 
@@ -175,6 +175,18 @@ namespace FoxMud.Game.State
             }
 
             base.OnInput(input);
+        }
+
+        private string capitalizeForename(string input)
+        {
+            if (!string.IsNullOrWhiteSpace(input))
+            {
+                string newFirstCharacter = input[0].ToString().ToUpper();
+                string newRestOfName = input.Substring(1).ToLower();
+                return newFirstCharacter + newRestOfName;
+            }
+
+            return input;
         }
     }
 }

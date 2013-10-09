@@ -40,14 +40,10 @@ namespace FoxMud.Game.Command.Visual
             StringBuilder builder = new StringBuilder();
             builder.Append("Available exits: [ ");
 
-            if (room.HasExit("north"))
-                builder.Append("North ");
-            if (room.HasExit("east"))
-                builder.Append("East ");
-            if (room.HasExit("south"))
-                builder.Append("South ");
-            if (room.HasExit("west"))
-                builder.Append("West ");
+            foreach (var exit in room.Exits.Keys)
+            {
+                builder.Append(string.Format("{0} ", exit));
+            }
 
             builder.Append("]");
             session.WriteLine(builder.ToString());
@@ -84,6 +80,8 @@ namespace FoxMud.Game.Command.Visual
                 PerformLookAtRoom(session);
                 return;
             }
+
+            // todo: look at a directional exit
 
             Room room = Server.Current.Database.Get<Room>(session.Player.Location);
             if (room == null)

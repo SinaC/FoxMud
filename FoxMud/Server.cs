@@ -18,7 +18,7 @@ namespace FoxMud
         // not yet sure of the value in using a Configuration object to contain these
         public static string DataDir { get { return "Data"; } }
         public static bool AutoApprovedEnabled { get { return true; } }
-        public static string StartRoom { get { return "void"; } }
+        public static string StartRoom { get { return "the square corner"; } }
         public static int Port = 9999;
 
         private const int TickRate = 20;

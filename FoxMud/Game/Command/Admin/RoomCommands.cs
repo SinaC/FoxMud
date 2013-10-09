@@ -127,16 +127,16 @@ namespace FoxMud.Game.Command.Admin
 
     /// <summary>
     /// creates an exit from the current room
-    /// syntax: createexit direction leadsto
-    /// example: createexit north void
-    /// example: createexit south awesome room
+    /// syntax: makeexit direction leadsto
+    /// example: makeexit north void
+    /// example: makeexit south <close> awesome room
     /// </summary>
-    [Command("createexit", true)]
-    class CreateExitCommand : CallbackCommand
+    [Command("makeexit", true)]
+    class MakeExitCommand : CallbackCommand
     {
         private void PrintSyntax(Session session)
         {
-            session.WriteLine("Syntax: createexit north room of awesomeness");
+            session.WriteLine("Syntax: makeexit north <close> room of awesomeness");
         }
 
         public void Execute(Session session, CommandContext context)
@@ -154,6 +154,7 @@ namespace FoxMud.Game.Command.Admin
             {
                 string direction = context.Arguments[0];
                 context.Arguments.Remove(direction);
+
                 if (!DirectionHelper.isValidDirection(direction))
                 {
                     session.WriteLine("{0} is not a valid direction", direction);
@@ -164,6 +165,17 @@ namespace FoxMud.Game.Command.Admin
                     session.WriteLine("Room already has {0} exit", direction);
                     PrintSyntax(session);
                     return;
+                }
+
+                // handle doors
+                string openClose = context.Arguments[0];
+                context.Arguments.Remove(openClose);
+                bool isDoor = false;
+                bool isOpen = false;
+                if (openClose == "<open>" || openClose == "<close>")
+                {
+                    isDoor = true;
+                    isOpen = openClose == "<open>";
                 }
 
                 // at this point, direction has been removed. all that remains if the new room key/name
@@ -181,7 +193,9 @@ namespace FoxMud.Game.Command.Admin
 
                 currentRoom.Exits.Add(direction, new RoomExit()
                     {
-                        LeadsTo = dstRoomKey
+                        LeadsTo = dstRoomKey,
+                        IsDoor = isDoor,
+                        IsOpen = isOpen
                     });
 
                 string oppositeDirection = DirectionHelper.GetOppositeDirection(direction);
@@ -189,6 +203,8 @@ namespace FoxMud.Game.Command.Admin
                 dstRoom.Exits.Add(oppositeDirection, new RoomExit()
                     {
                         LeadsTo = currentRoom.Key,
+                        IsDoor = isDoor,
+                        IsOpen = isOpen
                     });
                 
                 RoomHelper.SaveRoom(currentRoom);
@@ -196,5 +212,4 @@ namespace FoxMud.Game.Command.Admin
             }
         }
     }
-
 }

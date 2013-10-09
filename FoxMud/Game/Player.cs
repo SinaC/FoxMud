@@ -4,6 +4,7 @@ using System.Linq;
 using System.Security.Cryptography;
 using System.Text;
 using FoxMud.Db;
+using FoxMud.Game.Item;
 using FoxMud.Text;
 using Newtonsoft.Json;
 
@@ -21,13 +22,13 @@ namespace FoxMud.Game
         private string _passwordHash;
 
         [JsonConstructor]
-        private Player(string name, string passwordHash, bool isAdmin, string prompt)
+        private Player(string name, string passwordHash, bool isAdmin, string prompt, Dictionary<string,string> rememberedNames)
         {
             Forename = name;
             _passwordHash = passwordHash;
             IsAdmin = isAdmin;
             Prompt = prompt;
-            RememberedNames = new Dictionary<string, string>();
+            RememberedNames = rememberedNames;
         }
 
         public Player()
@@ -57,6 +58,8 @@ namespace FoxMud.Game
         }
         public bool IsAdmin { get; set; }
         public string Prompt { get; set; }
+        public List<PlayerItem> Inventory { get; private set; }
+        public List<Equipable> Equipped { get; private set; }
 
         private static string Hash(string value)
         {

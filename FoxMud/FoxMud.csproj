@@ -44,6 +44,7 @@
     <Reference Include="System.Xml" />
   </ItemGroup>
   <ItemGroup>
+    <Compile Include="Game\Command\Admin\ItemCommand.cs" />
     <Compile Include="Game\Command\Admin\RoomCommands.cs" />
     <Compile Include="Game\Command\CommandAttribute.cs" />
     <Compile Include="Game\Command\CommandBase.cs" />
@@ -51,16 +52,21 @@
     <Compile Include="Game\Command\CommandLookup.cs" />
     <Compile Include="Game\Command\Communication\ChatCommand.cs" />
     <Compile Include="Game\Command\Communication\SayCommand.cs" />
+    <Compile Include="Game\Command\Communication\TellCommand.cs" />
     <Compile Include="Game\Command\DynamicCommandLookup.cs" />
     <Compile Include="Db\Database.cs" />
     <Compile Include="Db\Storable.cs" />
     <Compile Include="Game\Command\ExitCommand.cs" />
+    <Compile Include="Game\Command\ItemCommand.cs" />
     <Compile Include="Game\Command\Movement\DoorCommand.cs" />
     <Compile Include="Game\Command\Movement\MoveCommand.cs" />
     <Compile Include="Game\Command\SaveCommand.cs" />
     <Compile Include="Game\Command\Visual\LookCommand.cs" />
     <Compile Include="Game\DirectionHelper.cs" />
+    <Compile Include="Game\Item\Armor.cs" />
+    <Compile Include="Game\Item\Equipable.cs" />
     <Compile Include="Game\Item\Item.cs" />
+    <Compile Include="Game\Item\Weapon.cs" />
     <Compile Include="Game\Player.cs" />
     <Compile Include="Game\State\CreateNewPlayer.cs" />
     <Compile Include="Game\State\EnterWorld.cs" />

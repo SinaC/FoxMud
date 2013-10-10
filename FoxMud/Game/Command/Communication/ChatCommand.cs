@@ -9,6 +9,11 @@ namespace FoxMud.Game.Command.Communication
     [Command("chat", false)]
     class ChatCommand : PlayerCommand
     {
+        public void PrintSyntax(Session session)
+        {
+            session.WriteLine("Syntax: chat <message>");
+        }
+
         public void Execute(Session session, CommandContext context)
         {
             foreach (var playerSession in Server.Current.SessionMonitor.EnumerateSessions())

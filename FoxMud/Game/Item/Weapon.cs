@@ -13,7 +13,6 @@ namespace FoxMud.Game.Item
 
         public override PlayerItem Copy()
         {
-            var baseItem = base.Copy();
             var newItem = new ItemWeapon(this);
             return newItem;
         }

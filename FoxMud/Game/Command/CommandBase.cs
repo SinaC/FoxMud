@@ -7,6 +7,7 @@ namespace FoxMud.Game.Command
 {
     interface PlayerCommand
     {
+        void PrintSyntax(Session session);
         void Execute(Session session, CommandContext context);
     }
 

@@ -10,6 +10,13 @@ namespace FoxMud.Game.Command.Visual
     [Command("look", false)]
     class LookCommand : PlayerCommand
     {
+        public void PrintSyntax(Session session)
+        {
+            session.WriteLine("Syntax: look");
+            session.WriteLine("Syntax: look <player>");
+            session.WriteLine("Syntax: look <item>");
+        }
+
         public static void WriteNullRoomDescription(Session session)
         {
             session.WriteLine("The Void.");
@@ -97,6 +104,7 @@ namespace FoxMud.Game.Command.Visual
                 return;
             }
 
+            session.WriteLine("look <item> not yet implemented...");
         }
     }
 }

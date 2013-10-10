@@ -37,6 +37,13 @@ namespace FoxMud.Game.Command.Movement
             this.direction = direction;
         }
 
+        public void PrintSyntax(Session session)
+        {
+            session.WriteLine("Syntax: <direction>");
+            session.WriteLine("Example: \"ne\" is short for northeast");
+            session.WriteLine("Example: \"up\" will move you up");
+        }
+
         public void Execute(Session session, CommandContext context)
         {
             Room room = Server.Current.Database.Get<Room>(session.Player.Location);

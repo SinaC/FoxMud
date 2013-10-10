@@ -22,13 +22,40 @@ namespace FoxMud.Game
         private string _passwordHash;
 
         [JsonConstructor]
-        private Player(string name, string passwordHash, bool isAdmin, string prompt, Dictionary<string,string> rememberedNames)
+        private Player(
+            string name, 
+            string passwordHash, 
+            bool isAdmin, 
+            string prompt, 
+            Dictionary<string,string> rememberedNames, 
+            Dictionary<string, string> inventory, 
+            int hitPoints, 
+            int maxHitPoints,
+            long gold, 
+            int experience, 
+            int baseDamage, 
+            int baseArmor)
         {
             Forename = name;
             _passwordHash = passwordHash;
             IsAdmin = isAdmin;
             Prompt = prompt;
-            RememberedNames = rememberedNames;
+            HitPoints = hitPoints;
+            MaxHitPoints = maxHitPoints;
+            Gold = gold;
+            Experience = experience;
+            BaseDamage = baseDamage;
+            BaseArmor = baseArmor;
+            
+            if (rememberedNames == null)
+                RememberedNames = new Dictionary<string, string>();
+            else
+                RememberedNames = rememberedNames;
+
+            if (inventory == null)
+                Inventory = new Dictionary<string, string>();
+            else
+                Inventory = inventory;
         }
 
         public Player()
@@ -58,8 +85,14 @@ namespace FoxMud.Game
         }
         public bool IsAdmin { get; set; }
         public string Prompt { get; set; }
-        public List<PlayerItem> Inventory { get; private set; }
-        public List<Equipable> Equipped { get; private set; }
+        public Dictionary<string, string> Inventory { get; private set; }
+        public int HitPoints { get; set; }
+        public int MaxHitPoints { get; set; }
+        public long Gold { get; set; }
+        public int Experience { get; set; }
+        public int BaseArmor { get; set; }
+        public int BaseDamage { get; set; }
+        //public List<Equipable> Equipped { get; private set; }
 
         private static string Hash(string value)
         {
@@ -106,7 +139,7 @@ namespace FoxMud.Game
 
         public void WritePrompt()
         {
-            OutputWriter.WriteLine(Prompt);
+            OutputWriter.WriteLine("<{0}/{1}hp ${0:n}>", HitPoints, MaxHitPoints, Gold);
         }
 
         public static string NameToKey(string name)

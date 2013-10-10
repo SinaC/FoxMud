@@ -9,6 +9,11 @@ namespace FoxMud.Game.Command
     [Command("save", false)]
     class SaveCommand : PlayerCommand
     {
+        public void PrintSyntax(Session session)
+        {
+            session.WriteLine("Syntax: save");
+        }
+
         public void Execute(Session session, CommandContext context)
         {
             var player = Server.Current.Database.Get<Player>(session.Player.Key);

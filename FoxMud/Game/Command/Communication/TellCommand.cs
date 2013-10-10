@@ -9,6 +9,11 @@ namespace FoxMud.Game.Command.Communication
     [Command("tell", false)]
     class TellCommand : PlayerCommand
     {
+        public void PrintSyntax(Session session)
+        {
+            session.WriteLine("Syntax: tell <player> <message>");
+        }
+
         public void Execute(Session session, CommandContext context)
         {
             var recipient = context.Arguments[0];

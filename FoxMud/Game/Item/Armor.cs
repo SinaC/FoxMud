@@ -10,6 +10,12 @@ namespace FoxMud.Game.Item
     {
         public int HpBonus { get; set; }
         public int ArmorBonus { get; set; }
+
+        public override PlayerItem Copy()
+        {
+            var newItem = new ItemArmor(this);
+            return newItem;
+        }
     }
 
     class ItemArmor : PlayerItem

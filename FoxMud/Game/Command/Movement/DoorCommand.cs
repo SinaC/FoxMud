@@ -10,6 +10,11 @@ namespace FoxMud.Game.Command.Movement
     [Command("open", false)]
     class OpenCommand : PlayerCommand
     {
+        public void PrintSyntax(Session session)
+        {
+            session.WriteLine("Syntax: open <direction>");
+        }
+
         public void Execute(Session session, CommandContext context)
         {
             if (context.Arguments.Count == 0)
@@ -50,6 +55,11 @@ namespace FoxMud.Game.Command.Movement
     [Command("close", false)]
     class CloseCommand : PlayerCommand
     {
+        public void PrintSyntax(Session session)
+        {
+            session.WriteLine("Syntax: close <direction>");
+        }
+
         public void Execute(Session session, CommandContext context)
         {
             if (context.Arguments.Count == 0)

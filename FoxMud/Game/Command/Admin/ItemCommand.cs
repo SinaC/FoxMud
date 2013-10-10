@@ -57,17 +57,8 @@ namespace FoxMud.Game.Command.Admin
                 // duplicate the item if makeitem
                 if (context.CommandName.ToLower() == "makeitem")
                 {
-                    session.WriteLine("makeitem not yet implemented...");
-
-                    // duplicate item
-                    if (newItem is TemplateWeapon)
-                    {
-
-                    }
-                    else
-                    {
-                        
-                    }
+                    PlayerItem dupedItem = newItem.Copy();
+                    
 
                     // add to inventory
 

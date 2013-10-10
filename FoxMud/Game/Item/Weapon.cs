@@ -10,6 +10,13 @@ namespace FoxMud.Game.Item
     {
         public int MinDamage { get; set; }
         public int MaxDamage { get; set; }
+
+        public override PlayerItem Copy()
+        {
+            var baseItem = base.Copy();
+            var newItem = new ItemWeapon(this);
+            return newItem;
+        }
     }
 
     class ItemWeapon : PlayerItem

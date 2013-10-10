@@ -32,7 +32,7 @@ namespace FoxMud.Game.Item
         /// <returns>a copy of the item with unique guid key</returns>
         public virtual PlayerItem Copy()
         {
-            throw new NotImplementedException();
+            return new PlayerItem(this);
         }
     }
 

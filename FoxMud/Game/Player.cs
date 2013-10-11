@@ -139,7 +139,7 @@ namespace FoxMud.Game
 
         public void WritePrompt()
         {
-            OutputWriter.WriteLine("<{0}/{1}hp ${0:n}>", HitPoints, MaxHitPoints, Gold);
+            OutputWriter.WriteLine("<{0}/{1}hp ${0:n0}>", HitPoints, MaxHitPoints, Gold);
         }
 
         public static string NameToKey(string name)

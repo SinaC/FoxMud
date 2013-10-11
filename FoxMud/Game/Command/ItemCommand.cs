@@ -2,6 +2,7 @@
 using System.Collections.Generic;
 using System.Linq;
 using System.Text;
+using System.Text.RegularExpressions;
 using System.Threading.Tasks;
 using FoxMud.Game.Item;
 using FoxMud.Game.World;
@@ -128,9 +129,41 @@ namespace FoxMud.Game.Command
             }
         }
 
-        private PlayerItem FindInventoryItem(Player player, string item)
+        // returns null if not found
+        private PlayerItem FindInventoryItem(Player player, string keyword)
         {
-            throw new NotImplementedException();
+            PlayerItem item = null;
+            int ordinal = 1;
+            int count = 0;
+
+            Regex regex = new Regex(@"^((\d+)\.)");
+            Match match = regex.Match(keyword);
+
+            // parse ordinal number of item
+            if (match.Success)
+            {
+                ordinal = Convert.ToInt32(match.Groups[2].Value); 
+                // remove X. from string so it doesn't try to match on e.g. "2.knife"
+                keyword = keyword.Replace(match.Groups[1].Value, string.Empty);
+            }
+            
+            foreach (string guid in player.Inventory.Keys)
+            {
+                var temp = Server.Current.Database.Get<PlayerItem>(guid);
+
+                // get item by key (guid)
+                if (temp != null && temp.Keywords.Contains(keyword))
+                {
+                    count++;
+                    if (count == ordinal)
+                    {
+                        item = temp;
+                        break;
+                    }
+                }
+            }
+
+            return item;
         }
     }
 

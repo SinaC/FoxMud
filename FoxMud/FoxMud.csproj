@@ -44,8 +44,9 @@
     <Reference Include="System.Xml" />
   </ItemGroup>
   <ItemGroup>
-    <Compile Include="Game\Command\Admin\ItemCommand.cs" />
-    <Compile Include="Game\Command\Admin\RoomCommands.cs" />
+    <Compile Include="Game\Command\Admin\AdminItemCommand.cs" />
+    <Compile Include="Game\Command\Admin\AdminRoomCommands.cs" />
+    <Compile Include="Game\Command\ArgumentType.cs" />
     <Compile Include="Game\Command\CommandAttribute.cs" />
     <Compile Include="Game\Command\CommandBase.cs" />
     <Compile Include="Game\Command\CommandContext.cs" />
@@ -63,10 +64,8 @@
     <Compile Include="Game\Command\SaveCommand.cs" />
     <Compile Include="Game\Command\Visual\LookCommand.cs" />
     <Compile Include="Game\DirectionHelper.cs" />
-    <Compile Include="Game\Item\Armor.cs" />
     <Compile Include="Game\Item\Equipable.cs" />
     <Compile Include="Game\Item\Item.cs" />
-    <Compile Include="Game\Item\Weapon.cs" />
     <Compile Include="Game\Player.cs" />
     <Compile Include="Game\State\CreateNewPlayer.cs" />
     <Compile Include="Game\State\EnterWorld.cs" />

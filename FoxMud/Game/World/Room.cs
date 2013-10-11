@@ -4,6 +4,7 @@ using System.Linq;
 using System.Text;
 using System.Threading.Tasks;
 using FoxMud.Db;
+using FoxMud.Game.Item;
 using Newtonsoft.Json;
 
 namespace FoxMud.Game.World
@@ -38,6 +39,7 @@ namespace FoxMud.Game.World
         {
             players = new List<Player>();
             Exits = new Dictionary<string, RoomExit>();
+            Items = new Dictionary<string, string>();
         }
 
         public string Key { get; set; }
@@ -45,6 +47,9 @@ namespace FoxMud.Game.World
         public string Title { get; set; }
         public string Description { get; set; }
         public Dictionary<string, RoomExit> Exits { get; private set; }
+
+        [JsonIgnore]
+        public Dictionary<string, string> Items { get; private set; }
 
         public IEnumerable<Player> GetPlayers()
         {
@@ -70,6 +75,16 @@ namespace FoxMud.Game.World
         public RoomExit GetExit(string exitName)
         {
             return Exits[exitName];
+        }
+
+        public void AddItem(PlayerItem item)
+        {
+            throw new NotImplementedException();
+        }
+
+        public void RemoveItem(PlayerItem item)
+        {
+            throw new NotImplementedException();
         }
 
         public RoomExit FindExitByPartialName(string exitSearch)

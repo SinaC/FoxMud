@@ -12,6 +12,7 @@ namespace FoxMud.Game.Item
         Shoulders,
         LeftHand,
         RightHand,
+        BothHands,
         Torso,
         Arms,
         Waist,

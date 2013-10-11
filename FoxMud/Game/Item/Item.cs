@@ -11,7 +11,7 @@ namespace FoxMud.Game.Item
     /// a templated item; these items won't be 'owned' by anything, but merely serve
     /// as a template from which to create objects
     /// </summary>
-    abstract class Template : Storable
+    class Template : Storable
     {
         public string Key
         {
@@ -20,9 +20,16 @@ namespace FoxMud.Game.Item
 
         public string Name { get; set; }
         public string Description { get; set; }
+        public string[] Keywords { get; set; }
         public int Weight { get; set; }
         public int Value { get; set; }
         public Wearlocation WearLocation { get; set; }
+
+        // in-game item attributes
+        public int HpBonus { get; set; }
+        public int ArmorBonus { get; set; }
+        public int MinDamage { get; set; }
+        public int MaxDamage { get; set; }
 
         /// <summary>
         /// copies an item from its template record i.e. template items have readable keys
@@ -30,7 +37,7 @@ namespace FoxMud.Game.Item
         /// </summary>
         /// <param name="key">the key e.g. a small knife</param>
         /// <returns>a copy of the item with unique guid key</returns>
-        public virtual PlayerItem Copy()
+        public PlayerItem Copy()
         {
             return new PlayerItem(this);
         }
@@ -52,9 +59,16 @@ namespace FoxMud.Game.Item
 
         public string Name { get; set; }
         public string Description { get; set; }
+        public string[] Keywords { get; set; }
         public int Weight { get; set; }
         public int Value { get; set; }
         public Wearlocation WearLocation { get; set; }
+
+        // in-game item attributes
+        public int HpBonus { get; set; }
+        public int ArmorBonus { get; set; }
+        public int MinDamage { get; set; }
+        public int MaxDamage { get; set; }
 
         public PlayerItem(Template item)
         {
@@ -69,9 +83,15 @@ namespace FoxMud.Game.Item
             // copy basic properties
             Name = item.Name;
             Description = item.Description;
+            Keywords = item.Keywords;
             Weight = item.Weight;
             Value = item.Value;
             this.WearLocation = item.WearLocation;
+
+            HpBonus = item.HpBonus;
+            ArmorBonus = item.ArmorBonus;
+            MinDamage = item.MinDamage;
+            MaxDamage = item.MaxDamage;
         }
 
         protected bool itemExists(Guid guid)

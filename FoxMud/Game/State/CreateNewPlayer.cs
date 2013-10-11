@@ -31,6 +31,8 @@ namespace FoxMud.Game.State
 
         public CreateNewPlayer(string playerName)
         {
+            forename = playerName;
+
             textEditor = new TextEditor();
             textEditor.Description =
                 "Please enter your character description: \r\n" +
@@ -56,7 +58,7 @@ namespace FoxMud.Game.State
             switch (state)
             {
                 case State.EnterForename:
-                    Session.WriteLine("This appears to be a new name, please confirm this player's forename.\n");
+                    Session.WriteLine("{0} appears to be a new name, please confirm this player's forename.\n", forename);
                     Session.WriteLine("Please enter your character's forename: ");
                     break;
 
@@ -141,6 +143,13 @@ namespace FoxMud.Game.State
             switch (currentState)
             {
                 case State.EnterForename:
+                    if (!PlayerLogin.ValidateUsername(input))
+                    {
+                        Session.WriteLine("Invalid username");
+                        changeStateTo(State.EnterForename);
+                        break;
+                    }
+
                     forename = capitalizeForename(input);
                     changeStateTo(State.EnterPassword);
                     break;

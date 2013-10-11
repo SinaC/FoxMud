@@ -3,6 +3,7 @@ using System.Collections.Generic;
 using System.Linq;
 using System.Text;
 using System.Threading.Tasks;
+using FoxMud.Game.Item;
 using FoxMud.Game.World;
 
 namespace FoxMud.Game.Command.Visual
@@ -57,6 +58,15 @@ namespace FoxMud.Game.Command.Visual
             session.WriteLine("");
         }
 
+        private static void WriteItemsOnFloor(Session session, Room room)
+        {
+            foreach (var item in room.Items)
+            {
+                var actualItem = Server.Current.Database.Get<PlayerItem>(item.Key);
+                session.WriteLine("{0} lies here.", actualItem.Description);
+            }
+        }
+
         private static void PerformLookAtRoom(Session session)
         {
             var room = Server.Current.Database.Get<Room>(session.Player.Location);
@@ -70,6 +80,7 @@ namespace FoxMud.Game.Command.Visual
             WriteRoomDescription(session, room);
             WriteAvailableExits(session, room);
             WriteRoomPlayerList(session, room);
+            WriteItemsOnFloor(session, room);
         }
 
         private void PerformLookAtPlayer(Session session, Room room, Player player)

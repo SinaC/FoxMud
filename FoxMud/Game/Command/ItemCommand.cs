@@ -9,6 +9,45 @@ using FoxMud.Game.World;
 
 namespace FoxMud.Game.Command
 {
+    static class ItemHelper
+    {
+        public static PlayerItem FindInventoryItem(Player player, string keyword)
+        {
+            PlayerItem item = null;
+            int ordinal = 1;
+            int count = 0;
+
+            Regex regex = new Regex(@"^((\d+)\.)");
+            Match match = regex.Match(keyword);
+
+            // parse ordinal number of item
+            if (match.Success)
+            {
+                ordinal = Convert.ToInt32(match.Groups[2].Value);
+                // remove X. from string so it doesn't try to match on e.g. "2.knife"
+                keyword = keyword.Replace(match.Groups[1].Value, String.Empty);
+            }
+
+            foreach (string guid in player.Inventory.Keys)
+            {
+                var temp = Server.Current.Database.Get<PlayerItem>(guid);
+
+                // get item by key (guid)
+                if (temp != null && temp.Keywords.Contains(keyword))
+                {
+                    count++;
+                    if (count == ordinal)
+                    {
+                        item = temp;
+                        break;
+                    }
+                }
+            }
+
+            return item;
+        }
+    }
+
     [Command("inventory", false)]
     [Command("i", false)]
     class InventoryCommand : PlayerCommand
@@ -43,7 +82,6 @@ namespace FoxMud.Game.Command
             {
                 session.WriteLine("\t{0} ({1})", itemLine.ItemName, itemLine.Count);
             }
-            session.WriteLine("\n");
         }
     }
 
@@ -100,7 +138,7 @@ namespace FoxMud.Game.Command
                 else
                 {
                     // find item
-                    var item = FindInventoryItem(session.Player, context.Arguments[0]);
+                    var item = ItemHelper.FindInventoryItem(session.Player, context.Arguments[0]);
                     
                     if (item == null)
                     {
@@ -121,49 +159,13 @@ namespace FoxMud.Game.Command
                 }
 
                 Server.Current.Database.Save(session.Player);
+                // should this be receiving player responsibility??
                 Server.Current.Database.Save(target);
             }
             catch
             {
                 PrintSyntax(session);
             }
-        }
-
-        // returns null if not found
-        private PlayerItem FindInventoryItem(Player player, string keyword)
-        {
-            PlayerItem item = null;
-            int ordinal = 1;
-            int count = 0;
-
-            Regex regex = new Regex(@"^((\d+)\.)");
-            Match match = regex.Match(keyword);
-
-            // parse ordinal number of item
-            if (match.Success)
-            {
-                ordinal = Convert.ToInt32(match.Groups[2].Value); 
-                // remove X. from string so it doesn't try to match on e.g. "2.knife"
-                keyword = keyword.Replace(match.Groups[1].Value, string.Empty);
-            }
-            
-            foreach (string guid in player.Inventory.Keys)
-            {
-                var temp = Server.Current.Database.Get<PlayerItem>(guid);
-
-                // get item by key (guid)
-                if (temp != null && temp.Keywords.Contains(keyword))
-                {
-                    count++;
-                    if (count == ordinal)
-                    {
-                        item = temp;
-                        break;
-                    }
-                }
-            }
-
-            return item;
         }
     }
 
@@ -173,12 +175,32 @@ namespace FoxMud.Game.Command
     {
         public void PrintSyntax(Session session)
         {
-            throw new NotImplementedException();
+            session.WriteLine("Syntax: drop <item>");
+            session.WriteLine("Syntax: dr <item>");
         }
         
         public void Execute(Session session, CommandContext context)
         {
-            session.WriteLine("Not yet implemented...");
+            // does player have item?
+            PlayerItem item = ItemHelper.FindInventoryItem(session.Player, context.Arguments[0]);
+            if (item == null)
+            {
+                session.WriteLine("Can't find item: {0}", context.Arguments[0]);
+                return;
+            }
+
+            // remove from player inventory
+            session.Player.Inventory.Remove(item.Key);
+            Server.Current.Database.Save(session.Player);
+
+            // drop in room
+            var room = Server.Current.Database.Get<Room>(session.Player.Location);
+            if (room != null)
+            {
+                room.AddItem(item); // this saves the room
+                session.WriteLine("You drop {0}.", item.Name);
+                room.SendPlayers("%d drops something.", session.Player, null, session.Player);
+            }
         }
     }
 

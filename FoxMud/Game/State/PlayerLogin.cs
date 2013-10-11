@@ -2,6 +2,7 @@
 using System.Collections.Generic;
 using System.Linq;
 using System.Text;
+using System.Text.RegularExpressions;
 using System.Threading.Tasks;
 
 namespace FoxMud.Game.State
@@ -18,6 +19,8 @@ namespace FoxMud.Game.State
         private string playerName;
         private string password;
         private Player player;
+        private const int MaxPasswordAttempts = 3;
+        private int PasswordAttempts = 0;
 
         private void changeStateTo(State state)
         {
@@ -67,6 +70,13 @@ namespace FoxMud.Game.State
                     {
                         // todo: bug#29 validate usernames
 
+                        if (!ValidateUsername(input))
+                        {
+                            Session.WriteLine("Invalid username");
+                            changeStateTo(State.RequestUserName);
+                            break;
+                        }
+
                         // create new character
                         Session.PushState(new CreateNewPlayer(playerName));
                         break;
@@ -82,6 +92,9 @@ namespace FoxMud.Game.State
                     {
                         Session.WriteLine("Invalid password");
                         changeStateTo(State.RequestPassword);
+                        PasswordAttempts++;
+                        if (PasswordAttempts >= MaxPasswordAttempts)
+                            Session.End();
                         break;
                     }
 
@@ -99,6 +112,11 @@ namespace FoxMud.Game.State
             }
 
             base.OnInput(input);
+        }
+
+        public static bool ValidateUsername(string input)
+        {
+            return Regex.Match(input, @"^[a-zA-Z]{3,20}$").Success;
         }
     }
 }

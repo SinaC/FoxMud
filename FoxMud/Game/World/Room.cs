@@ -79,12 +79,12 @@ namespace FoxMud.Game.World
 
         public void AddItem(PlayerItem item)
         {
-            throw new NotImplementedException();
+            Items[item.Key] = item.Name;
         }
 
         public void RemoveItem(PlayerItem item)
         {
-            throw new NotImplementedException();
+            Items.Remove(item.Key);
         }
 
         public RoomExit FindExitByPartialName(string exitSearch)

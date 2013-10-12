@@ -3,6 +3,7 @@ using System.Collections.Generic;
 using System.Linq;
 using System.Text;
 using System.Threading.Tasks;
+using AutoMapper;
 using FoxMud.Game.Item;
 
 namespace FoxMud.Game.Command.Admin
@@ -83,7 +84,8 @@ namespace FoxMud.Game.Command.Admin
                 
                 if(context.CommandName.ToLower() == "makeitem")
                 {
-                    PlayerItem dupedItem = newItem.Copy();
+                    //PlayerItem dupedItem = newItem.Copy();
+                    PlayerItem dupedItem = Mapper.Map<PlayerItem>(newItem);
                     
                     if (!isGenericMakeitem)
                     {
@@ -134,7 +136,7 @@ namespace FoxMud.Game.Command.Admin
             // wear location must match, or this will throw
             Enum.Parse(typeof (Wearlocation), values[args[ItemArgType.WearLocation]]);
 
-            // unacceptable negative values
+            // unacceptable negative values (will throw FormatExceptions if they're not numbers
             if (Convert.ToInt32(values[args[ItemArgType.MinDamage]]) < 0 ||
                 Convert.ToInt32(values[args[ItemArgType.MaxDamage]]) < 0 ||
                 Convert.ToInt32(values[args[ItemArgType.Weight]]) < 0 ||
@@ -146,4 +148,88 @@ namespace FoxMud.Game.Command.Admin
                 throw new Exception();
         }
     }
+
+    /// <summary>
+    /// both templates and duplicates an item into inventory
+    /// </summary>
+    [Command("container", true)]
+    class ContainerCommand : PlayerCommand
+    {
+        protected readonly Dictionary<ContainerArgType, int> args = new Dictionary<ContainerArgType, int>()
+            {
+                { ContainerArgType.Name, 0 },
+                { ContainerArgType.Description, 1 },
+                { ContainerArgType.Keywords, 2 },
+                { ContainerArgType.Capacity, 3 },
+                { ContainerArgType.Weight, 4 },
+                { ContainerArgType.Value, 5 },
+            };
+
+        public void PrintSyntax(Session session)
+        {
+            session.WriteLine("Syntax: container \"name\" \"description\" \"keywords\" <capacity> <weight> <value> ");
+            session.WriteLine("Syntax: container \"name\" (when container template exists)");
+        }
+
+        public void Execute(Session session, CommandContext context)
+        {
+            // validate
+            try
+            {
+                Template newItem = Server.Current.Database.Get<Template>(context.Arguments[args[ContainerArgType.Name]].ToLower());
+                PlayerItem dupedItem;
+                if (newItem != null)
+                {
+                    Duplicate(session, newItem);
+                    return;
+                }
+
+                Validate(context.Arguments);
+                
+                if (newItem == null)
+                {
+                    // template
+                    newItem = new Template()
+                        {
+                            ContainedItems = new Dictionary<string, string>(),
+                            Description = context.Arguments[args[ContainerArgType.Description]],
+                            Keywords = context.Arguments[args[ContainerArgType.Keywords]].Split(' '),
+                            Name = context.Arguments[args[ContainerArgType.Name]],
+                            Value = Convert.ToInt32(context.Arguments[args[ContainerArgType.Value]]),
+                            Weight = Convert.ToInt32(context.Arguments[args[ContainerArgType.Weight]]),
+                        };
+
+                    Server.Current.Database.Save(newItem);
+                    session.WriteLine("Container templated...");
+                }
+
+                Duplicate(session, newItem);
+            }
+            catch
+            {
+                PrintSyntax(session);
+            }
+        }
+
+        private void Duplicate(Session session, Template newItem)
+        {
+            PlayerItem dupedItem;
+            dupedItem = Mapper.Map<PlayerItem>(newItem);
+            Server.Current.Database.Save(dupedItem);
+
+            // add to inventory
+            session.Player.Inventory[dupedItem.Key] = dupedItem.Name;
+            session.WriteLine("Container added to inventory...");
+        }
+
+        private void Validate(List<string> values)
+        {
+            Enum.Parse(typeof(Capacity), values[args[ContainerArgType.Capacity]]);
+
+            if (Convert.ToInt32(values[args[ContainerArgType.Weight]]) < 0 ||
+                Convert.ToInt32(values[args[ContainerArgType.Value]]) < 0)
+                throw new Exception();
+        }
+    }
+
 }

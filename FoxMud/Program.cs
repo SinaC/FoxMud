@@ -6,6 +6,8 @@ using System.Net.Sockets;
 using System.Text;
 using System.Threading;
 using System.Threading.Tasks;
+using AutoMapper;
+using FoxMud.Game.Item;
 
 namespace FoxMud
 {
@@ -17,11 +19,12 @@ namespace FoxMud
     {
         static void Main(string[] args)
         {
-            using (Server server = new Server())
+            Mapper.CreateMap<Template, PlayerItem>();
+
+            using (var server = new Server())
             {
                 server.Start();
             }
-            
         }
     }
 }

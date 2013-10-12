@@ -18,7 +18,16 @@ namespace FoxMud.Game.Item
         Waist,
         Legs,
         Feet,
-        None
+        None,
+        Container,
+        Key
+    }
+
+    enum Capacity
+    {
+        Small = 30,
+        Medium = 250,
+        Large = 750,
     }
 
     interface Equipable

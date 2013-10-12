@@ -20,4 +20,14 @@ namespace FoxMud.Game.Command
         ArmorBonus,
         Keywords,
     }
+
+    public enum ContainerArgType
+    {
+        Name,
+        Description,
+        Keywords,
+        Capacity,
+        Weight,
+        Value,
+    }
 }

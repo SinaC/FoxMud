@@ -30,17 +30,7 @@ namespace FoxMud.Game.Item
         public int ArmorBonus { get; set; }
         public int MinDamage { get; set; }
         public int MaxDamage { get; set; }
-
-        /// <summary>
-        /// copies an item from its template record i.e. template items have readable keys
-        /// while copied items are specific instances saved to db
-        /// </summary>
-        /// <param name="key">the key e.g. a small knife</param>
-        /// <returns>a copy of the item with unique guid key</returns>
-        public PlayerItem Copy()
-        {
-            return new PlayerItem(this);
-        }
+        public Dictionary<string, string> ContainedItems { get; set; }
     }
 
 
@@ -69,8 +59,10 @@ namespace FoxMud.Game.Item
         public int ArmorBonus { get; set; }
         public int MinDamage { get; set; }
         public int MaxDamage { get; set; }
+        public Dictionary<string, string> ContainedItems { get; set; }
 
-        public PlayerItem(Template item)
+        // need this empty constructor for automapper
+        public PlayerItem()
         {
             Guid guid = Guid.NewGuid();
             while (itemExists(guid))
@@ -79,19 +71,6 @@ namespace FoxMud.Game.Item
             }
 
             _guid = guid;
-
-            // copy basic properties
-            Name = item.Name;
-            Description = item.Description;
-            Keywords = item.Keywords;
-            Weight = item.Weight;
-            Value = item.Value;
-            this.WearLocation = item.WearLocation;
-
-            HpBonus = item.HpBonus;
-            ArmorBonus = item.ArmorBonus;
-            MinDamage = item.MinDamage;
-            MaxDamage = item.MaxDamage;
         }
 
         protected bool itemExists(Guid guid)

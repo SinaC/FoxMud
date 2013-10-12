@@ -20,21 +20,12 @@ namespace FoxMud.Game
     class Player : Storable
     {
         private string _passwordHash;
+        private int _weight;
 
         [JsonConstructor]
         private Player(
-            string name, 
-            string passwordHash, 
-            bool isAdmin, 
-            string prompt, 
-            Dictionary<string,string> rememberedNames, 
-            Dictionary<string, string> inventory, 
-            int hitPoints, 
-            int maxHitPoints,
-            long gold, 
-            int experience, 
-            int baseDamage, 
-            int baseArmor)
+            string name, string passwordHash, bool isAdmin, string prompt, Dictionary<string,string> rememberedNames, Dictionary<string, string> inventory, int hitPoints, 
+            int maxHitPoints,long gold, int experience, int baseDamage, int baseArmor, int maxInventory, int maxWeight)
         {
             Forename = name;
             _passwordHash = passwordHash;
@@ -46,6 +37,8 @@ namespace FoxMud.Game
             Experience = experience;
             BaseDamage = baseDamage;
             BaseArmor = baseArmor;
+            MaxInventory = maxInventory;
+            MaxWeight = maxWeight;
             
             if (rememberedNames == null)
                 RememberedNames = new Dictionary<string, string>();
@@ -92,6 +85,30 @@ namespace FoxMud.Game
         public int Experience { get; set; }
         public int BaseArmor { get; set; }
         public int BaseDamage { get; set; }
+        public int MaxInventory { get; set; }
+        public int MaxWeight { get; set; }
+        
+        [JsonIgnore]
+        public int Weight
+        {
+            get
+            {
+                foreach (var key in Inventory.Keys)
+                {
+                    var item = Server.Current.Database.Get<PlayerItem>(key);
+                    if (item != null)
+                    {
+                        _weight += item.Weight;
+                        if (item.ContainedItems.Count > 0)
+                        {
+                            // fixme: get containre items' combined weight
+                        }
+                    }
+                }
+
+                return _weight;
+            }
+        }
         //public List<Equipable> Equipped { get; private set; }
 
         private static string Hash(string value)

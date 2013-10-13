@@ -4,6 +4,7 @@ using System.Linq;
 using System.Text;
 using System.Threading.Tasks;
 using FoxMud.Db;
+using Newtonsoft.Json;
 
 namespace FoxMud.Game.Item
 {
@@ -60,6 +61,23 @@ namespace FoxMud.Game.Item
         public int MinDamage { get; set; }
         public int MaxDamage { get; set; }
         public Dictionary<string, string> ContainedItems { get; set; }
+
+        [JsonConstructor]
+        private PlayerItem(string key, string name, string description, string[] keywords, int weight, int value, Wearlocation wearLocation,
+            int hpBonus, int armorBonus, int mindDamage, int maxDamage)
+        {
+            _guid = new Guid(key);
+            Name = name;
+            Description = description;
+            Keywords = keywords;
+            Weight = weight;
+            Value = value;
+            WearLocation = wearLocation;
+            HpBonus = hpBonus;
+            ArmorBonus = armorBonus;
+            MinDamage = mindDamage;
+            MaxDamage = maxDamage;
+        }
 
         // need this empty constructor for automapper
         public PlayerItem()

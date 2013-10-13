@@ -388,7 +388,7 @@ namespace FoxMud.Game.Command
     {
         public void PrintSyntax(Session session)
         {
-            throw new NotImplementedException();
+            session.WriteLine("put <item> <container>");
         }
 
         public void Execute(Session session, CommandContext context)

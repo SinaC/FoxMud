@@ -81,6 +81,7 @@
     <Compile Include="Game\State\TextEditor.cs" />
     <Compile Include="Game\State\TextToken.cs" />
     <Compile Include="Game\World\Room.cs" />
+    <Compile Include="Game\World\RoomHelper.cs" />
     <Compile Include="Net\Connection.cs" />
     <Compile Include="Net\ConnectionHandler.cs" />
     <Compile Include="Net\ConnectionListener.cs" />

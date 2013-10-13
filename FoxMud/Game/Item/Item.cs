@@ -96,6 +96,31 @@ namespace FoxMud.Game.Item
             return Server.Current.Database.Get<PlayerItem>(guid.ToString()) != null;
         }
 
+        public void LookAt(Session session)
+        {
+            session.WriteLine(Description);
+
+            if (WearLocation == Wearlocation.Container)
+            {
+                if (ContainedItems.Count == 0)
+                {
+                    session.WriteLine("\tEmpty");
+                    return;
+                }
+
+                foreach (var itemLine in ContainedItems
+                    .GroupBy(i => i.Value)
+                    .Select(group => new
+                {
+                    ItemName = group.Key,
+                    Count = group.Count()
+                }))
+                {
+                    session.WriteLine("\t{0} ({1})", itemLine.ItemName, itemLine.Count);
+                }
+            }
+        }
+
         public virtual void Equip(Player player)
         {
             throw new NotImplementedException();

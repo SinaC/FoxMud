@@ -196,6 +196,7 @@ namespace FoxMud.Game.Command.Admin
                             Keywords = context.Arguments[args[ContainerArgType.Keywords]].Split(' '),
                             Name = context.Arguments[args[ContainerArgType.Name]],
                             Value = Convert.ToInt32(context.Arguments[args[ContainerArgType.Value]]),
+                            WearLocation = Wearlocation.Container,
                             Weight = Convert.ToInt32(context.Arguments[args[ContainerArgType.Weight]]),
                         };
 

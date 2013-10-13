@@ -115,7 +115,18 @@ namespace FoxMud.Game.Command.Visual
                 return;
             }
 
-            session.WriteLine("look <item> not yet implemented...");
+            // find item to look at
+            foreach (var key in session.Player.Inventory.Keys)
+            {
+                var item = Server.Current.Database.Get<PlayerItem>(key);
+                if (item != null)
+                {
+                    item.LookAt(session);
+                    return;
+                }
+            }
+
+            session.WriteLine("Couldn't find anything to look at");
         }
     }
 }

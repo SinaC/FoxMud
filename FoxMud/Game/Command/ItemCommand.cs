@@ -11,7 +11,7 @@ namespace FoxMud.Game.Command
 {
     static class ItemHelper
     {
-        public static PlayerItem FindInventoryItem(Player player, string keyword)
+        public static PlayerItem FindInventoryItem(Player player, string keyword, bool isContainer = false)
         {
             PlayerItem item = null;
             int ordinal = 1;
@@ -393,7 +393,86 @@ namespace FoxMud.Game.Command
 
         public void Execute(Session session, CommandContext context)
         {
-            throw new NotImplementedException();
+            try
+            {
+                PlayerItem container = null;
+                PlayerItem putItem = null;
+                bool containerFound = false;
+                bool itemFound = false;
+                string argContainer = context.Arguments[1];
+                string argItem = context.Arguments[0];
+
+                // item in inevntory?
+                foreach (var key in session.Player.Inventory.Keys)
+                {
+                    putItem = Server.Current.Database.Get<PlayerItem>(key);
+                    if (putItem != null
+                        && putItem.Keywords.Contains(argItem))
+                    {
+                        itemFound = true;
+                        break;
+                    }
+                }
+
+                if (!itemFound)
+                {
+                    session.WriteLine("Can't find item: {0}", argItem);
+                    return;
+                }
+
+                // container in inventory?
+                foreach (var key in session.Player.Inventory.Keys)
+                {
+                    container = Server.Current.Database.Get<PlayerItem>(key);
+                    if (container != null
+                        && container.WearLocation == Wearlocation.Container
+                        && container.Keywords.Contains(argContainer))
+                    {
+                        containerFound = true;
+                        break;
+                    }
+                }
+
+                // container on floor?
+                if (!containerFound)
+                {
+                    var room = Server.Current.Database.Get<Room>(session.Player.Location);
+                    if (room != null)
+                    {
+                        foreach (var key in room.Items.Keys)
+                        {
+                            container = Server.Current.Database.Get<PlayerItem>(key);
+                            if (container != null
+                                && container.WearLocation == Wearlocation.Container
+                                && container.Keywords.Contains(argContainer))
+                            {
+                                containerFound = true;
+                                break;
+                            }
+                        }
+                    }
+                }
+
+                if (!containerFound)
+                {
+                    session.WriteLine("Can't find container: {0}", argContainer);
+                    return;
+                }
+
+                // move item
+                session.Player.Inventory.Remove(putItem.Key);
+                container.ContainedItems.Add(putItem.Key, putItem.Name);
+                session.WriteLine("You put {0} in {1}", putItem.Name, container.Name);
+                return;
+
+                // save??
+            }
+            catch
+            {
+                PrintSyntax(session);
+            }
+
+            session.WriteLine("Put what in what?");
         }
     }
 
@@ -402,12 +481,34 @@ namespace FoxMud.Game.Command
     {
         public void PrintSyntax(Session session)
         {
-            throw new NotImplementedException();
+            session.WriteLine("empty <container>");
         }
 
         public void Execute(Session session, CommandContext context)
         {
-            throw new NotImplementedException();
+            string argContainer = context.Arguments[0];
+
+            // find container
+            PlayerItem container = ItemHelper.FindInventoryItem(session.Player, argContainer, true);
+            if (container == null)
+            {
+                session.Write("Can't find container: {0}", argContainer);
+                return;
+            }
+
+            var room = RoomHelper.GetPlayerRoom(session.Player);
+
+            // toss on floor
+            foreach (var item in container.ContainedItems.ToArray())
+            {
+                container.ContainedItems.Remove(item.Key);
+                room.Items.Add(item.Key, item.Value);
+            }
+
+            session.WriteLine("You empty {0}", container.Name);
+            room.SendPlayers(string.Format("%d empties {0}", container.Name), session.Player, null, session.Player);
+
+            // save?
         }
     }
 
@@ -417,12 +518,46 @@ namespace FoxMud.Game.Command
     {
         public void PrintSyntax(Session session)
         {
-            throw new NotImplementedException();
+            session.WriteLine("fill <container>");
         }
 
         public void Execute(Session session, CommandContext context)
         {
-            throw new NotImplementedException();
+            string argContainer = context.Arguments[0];
+
+            // container in inventory?
+            PlayerItem container = ItemHelper.FindInventoryItem(session.Player, argContainer, true);
+            if (container == null)
+            {
+                session.WriteLine("Can't find container: {0}", argContainer);
+                return;
+            }
+
+            var room = RoomHelper.GetPlayerRoom(session.Player);
+
+            // add items from room, with weight checks
+            foreach (var key in room.Items.Keys.ToArray())
+            {
+                // get item
+                var roomItem = Server.Current.Database.Get<PlayerItem>(key);
+                if (roomItem != null)
+                {
+                    room.SendPlayers(string.Format("%d filled %o {0}.", container.Name), session.Player, null, session.Player);
+
+                    if (session.Player.Weight + roomItem.Weight <= session.Player.MaxWeight)
+                    {
+                        room.Items.Remove(roomItem.Key);
+                        container.ContainedItems[roomItem.Key] = roomItem.Name;
+                    }
+                    else
+                    {
+                        session.WriteLine("You filled all you could...");
+                        return;
+                    }
+                }
+            }
+
+            session.WriteLine("You filled your {0}", container.Name);
         }
     }
 }

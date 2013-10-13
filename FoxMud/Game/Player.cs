@@ -17,6 +17,12 @@ namespace FoxMud.Game
         Unknown
     }
 
+    struct WearSlot
+    {
+        public string Key { get; set; }
+        public string Name { get; set; }
+    }
+
     class Player : Storable
     {
         private string _passwordHash;
@@ -24,8 +30,8 @@ namespace FoxMud.Game
 
         [JsonConstructor]
         private Player(
-            string name, string passwordHash, bool isAdmin, string prompt, Dictionary<string,string> rememberedNames, Dictionary<string, string> inventory, int hitPoints, 
-            int maxHitPoints,long gold, int experience, int baseDamage, int baseArmor, int maxInventory, int maxWeight)
+            string name, string passwordHash, bool isAdmin, string prompt, Dictionary<string,string> rememberedNames, Dictionary<string, string> inventory, int hitPoints,
+            int maxHitPoints, long gold, int experience, int baseDamage, int baseArmor, int maxInventory, int maxWeight, Dictionary<Wearlocation, WearSlot> equipped)
         {
             Forename = name;
             _passwordHash = passwordHash;
@@ -49,6 +55,11 @@ namespace FoxMud.Game
                 Inventory = new Dictionary<string, string>();
             else
                 Inventory = inventory;
+
+            if (equipped == null)
+                Equipped = new Dictionary<Wearlocation, WearSlot>();
+            else
+                Equipped = equipped;
         }
 
         public Player()
@@ -87,29 +98,46 @@ namespace FoxMud.Game
         public int BaseDamage { get; set; }
         public int MaxInventory { get; set; }
         public int MaxWeight { get; set; }
+        public Dictionary<Wearlocation, WearSlot> Equipped { get; private set; }
         
         [JsonIgnore]
         public int Weight
         {
             get
             {
-                foreach (var key in Inventory.Keys)
+                foreach (var key in Inventory.Keys.Union(Equipped.Values.Select(w => w.Key)))
                 {
                     var item = Server.Current.Database.Get<PlayerItem>(key);
                     if (item != null)
                     {
-                        _weight += item.Weight;
-                        if (item.ContainedItems.Count > 0)
-                        {
-                            // fixme: get containre items' combined weight
-                        }
+                        if (item.WearLocation == Wearlocation.Container)
+                            _weight += item.ContainerWeight;
+                        else
+                            _weight += item.Weight;
                     }
                 }
 
                 return _weight;
             }
         }
-        //public List<Equipable> Equipped { get; private set; }
+
+        [JsonIgnore]
+        public int Damage
+        {
+            get
+            {
+                return BaseDamage;
+            }
+        }
+
+        [JsonIgnore]
+        public int Armor
+        {
+            get
+            {
+                return BaseArmor;
+            }
+        }
 
         private static string Hash(string value)
         {

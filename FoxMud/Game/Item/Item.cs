@@ -4,6 +4,7 @@ using System.Linq;
 using System.Text;
 using System.Threading.Tasks;
 using FoxMud.Db;
+using FoxMud.Game.World;
 using Newtonsoft.Json;
 
 namespace FoxMud.Game.Item
@@ -61,6 +62,28 @@ namespace FoxMud.Game.Item
         public int MinDamage { get; set; }
         public int MaxDamage { get; set; }
         public Dictionary<string, string> ContainedItems { get; set; }
+
+        [JsonIgnore]
+        public int ContainerWeight
+        {
+            get
+            {
+                if (this.WearLocation != Wearlocation.Container)
+                    return Weight;
+
+                int _weight = this.Weight;
+                foreach (var key in ContainedItems.Keys)
+                {
+                    var item = Server.Current.Database.Get<PlayerItem>(key);
+                    if (item.WearLocation == Wearlocation.Container)
+                        _weight += item.ContainerWeight;
+                    else
+                        _weight += item.Weight;
+                }
+
+                return _weight;
+            }
+        }
 
         [JsonConstructor]
         private PlayerItem(string key, string name, string description, string[] keywords, int weight, int value, Wearlocation wearLocation,
@@ -121,14 +144,62 @@ namespace FoxMud.Game.Item
             }
         }
 
-        public virtual void Equip(Player player)
+        public virtual void Equip(Session session)
         {
-            throw new NotImplementedException();
+            // don't equip .None or .Key
+            if (this.WearLocation == Wearlocation.None 
+                || this.WearLocation == Wearlocation.Key 
+                || this.WearLocation == Wearlocation.Container)
+            {
+                session.WriteLine("You can't equip that.");
+                return;
+            }
+
+            if (session.Player.Equipped.ContainsKey(this.WearLocation))
+            {
+                session.WriteLine("You've already equipped that slot.");
+                return;
+            }
+
+            // can't equip both hands if either single hand is equipped
+            if (this.WearLocation == Wearlocation.BothHands
+                && (session.Player.Equipped.ContainsKey(Wearlocation.LeftHand)
+                    || session.Player.Equipped.ContainsKey(Wearlocation.RightHand)))
+            {
+                session.WriteLine("You can't hold a two-handed weapon with any other weapons.");
+                return;
+            }
+
+            // can't eqiup either hand if both hands is equipped
+            if ((this.WearLocation == Wearlocation.RightHand || this.WearLocation == Wearlocation.LeftHand)
+                && session.Player.Equipped.ContainsKey(Wearlocation.BothHands))
+            {
+                session.WriteLine("You're already using both hands.");
+                return;
+            }
+
+            session.Player.Equipped[this.WearLocation] = new WearSlot()
+            {
+                Key = this.Key,
+                Name = this.Name
+            };
+
+            // remove from inventory
+            session.Player.Inventory.Remove(this.Key);
+
+            session.WriteLine("You don {0}.", this.Name);
+            RoomHelper.GetPlayerRoom(session.Player)
+                .SendPlayers(string.Format("%d dons {0}", this.Name), session.Player, null, session.Player);
         }
 
-        public virtual void Unequip(Player player)
+        public virtual void Unequip(Session session)
         {
-            throw new NotImplementedException();
+            session.Player.Equipped.Remove(this.WearLocation);
+            session.Player.Inventory[this.Key] = this.Name;
+
+            session.WriteLine("You remove {0}", this.Name);
+            RoomHelper.GetPlayerRoom(session.Player)
+                .SendPlayers(string.Format("%d removes {0}", this.Name), session.Player, null, session.Player);
         }
     }
 }

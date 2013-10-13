@@ -32,7 +32,7 @@ namespace FoxMud.Game.Item
 
     interface Equipable
     {
-        void Equip(Player player);
-        void Unequip(Player player);
+        void Equip(Session player);
+        void Unequip(Session player);
     }
 }

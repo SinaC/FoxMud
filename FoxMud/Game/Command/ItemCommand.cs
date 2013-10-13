@@ -11,7 +11,7 @@ namespace FoxMud.Game.Command
 {
     static class ItemHelper
     {
-        public static PlayerItem FindInventoryItem(Player player, string keyword, bool isContainer = false)
+        public static PlayerItem FindInventoryItem(Player player, string keyword, bool isContainer = false, bool isEquipped = false)
         {
             PlayerItem item = null;
             int ordinal = 1;
@@ -28,7 +28,10 @@ namespace FoxMud.Game.Command
                 keyword = keyword.Replace(match.Groups[1].Value, String.Empty);
             }
 
-            foreach (string guid in player.Inventory.Keys)
+            foreach (string guid in 
+                isEquipped 
+                ? player.Equipped.Values.Select(w => w.Key) 
+                : player.Inventory.Keys)
             {
                 var temp = Server.Current.Database.Get<PlayerItem>(guid);
 
@@ -558,6 +561,99 @@ namespace FoxMud.Game.Command
             }
 
             session.WriteLine("You filled your {0}", container.Name);
+        }
+    }
+
+    [Command("eq", false, "eq")]
+    [Command("equip", false, "equip")]
+    [Command("don", false, "equip")]
+    [Command("wear", false, "equip")]
+    [Command("unequip", false, "unequip")]
+    [Command("remove", false, "unequip")]
+    [Command("rem", false, "unequip")]
+    class EquipCommand : PlayerCommand
+    {
+        private readonly string command;
+
+        public EquipCommand(string command)
+        {
+            this.command = command;
+        }
+
+        public void PrintSyntax(Session session)
+        {
+            session.WriteLine("Syntax: equip <item>");
+            session.WriteLine("Syntax: don <item>");
+            session.WriteLine("Syntax: wear <item>");
+            session.WriteLine("Syntax: unequip <item>");
+            session.WriteLine("Syntax: remove <item>");
+            session.WriteLine("Syntax: rem <item>");
+        }
+
+        public void Execute(Session session, CommandContext context)
+        {
+            if (command == "eq")
+            {
+                foreach (var location in Enum.GetValues(typeof(Wearlocation)).Cast<Wearlocation>())
+                {
+                    if (location == Wearlocation.Key || location == Wearlocation.Container || location == Wearlocation.None)
+                        continue;
+
+                    // don't display 
+                    if (session.Player.Equipped.ContainsKey(Wearlocation.BothHands)
+                        && (location == Wearlocation.RightHand || location == Wearlocation.LeftHand))
+                        continue;
+
+                    // don't display both hands location if either single hand is equipped
+                    if (location == Wearlocation.BothHands
+                        && (session.Player.Equipped.ContainsKey(Wearlocation.RightHand)
+                            || session.Player.Equipped.ContainsKey(Wearlocation.LeftHand)))
+                        continue;
+
+                    if (session.Player.Equipped.ContainsKey(location))
+                        session.WriteLine("{0,-15}{1}", "<" + StringHelpers.GetWearLocation(location) + ">", session.Player.Equipped[location].Name);
+                    else
+                        session.WriteLine("{0,-15}Empty", "<" + StringHelpers.GetWearLocation(location) + ">");
+                }
+
+                return;
+            }
+
+            if (context.Arguments.Count == 0)
+            {
+                session.WriteLine("{0} what?", context.CommandName);
+                return;
+            }
+
+            string argItem = context.Arguments[0];
+
+            if (command == "equip")
+            {
+                // find inventory item
+                var item = ItemHelper.FindInventoryItem(session.Player, argItem);
+                if (item == null)
+                {
+                    session.WriteLine("Can't find item: {0}", argItem);
+                    return;
+                }
+
+                // equip
+                item.Equip(session);
+            }
+            else
+            {
+                // find equipped item
+                var item = ItemHelper.FindInventoryItem(session.Player, argItem, false, true);
+
+                if (item == null)
+                {
+                    session.WriteLine("You're not wearing that.");
+                    return;
+                }
+
+                // remove, put in inventory
+                item.Unequip(session);
+            }
         }
     }
 }

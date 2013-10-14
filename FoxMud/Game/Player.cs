@@ -17,6 +17,16 @@ namespace FoxMud.Game
         Unknown
     }
 
+    enum GameStatus
+    {
+        Sitting,
+        Standing,
+        Sleeping,
+        Fighting,
+        Dead,
+        Frozen,
+    }
+
     struct WearSlot
     {
         public string Key { get; set; }

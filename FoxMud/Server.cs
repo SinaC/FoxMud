@@ -6,7 +6,9 @@ using System.Text;
 using System.Threading;
 using System.Threading.Tasks;
 using FoxMud.Game;
+using FoxMud.Game.Combat;
 using FoxMud.Game.Command;
+using FoxMud.Game.World;
 
 namespace FoxMud
 {
@@ -23,6 +25,7 @@ namespace FoxMud
 
         private const int TickRate = 20;
         private const long TickTime = 1000 / TickRate;
+        private const long RepopTime = 600000;
 
         private AutoResetEvent wait;
         private bool running;
@@ -38,6 +41,8 @@ namespace FoxMud
             SessionMonitor = new SessionMonitor();
             Database = new Database(DataDir);
             CommandLookup = new DynamicCommandLookup();
+            RepopHandler = new RepopHandler(RepopTime);
+            CombatHandler = new CombatHandler(TickTime);
 
             // Setup services
             ConnectionListener.ConnectionHandler = new StartupConnectionHandler(ConnectionMonitor, SessionMonitor);
@@ -50,6 +55,8 @@ namespace FoxMud
         public SessionMonitor SessionMonitor { get; private set; }
         public Database Database { get; private set; }
         public CommandLookup CommandLookup { get; private set; }
+        public CombatHandler CombatHandler { get; private set; }
+        public RepopHandler RepopHandler { get; private set; }
 
         public void Start()
         {
@@ -58,6 +65,8 @@ namespace FoxMud
 
             running = true;
             ConnectionListener.Start();
+            CombatHandler.Start();
+            RepopHandler.Start();
 
             DoLoop();
         }

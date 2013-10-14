@@ -19,6 +19,7 @@ namespace FoxMud.Game.World
         public string Key { get { return Name.ToLower(); } }
         public string Name { get; set; }
         public List<string> Rooms { get; private set; }
+        public long RepopTime { get; set; }
     }
 
     class RoomExit

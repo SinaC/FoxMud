@@ -50,6 +50,7 @@
     <Reference Include="System.Xml" />
   </ItemGroup>
   <ItemGroup>
+    <Compile Include="Game\CombatHandler.cs" />
     <Compile Include="Game\Command\Admin\AdminItemCommand.cs" />
     <Compile Include="Game\Command\Admin\AdminRoomCommands.cs" />
     <Compile Include="Game\Command\ArgumentType.cs" />
@@ -80,6 +81,8 @@
     <Compile Include="Game\State\SplashState.cs" />
     <Compile Include="Game\State\TextEditor.cs" />
     <Compile Include="Game\State\TextToken.cs" />
+    <Compile Include="Game\World\NonPlayer.cs" />
+    <Compile Include="Game\World\RepopHandler.cs" />
     <Compile Include="Game\World\Room.cs" />
     <Compile Include="Game\World\RoomHelper.cs" />
     <Compile Include="Net\Connection.cs" />
@@ -106,6 +109,7 @@
   </ItemGroup>
   <ItemGroup>
     <Folder Include="bin\Debug\" />
+    <Folder Include="Game\Command\Combat\" />
   </ItemGroup>
   <Import Project="$(MSBuildToolsPath)\Microsoft.CSharp.targets" />
   <!-- To modify your build process, add your task inside one of the targets below and uncomment it. 

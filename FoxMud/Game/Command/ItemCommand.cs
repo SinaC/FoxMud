@@ -545,8 +545,6 @@ namespace FoxMud.Game.Command
                 var roomItem = Server.Current.Database.Get<PlayerItem>(key);
                 if (roomItem != null)
                 {
-                    room.SendPlayers(string.Format("%d filled %o {0}.", container.Name), session.Player, null, session.Player);
-
                     if (session.Player.Weight + roomItem.Weight <= session.Player.MaxWeight)
                     {
                         room.Items.Remove(roomItem.Key);
@@ -554,13 +552,13 @@ namespace FoxMud.Game.Command
                     }
                     else
                     {
-                        session.WriteLine("You filled all you could...");
-                        return;
+                        continue;
                     }
                 }
             }
 
             session.WriteLine("You filled your {0}", container.Name);
+            room.SendPlayers(string.Format("%d filled %o {0}.", container.Name), session.Player, null, session.Player);
         }
     }
 

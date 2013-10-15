@@ -11,7 +11,7 @@ namespace FoxMud.Game
     class Combat
     {
         List<Player> fighters;
-        List<NonPlayer> mobs;
+        List<MobTemplate> mobs;
 
         public Combat()
         {

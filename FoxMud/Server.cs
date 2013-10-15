@@ -6,7 +6,6 @@ using System.Text;
 using System.Threading;
 using System.Threading.Tasks;
 using FoxMud.Game;
-using FoxMud.Game.Combat;
 using FoxMud.Game.Command;
 using FoxMud.Game.World;
 
@@ -65,8 +64,8 @@ namespace FoxMud
 
             running = true;
             ConnectionListener.Start();
-            CombatHandler.Start();
             RepopHandler.Start();
+            CombatHandler.Start();
 
             DoLoop();
         }

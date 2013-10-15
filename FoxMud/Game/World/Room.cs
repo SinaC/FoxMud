@@ -9,19 +9,6 @@ using Newtonsoft.Json;
 
 namespace FoxMud.Game.World
 {
-    class Area : Storable
-    {
-        public Area()
-        {
-            Rooms = new List<string>();
-        }
-
-        public string Key { get { return Name.ToLower(); } }
-        public string Name { get; set; }
-        public List<string> Rooms { get; private set; }
-        public long RepopTime { get; set; }
-    }
-
     class RoomExit
     {
         public string LeadsTo { get; set; }

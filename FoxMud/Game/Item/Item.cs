@@ -106,17 +106,12 @@ namespace FoxMud.Game.Item
         public PlayerItem()
         {
             Guid guid = Guid.NewGuid();
-            while (itemExists(guid))
+            while (Server.Current.Database.Exists<PlayerItem>(guid.ToString()))
             {
                 guid = Guid.NewGuid();
             }
 
             _guid = guid;
-        }
-
-        protected bool itemExists(Guid guid)
-        {
-            return Server.Current.Database.Get<PlayerItem>(guid.ToString()) != null;
         }
 
         public void LookAt(Session session)

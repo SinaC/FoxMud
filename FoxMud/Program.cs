@@ -7,7 +7,9 @@ using System.Text;
 using System.Threading;
 using System.Threading.Tasks;
 using AutoMapper;
+using FoxMud.Game;
 using FoxMud.Game.Item;
+using FoxMud.Game.World;
 
 namespace FoxMud
 {
@@ -20,6 +22,9 @@ namespace FoxMud
         static void Main(string[] args)
         {
             Mapper.CreateMap<Template, PlayerItem>();
+            Mapper.CreateMap<MobTemplate, NonPlayer>()
+                .ForMember(dst => dst.Inventory, opt => opt.ResolveUsing<NonPlayerInventoryResolver>())
+                .ForMember(dst => dst.Equipped, opt => opt.ResolveUsing<NonPlayerEquippedResolver>());
 
             using (var server = new Server())
             {

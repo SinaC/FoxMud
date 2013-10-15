@@ -202,5 +202,11 @@ namespace FoxMud
         {
             readWriteLock.Dispose();
         }
+
+        public bool Exists<T>(string key)
+            where T : class, Storable
+        {
+            return Get<T>(key) != null;
+        }
     }
 }

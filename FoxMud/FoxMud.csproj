@@ -73,6 +73,7 @@
     <Compile Include="Game\DirectionHelper.cs" />
     <Compile Include="Game\Item\Equipable.cs" />
     <Compile Include="Game\Item\Item.cs" />
+    <Compile Include="Game\NonPlayerResolver.cs" />
     <Compile Include="Game\Player.cs" />
     <Compile Include="Game\State\CreateNewPlayer.cs" />
     <Compile Include="Game\State\EnterWorld.cs" />
@@ -81,6 +82,7 @@
     <Compile Include="Game\State\SplashState.cs" />
     <Compile Include="Game\State\TextEditor.cs" />
     <Compile Include="Game\State\TextToken.cs" />
+    <Compile Include="Game\World\Area.cs" />
     <Compile Include="Game\World\NonPlayer.cs" />
     <Compile Include="Game\World\RepopHandler.cs" />
     <Compile Include="Game\World\Room.cs" />

@@ -24,7 +24,6 @@ namespace FoxMud
 
         private const int TickRate = 20;
         private const long TickTime = 1000 / TickRate;
-        private const long RepopTime = 600000;
 
         private AutoResetEvent wait;
         private bool running;
@@ -40,9 +39,10 @@ namespace FoxMud
             SessionMonitor = new SessionMonitor();
             Database = new Database(DataDir);
             CommandLookup = new DynamicCommandLookup();
-            RepopHandler = new RepopHandler(RepopTime);
+            Areas = Database.GetAll<Area>();
+            RepopHandler = new RepopHandler(TickTime);
             CombatHandler = new CombatHandler(TickTime);
-
+            
             // Setup services
             ConnectionListener.ConnectionHandler = new StartupConnectionHandler(ConnectionMonitor, SessionMonitor);
 
@@ -56,6 +56,7 @@ namespace FoxMud
         public CommandLookup CommandLookup { get; private set; }
         public CombatHandler CombatHandler { get; private set; }
         public RepopHandler RepopHandler { get; private set; }
+        public IEnumerable<Area> Areas { get; private set; }
 
         public void Start()
         {
@@ -65,7 +66,7 @@ namespace FoxMud
             running = true;
             ConnectionListener.Start();
             RepopHandler.Start();
-            CombatHandler.Start();
+            //CombatHandler.Start();
 
             DoLoop();
         }

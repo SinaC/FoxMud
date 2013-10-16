@@ -36,7 +36,7 @@ namespace FoxMud.Game
 
         private void DoCombat(object sender, ElapsedEventArgs e)
         {
-            throw new NotImplementedException();
+            // not yet implemented
         }
 
         public void Start()

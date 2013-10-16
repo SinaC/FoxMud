@@ -35,6 +35,11 @@ namespace FoxMud.Game.Command.Visual
 
                 session.WriteLine("{0} is here.\n", session.Player.GetOtherPlayerDescription(player));
             }
+
+            foreach (var npc in room.GetNpcs())
+            {
+                session.WriteLine("{0} is here.\n", npc.Name);
+            }
         }
 
         private static void WriteRoomDescription(Session session, Room room)
@@ -79,8 +84,8 @@ namespace FoxMud.Game.Command.Visual
 
             WriteRoomDescription(session, room);
             WriteAvailableExits(session, room);
-            WriteRoomPlayerList(session, room);
             WriteItemsOnFloor(session, room);
+            WriteRoomPlayerList(session, room);
         }
 
         private void PerformLookAtPlayer(Session session, Room room, Player player)

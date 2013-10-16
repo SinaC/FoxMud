@@ -11,16 +11,17 @@ namespace FoxMud.Game.World
     class Area : Storable
     {
         [JsonConstructor]
-        private Area(string name, List<string> rooms, int repopTime)
+        private Area(string name, List<string> rooms, int repopTime, string repopMessage)
         {
             Name = name;
-            Rooms = rooms;
             RepopTime = repopTime;
+            RepopMessage = repopMessage;
+            Rooms = rooms ?? new List<string>();
+            RepopQueue = new List<string>();
         }
 
         public Area()
         {
-            Rooms = new List<string>();
             RepopQueue = new List<string>();
         }
 
@@ -28,6 +29,10 @@ namespace FoxMud.Game.World
         public string Name { get; set; }
         public List<string> Rooms { get; private set; }
         public long RepopTime { get; set; }
+        public string RepopMessage { get; set; }
+
+        [JsonIgnore]
+        public DateTime LastRepop { get; set; }
 
         /// <summary>
         /// this "queue" is used when a mob dies. it's added here so the

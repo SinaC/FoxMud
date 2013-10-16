@@ -55,21 +55,9 @@ namespace FoxMud.Game
             BaseArmor = baseArmor;
             MaxInventory = maxInventory;
             MaxWeight = maxWeight;
-            
-            if (rememberedNames == null)
-                RememberedNames = new Dictionary<string, string>();
-            else
-                RememberedNames = rememberedNames;
-
-            if (inventory == null)
-                Inventory = new Dictionary<string, string>();
-            else
-                Inventory = inventory;
-
-            if (equipped == null)
-                Equipped = new Dictionary<Wearlocation, WearSlot>();
-            else
-                Equipped = equipped;
+            RememberedNames = rememberedNames ?? new Dictionary<string, string>();
+            Inventory = inventory ?? new Dictionary<string, string>();
+            Equipped = equipped ?? new Dictionary<Wearlocation, WearSlot>();
         }
 
         public Player()

@@ -22,30 +22,65 @@ namespace FoxMud.Game.World
         }
 
         /// <summary>
-        /// populate all rooms in all areas, etc
+        /// initially, spawn all mobs
         /// </summary>
         private void mudBoot()
         {
             // get all MobTemplates
             foreach (var mob in Server.Current.Database.GetAll<MobTemplate>())
             {
-                // copy into NonPlayer
-                NonPlayer npc = Mapper.Map<NonPlayer>(mob);
-
-                // generate inventory and equipped
-
+                // copy into NonPlayer, mapping generates inventory and equipped
+                var npc = Mapper.Map<NonPlayer>(mob);
+                npc.MobTemplateKey = mob.Key;
+                Server.Current.Database.Save(npc); // do we even need to persist NonPlayer objects, or can they be managed in memory?
 
                 // get room, put in room
+                RoomHelper.GetPlayerRoom(npc.RespawnRoom).AddNpc(npc);
             }
+
+            foreach (var area in Server.Current.Areas)
+                area.LastRepop = DateTime.Now;
         }
 
         private void DoRepop(object sender, ElapsedEventArgs e)
         {
-            throw new NotImplementedException();
+            foreach (var area in Server.Current.Areas)
+            {
+                if ((DateTime.Now - area.LastRepop).TotalMilliseconds > area.RepopTime)
+                {
+                    try
+                    {
+                        _timer.Stop();
+                        // broadcast repop message to players in area
+                        foreach (var roomKey in area.Rooms)
+                            foreach (var player in RoomHelper.GetPlayerRoom(roomKey).GetPlayers())
+                                player.Send(area.RepopMessage, null);
+
+                        foreach (var key in area.RepopQueue.ToArray())
+                        {
+                            var mob = Server.Current.Database.Get<MobTemplate>(key);
+                            var npc = Mapper.Map<NonPlayer>(mob);
+                            RoomHelper.GetPlayerRoom(npc.RespawnRoom).AddNpc(npc);
+                            area.RepopQueue.Remove(key);
+                        }
+
+                        area.LastRepop = DateTime.Now;
+                    }
+                    catch (Exception ex)
+                    {
+                        Console.WriteLine("DoRepop error: {0}", ex.StackTrace);
+                    }
+                    finally
+                    {
+                        _timer.Start();
+                    }
+                }
+            }
         }
 
         public void Start()
         {
+            _timer.Enabled = true;
             _timer.Start();
         }
     }

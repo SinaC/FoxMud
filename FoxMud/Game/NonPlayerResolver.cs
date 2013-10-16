@@ -18,8 +18,9 @@ namespace FoxMud.Game
         {
             Dictionary<string, string> items = new Dictionary<string, string>();
 
-            foreach (var item in source.Inventory)
+            foreach (var key in source.Inventory)
             {
+                var item = Server.Current.Database.Get<Template>(key);
                 var dupedItem = Mapper.Map<PlayerItem>(item);
                 Server.Current.Database.Save(dupedItem);
                 items[dupedItem.Key] = dupedItem.Name;
@@ -37,7 +38,7 @@ namespace FoxMud.Game
 
             foreach (var item in source.Equipped)
             {
-                var template = Server.Current.Database.Get<Template>(item.Value.Key);
+                var template = Server.Current.Database.Get<Template>(item.Value);
                 var dupedItem = Mapper.Map<PlayerItem>(template);
                 Server.Current.Database.Save(dupedItem);
                 items[item.Key] = new WearSlot()

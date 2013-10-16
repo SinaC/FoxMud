@@ -23,11 +23,15 @@ namespace FoxMud.Game.World
         [JsonIgnore]
         private List<Player> players;
 
+        [JsonIgnore]
+        private List<NonPlayer> npcs;
+
         public Room()
         {
             players = new List<Player>();
             Exits = new Dictionary<string, RoomExit>();
             Items = new Dictionary<string, string>();
+            npcs = new List<NonPlayer>();
         }
 
         public string Key { get; set; }
@@ -44,6 +48,11 @@ namespace FoxMud.Game.World
             return players;
         }
 
+        public IEnumerable<NonPlayer> GetNpcs()
+        {
+            return npcs;
+        }
+
         public void AddPlayer(Player player)
         {
             if (!players.Contains(player))
@@ -53,6 +62,17 @@ namespace FoxMud.Game.World
         public void RemovePlayer(Player player)
         {
             players.Remove(player);
+        }
+
+        public void AddNpc(NonPlayer npc)
+        {
+            if (!npcs.Contains(npc))
+                npcs.Add(npc);
+        }
+
+        public void RemoveNpc(NonPlayer npc)
+        {
+            npcs.Remove(npc);
         }
 
         public bool HasExit(string exitName)

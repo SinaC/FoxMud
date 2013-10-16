@@ -10,7 +10,12 @@ namespace FoxMud.Game.World
     {
         public static Room GetPlayerRoom(Player player)
         {
-            return Server.Current.Database.Get<Room>(player.Location);
+            return GetPlayerRoom(player.Location);
+        }
+
+        public static Room GetPlayerRoom(string key)
+        {
+            return Server.Current.Database.Get<Room>(key);
         }
     }
 }

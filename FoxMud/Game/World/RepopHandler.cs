@@ -5,6 +5,7 @@ using System.Text;
 using System.Threading.Tasks;
 using System.Timers;
 using AutoMapper;
+using FoxMud.Game.Item;
 
 namespace FoxMud.Game.World
 {
@@ -44,13 +45,14 @@ namespace FoxMud.Game.World
 
         private void DoRepop(object sender, ElapsedEventArgs e)
         {
+            _timer.Stop();
+
             foreach (var area in Server.Current.Areas)
             {
                 if ((DateTime.Now - area.LastRepop).TotalMilliseconds > area.RepopTime)
                 {
                     try
                     {
-                        _timer.Stop();
                         // broadcast repop message to players in area
                         foreach (var roomKey in area.Rooms)
                             foreach (var player in RoomHelper.GetPlayerRoom(roomKey).GetPlayers())
@@ -68,13 +70,25 @@ namespace FoxMud.Game.World
                     }
                     catch (Exception ex)
                     {
-                        var log = string.Format("DoRepop Error: {0}", ex.StackTrace);
+                        var log = string.Format("Respawn Error: {0}", ex.StackTrace);
                         Console.WriteLine(log);
                         Server.Current.Log(LogType.Error, log);
                     }
-                    finally
+                }
+
+                // handle corpses
+                foreach (var key in area.Rooms)
+                {
+                    var room = Server.Current.Database.Get<Room>(key);
+                    foreach (var corpseKey in room.CorpseQueue.Where(k => k.Value < DateTime.Now))
                     {
-                        _timer.Start();
+                        var corpse = Server.Current.Database.Get<PlayerItem>(corpseKey.Key);
+                        
+                        // delete the corpse and all items in it
+                        foreach (var corpseItemKey in corpse.ContainedItems.Keys)
+                            Server.Current.Database.Delete<PlayerItem>(corpseItemKey);
+
+                        room.SendPlayers(string.Format("{0} withers and blows away...", corpse.Name), null, null, null);
                     }
                 }
             }
@@ -82,8 +96,10 @@ namespace FoxMud.Game.World
             // fixme: this is going to get dead/old npc's as well
             foreach (var npc in Server.Current.Database.GetAll<NonPlayer>())
             {
-                
+                npc.TalkOrWalk();
             }
+
+            _timer.Start();
         }
 
         public void Start()

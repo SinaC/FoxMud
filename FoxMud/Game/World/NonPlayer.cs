@@ -56,6 +56,7 @@ namespace FoxMud.Game.World
         private Guid _guid;
         private int _hp;
         private DateTime _lastTimeTalked;
+        private DateTime _lastTimeWalked;
 
         public string Key
         {
@@ -108,8 +109,17 @@ namespace FoxMud.Game.World
                     dupedCorpse.ContainedItems[item.Key] = item.Value;
                 }
 
+                dupedCorpse.Name = string.Format("The corpse of {0}", Name);
+                dupedCorpse.Description = string.Format("The corpse of {0} is rotting away.", Name.ToLower());
+                dupedCorpse.Keywords = new List<string>() {"corpse", Name}.ToArray();
+
+                // put corpse in room
+                var room = RoomHelper.GetPlayerRoom(Location);
+                room.Items[dupedCorpse.Key] = dupedCorpse.Name;
+                room.CorpseQueue[dupedCorpse.Key] = DateTime.Now.AddMilliseconds(Server.CorpseDecayTime);
+
                 // get area from this.RespawnRoom
-                var area = Server.Current.Areas.FirstOrDefault(a => a.Rooms.Contains(Location));
+                var area = Server.Current.Areas.FirstOrDefault(a => a.Key == room.Area);
 
                 // add to .RepopQueue
                 area.RepopQueue.Add(MobTemplateKey);
@@ -119,10 +129,10 @@ namespace FoxMud.Game.World
                 // delete inventory/equipped items' .db files
                 foreach (var key in Inventory.Keys.Union(Equipped.Values.Select(e => e.Key)))
                     Server.Current.Database.Delete<PlayerItem>(key);
-
-                // delete .db file
-                Server.Current.Database.Delete<NonPlayer>(Key);
             }
+
+            // delete .db file
+            Server.Current.Database.Delete<NonPlayer>(Key);
         }
 
         [JsonIgnore]
@@ -163,6 +173,7 @@ namespace FoxMud.Game.World
             Inventory = inventory ?? new Dictionary<string, string>();
             Equipped = equipped ?? new Dictionary<Wearlocation, WearSlot>();
             _lastTimeTalked = DateTime.Now;
+            _lastTimeWalked = DateTime.Now;
         }
 
         public NonPlayer()
@@ -175,30 +186,73 @@ namespace FoxMud.Game.World
 
             _guid = guid;
             _lastTimeTalked = DateTime.Now;
+            _lastTimeWalked = DateTime.Now;
         }
 
-        public void Talk()
+        public void TalkOrWalk()
+        {
+            if (Phrases != null && Phrases.Length > 0
+                && AllowedRooms != null && AllowedRooms.Count > 1)
+            {
+                if (Server.Current.Random.Next(2) == 0)
+                    Talk();
+                else
+                    Walk();
+            }
+            else if (Phrases != null && Phrases.Length > 0)
+                Talk();
+            else if (AllowedRooms != null && AllowedRooms.Count > 1)
+                Walk();
+        }
+
+        protected void Talk()
         {
             if ((DateTime.Now - _lastTimeTalked).TotalMilliseconds > MinimumTalkInterval)
             {
+                // set the new interval
+                _lastTimeTalked = DateTime.Now;
+
                 // talk at random
                 double prob = Server.Current.Random.NextDouble();
-                if(prob < TalkProbability)
+                if (prob < TalkProbability && Phrases != null && Phrases.Length > 0)
                 {
-                    // get random phrase
-                    if (Phrases != null && Phrases.Length > 0)
+                    var phrase = Phrases[Server.Current.Random.Next(Phrases.Length)];
+
+                    // say it to the room
+                    var room = RoomHelper.GetPlayerRoom(Location);
+                    if (room != null)
                     {
-                        var phrase = Phrases[Server.Current.Random.Next(Phrases.Length)];
-                        
-                        // say it to the room
-                        var room = RoomHelper.GetPlayerRoom(Location);
-                        if (room != null)
-                        {
-                            string message = string.Format("{0} says, \"{1}\"", Name, phrase);
-                            room.SendPlayers(message, null, null, null);
-                            _lastTimeTalked = DateTime.Now;
-                        }
+                        string message = string.Format("{0} says, \"{1}\"", Name, phrase);
+                        room.SendPlayers(message, null, null, null);
                     }
+                }
+            }
+        }
+
+        protected void Walk()
+        {
+            if ((DateTime.Now - _lastTimeWalked).TotalMilliseconds > Server.MobWalkInterval)
+            {
+                _lastTimeWalked = DateTime.Now;
+
+                var room = RoomHelper.GetPlayerRoom(Location);
+
+                // get allowed exits
+                var allowedExits = room.Exits.Where(e => AllowedRooms.Contains(e.Value.LeadsTo) && e.Value.IsOpen).ToList();
+
+                if (allowedExits.Any() && Server.Current.Random.NextDouble() < 0.5)
+                {
+                    var exit = allowedExits.Skip(Server.Current.Random.Next(allowedExits.Count())).FirstOrDefault();
+
+                    room.RemoveNpc(this);
+                    var newRoom = RoomHelper.GetPlayerRoom(exit.Value.LeadsTo);
+                    newRoom.AddNpc(this);
+                    Location = newRoom.Key;
+                    room.SendPlayers(string.Format("{0} heads {1}.", Name, DirectionHelper.GetDirectionWord(exit.Key)),
+                                     null, null, null);
+                    newRoom.SendPlayers(
+                        string.Format("{0} arrives from the {1}.", Name, DirectionHelper.GetOppositeDirection(exit.Key)),
+                        null, null, null);
                 }
             }
         }

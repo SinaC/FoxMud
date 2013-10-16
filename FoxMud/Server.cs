@@ -29,6 +29,8 @@ namespace FoxMud
         public static bool AutoApprovedEnabled { get { return true; } }
         public static string StartRoom { get { return "the square corner"; } }
         public static int Port = 9999;
+        public static int CorpseDecayTime { get { return 10*60*1000; } } // 10 minutes
+        public static int MobWalkInterval { get { return 5*60*1000; } } // 5 minutes
 
         private const int TickRate = 20;
         private const long TickTime = 1000 / TickRate;

@@ -16,6 +16,45 @@ namespace FoxMud.Game
                     .Contains(direction.ToLower());
         }
 
+        public static string GetDirectionWord(string direction)
+        {
+            switch (direction.ToLower())
+            {
+                case "n":
+                case "north":
+                    return "north";
+                case "ne":
+                case "northeast":
+                    return "northeast";
+                case "nw":
+                case "northwest":
+                    return "northwest";
+                case "s":
+                case "south":
+                    return "south";
+                case "sw":
+                case "southwest":
+                    return "southwest";
+                case "se":
+                case "southeast":
+                    return "southeast";
+                case "e":
+                case "east":
+                    return "east";
+                case "w":
+                case "west":
+                    return "west";
+                case "u":
+                case "up":
+                    return "up";
+                case "d":
+                case "down":
+                    return "down";
+                default:
+                    return string.Empty;
+            }
+        }
+
         public static string GetOppositeDirection(string direction)
         {
             switch (direction.ToLower())

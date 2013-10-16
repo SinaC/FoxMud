@@ -96,6 +96,12 @@ namespace FoxMud.Game.Command.Visual
             room.SendPlayers("%d looks at %D", session.Player, player, session.Player, player);
         }
 
+        private void PerformLookAtNpc(Session session, NonPlayer npc)
+        {
+            session.WriteLine("You look at {0}", npc.Name.ToLower());
+            session.WriteLine("{0}", npc.Description);
+        }
+
         public void Execute(Session session, CommandContext context)
         {
             if (context.Arguments.Count == 0)
@@ -117,6 +123,13 @@ namespace FoxMud.Game.Command.Visual
             if (player != null)
             {
                 PerformLookAtPlayer(session, room, player);
+                return;
+            }
+
+            NonPlayer npc = room.LookUpNpc(context.ArgumentString);
+            if (npc != null)
+            {
+                PerformLookAtNpc(session, npc);
                 return;
             }
 

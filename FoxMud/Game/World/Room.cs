@@ -32,6 +32,7 @@ namespace FoxMud.Game.World
             Exits = new Dictionary<string, RoomExit>();
             Items = new Dictionary<string, string>();
             npcs = new List<NonPlayer>();
+            CorpseQueue = new Dictionary<string, DateTime>();
         }
 
         public string Key { get; set; }
@@ -42,6 +43,9 @@ namespace FoxMud.Game.World
 
         [JsonIgnore]
         public Dictionary<string, string> Items { get; private set; }
+
+        [JsonIgnore]
+        public Dictionary<string, DateTime> CorpseQueue { get; private set; }
 
         public IEnumerable<Player> GetPlayers()
         {
@@ -121,7 +125,7 @@ namespace FoxMud.Game.World
         {
             foreach (var player in players)
             {
-                if (ignore.Contains(player))
+                if (ignore != null && ignore.Contains(player))
                     continue;
 
                 player.Send(format, subject, target);
@@ -163,6 +167,33 @@ namespace FoxMud.Game.World
 
                 if (successful)
                     return player;
+            }
+
+            return null;
+        }
+
+        public NonPlayer LookUpNpc(string keywords)
+        {
+            string[] lookUpKeywords = StringHelpers.GetKeywords(keywords);
+
+            foreach (var npc in npcs)
+            {
+                List<string> possibleNpcKeywords = new List<string>();
+
+                possibleNpcKeywords.AddRange(StringHelpers.GetKeywords(npc.Description));
+
+                bool successful = true;
+                foreach (var keyword in lookUpKeywords)
+                {
+                    if (!possibleNpcKeywords.Contains(keyword))
+                    {
+                        successful = false;
+                        break;
+                    }
+                }
+
+                if (successful)
+                    return npc;
             }
 
             return null;

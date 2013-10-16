@@ -190,12 +190,17 @@ namespace FoxMud.Game.Command.Admin
                 // handle doors
                 string openClose = context.Arguments[0];
                 context.Arguments.Remove(openClose);
-                bool isDoor = false;
-                bool isOpen = false;
+                bool isDoor;
+                bool isOpen;
                 if (openClose == "<open>" || openClose == "<close>")
                 {
                     isDoor = true;
                     isOpen = openClose == "<open>";
+                }
+                else
+                {
+                    isDoor = false;
+                    isOpen = true;
                 }
 
                 // at this point, direction has been removed. all that remains if the new room key/name

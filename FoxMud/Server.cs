@@ -1,6 +1,7 @@
 ﻿using System;
 using System.Collections.Generic;
 using System.Diagnostics;
+using System.IO;
 using System.Linq;
 using System.Text;
 using System.Threading;
@@ -11,6 +12,13 @@ using FoxMud.Game.World;
 
 namespace FoxMud
 {
+    enum LogType
+    {
+        Info,
+        Warning,
+        Error,
+    }
+
     class Server : IDisposable
     {
         public static Server Current { get; private set; }
@@ -24,6 +32,7 @@ namespace FoxMud
 
         private const int TickRate = 20;
         private const long TickTime = 1000 / TickRate;
+        private const string LogFilePath = @"Log\gamelog.log";
 
         private AutoResetEvent wait;
         private bool running;
@@ -32,6 +41,7 @@ namespace FoxMud
         {
             wait = new AutoResetEvent(false);
             Current = this;
+            Random = new Random();
 
             // Create services
             ConnectionListener = new ConnectionListener(Port);
@@ -57,6 +67,7 @@ namespace FoxMud
         public CombatHandler CombatHandler { get; private set; }
         public RepopHandler RepopHandler { get; private set; }
         public IEnumerable<Area> Areas { get; private set; }
+        public Random Random { get; private set; }
 
         public void Start()
         {
@@ -94,6 +105,19 @@ namespace FoxMud
                 stopWatch.Stop();
                 WaitIfNeeded(stopWatch.ElapsedMilliseconds);
                 stopWatch.Reset();
+            }
+        }
+
+        public void Log(LogType logType, string message)
+        {
+            try
+            {
+                var log = string.Format("{0}: {1}", logType, message);
+                File.AppendAllText(LogFilePath, log);
+            }
+            catch
+            {
+                
             }
         }
 

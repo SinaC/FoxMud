@@ -1,8 +1,10 @@
 ﻿using System;
 using System.Collections.Generic;
+using System.IO;
 using System.Linq;
 using System.Text;
 using System.Threading.Tasks;
+using AutoMapper;
 using FoxMud.Db;
 using FoxMud.Game.Item;
 using Newtonsoft.Json;
@@ -26,6 +28,9 @@ namespace FoxMud.Game.World
         public string Description { get; set; }
         public string RespawnRoom { get; set; }
         public string Location { get; set; }
+        public string[] Phrases { get; set; }
+        public double TalkProbability { get; set; }
+        public long MinimumTalkInterval { get; set; }
         public int Hp { get; set; }
         public bool Aggro { get; set; }
         public int Armor { get; set; }
@@ -50,6 +55,7 @@ namespace FoxMud.Game.World
     {
         private Guid _guid;
         private int _hp;
+        private DateTime _lastTimeTalked;
 
         public string Key
         {
@@ -63,7 +69,9 @@ namespace FoxMud.Game.World
         public string Description { get; set; }
         public string RespawnRoom { get; set; }
         public string Location { get; set; }
-        
+        public string[] Phrases { get; set; }
+        public double TalkProbability { get; set; }
+        public long MinimumTalkInterval { get; set; }
         public bool Aggro { get; set; }
         public int Armor { get; set; }
         public int MinDamage { get; set; }
@@ -82,16 +90,39 @@ namespace FoxMud.Game.World
             {
                 _hp = value;
                 if (_hp <= 0)
-                    Die();
+                    Die(false);
             }
         }
 
-        private void Die()
+        public void Die(bool shutdown)
         {
-            // get area from this.RespawnRoom
+            if (!shutdown)
+            {
+                // create a corpse item with .ContainsItems equal to whatever was held/equipped
+                var corpseTemplate = Server.Current.Database.Get<Template>("corpse");
+                var dupedCorpse = Mapper.Map<PlayerItem>(corpseTemplate);
+                foreach (var item in Inventory
+                    .Select(i => new KeyValuePair<string, string>(i.Key, i.Value))
+                    .Union(Equipped.Values.Select(e => new KeyValuePair<string, string>(e.Key, e.Name))))
+                {
+                    dupedCorpse.ContainedItems[item.Key] = item.Value;
+                }
 
-            // add to .RepopQueue
-            throw new NotImplementedException();
+                // get area from this.RespawnRoom
+                var area = Server.Current.Areas.FirstOrDefault(a => a.Rooms.Contains(Location));
+
+                // add to .RepopQueue
+                area.RepopQueue.Add(MobTemplateKey);
+            }
+            else
+            {
+                // delete inventory/equipped items' .db files
+                foreach (var key in Inventory.Keys.Union(Equipped.Values.Select(e => e.Key)))
+                    Server.Current.Database.Delete<PlayerItem>(key);
+
+                // delete .db file
+                Server.Current.Database.Delete<NonPlayer>(Key);
+            }
         }
 
         [JsonIgnore]
@@ -108,7 +139,8 @@ namespace FoxMud.Game.World
 
         [JsonConstructor]
         private NonPlayer(string key, string name, GameStatus status, string[] keywords, string description, string respawnRoom, int hp, bool aggro, int armor, string mobTemplateKey,
-            int minDamage, int maxDamage, List<string> allowedRooms, Dictionary<string, string> inventory, Dictionary<Wearlocation, WearSlot> equipped, string location)
+            int minDamage, int maxDamage, List<string> allowedRooms, Dictionary<string, string> inventory, Dictionary<Wearlocation, WearSlot> equipped, string location,
+            string[] phrases, double talkProbability, long minimumTalkInterval)
         {
             _guid = new Guid(key);
 
@@ -119,6 +151,9 @@ namespace FoxMud.Game.World
             Description = description;
             RespawnRoom = respawnRoom;
             Location = location;
+            Phrases = phrases;
+            TalkProbability = talkProbability;
+            MinimumTalkInterval = minimumTalkInterval;
             Hp = hp;
             Aggro = aggro;
             Armor = armor;
@@ -127,6 +162,7 @@ namespace FoxMud.Game.World
             AllowedRooms = allowedRooms ?? new List<string>();
             Inventory = inventory ?? new Dictionary<string, string>();
             Equipped = equipped ?? new Dictionary<Wearlocation, WearSlot>();
+            _lastTimeTalked = DateTime.Now;
         }
 
         public NonPlayer()
@@ -138,6 +174,33 @@ namespace FoxMud.Game.World
             }
 
             _guid = guid;
+            _lastTimeTalked = DateTime.Now;
+        }
+
+        public void Talk()
+        {
+            if ((DateTime.Now - _lastTimeTalked).TotalMilliseconds > MinimumTalkInterval)
+            {
+                // talk at random
+                double prob = Server.Current.Random.NextDouble();
+                if(prob < TalkProbability)
+                {
+                    // get random phrase
+                    if (Phrases != null && Phrases.Length > 0)
+                    {
+                        var phrase = Phrases[Server.Current.Random.Next(Phrases.Length)];
+                        
+                        // say it to the room
+                        var room = RoomHelper.GetPlayerRoom(Location);
+                        if (room != null)
+                        {
+                            string message = string.Format("{0} says, \"{1}\"", Name, phrase);
+                            room.SendPlayers(message, null, null, null);
+                            _lastTimeTalked = DateTime.Now;
+                        }
+                    }
+                }
+            }
         }
     }
 }

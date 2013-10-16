@@ -68,7 +68,9 @@ namespace FoxMud.Game.World
                     }
                     catch (Exception ex)
                     {
-                        Console.WriteLine("DoRepop error: {0}", ex.StackTrace);
+                        var log = string.Format("DoRepop Error: {0}", ex.StackTrace);
+                        Console.WriteLine(log);
+                        Server.Current.Log(LogType.Error, log);
                     }
                     finally
                     {
@@ -76,12 +78,23 @@ namespace FoxMud.Game.World
                     }
                 }
             }
+
+            // fixme: this is going to get dead/old npc's as well
+            foreach (var npc in Server.Current.Database.GetAll<NonPlayer>())
+            {
+                
+            }
         }
 
         public void Start()
         {
             _timer.Enabled = true;
             _timer.Start();
+        }
+
+        public void Stop()
+        {
+            _timer.Stop();
         }
     }
 }

@@ -54,6 +54,7 @@
     <Compile Include="Game\CombatHandler.cs" />
     <Compile Include="Game\Command\Admin\AdminItemCommand.cs" />
     <Compile Include="Game\Command\Admin\AdminRoomCommands.cs" />
+    <Compile Include="Game\Command\Admin\ShutdownCommand.cs" />
     <Compile Include="Game\Command\ArgumentType.cs" />
     <Compile Include="Game\Command\CommandAttribute.cs" />
     <Compile Include="Game\Command\CommandBase.cs" />

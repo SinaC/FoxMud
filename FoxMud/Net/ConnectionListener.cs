@@ -49,13 +49,20 @@ namespace FoxMud
         {
             try
             {
-                var socket = listenSocket.EndAccept(ar);
+                try
+                {
+                    var socket = listenSocket.EndAccept(ar);
 
-                OnNewConnection(socket);
+                    OnNewConnection(socket);
+                }
+                finally
+                {
+                    listenSocket.BeginAccept(OnConnectionAccepted, null);
+                }
             }
-            finally
+            catch
             {
-                listenSocket.BeginAccept(OnConnectionAccepted, null);
+                Server.Current.Log(LogType.Warning, "OnConnectionAccepted error (probably on shutdown");
             }
         }
 

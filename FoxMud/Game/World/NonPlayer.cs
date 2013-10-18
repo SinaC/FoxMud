@@ -39,6 +39,7 @@ namespace FoxMud.Game.World
         public List<string> AllowedRooms { get; private set; }
         public List<string> Inventory { get; private set; }
         public Dictionary<Wearlocation, string> Equipped { get; private set; }
+        public bool IsShopkeeper { get; set; }
 
         public MobTemplate()
         {
@@ -80,6 +81,7 @@ namespace FoxMud.Game.World
         public List<string> AllowedRooms { get; private set; }
         public Dictionary<string, string> Inventory { get; private set; }
         public Dictionary<Wearlocation, WearSlot> Equipped { get; private set; }
+        public bool IsShopkeeper { get; set; }
 
         public int Hp
         {
@@ -150,7 +152,7 @@ namespace FoxMud.Game.World
         [JsonConstructor]
         private NonPlayer(string key, string name, GameStatus status, string[] keywords, string description, string respawnRoom, int hp, bool aggro, int armor, string mobTemplateKey,
             int minDamage, int maxDamage, List<string> allowedRooms, Dictionary<string, string> inventory, Dictionary<Wearlocation, WearSlot> equipped, string location,
-            string[] phrases, double talkProbability, long minimumTalkInterval)
+            string[] phrases, double talkProbability, long minimumTalkInterval, bool isShopkeeper)
         {
             _guid = new Guid(key);
 
@@ -174,6 +176,7 @@ namespace FoxMud.Game.World
             Equipped = equipped ?? new Dictionary<Wearlocation, WearSlot>();
             _lastTimeTalked = DateTime.Now;
             _lastTimeWalked = DateTime.Now;
+            IsShopkeeper = IsShopkeeper;
         }
 
         public NonPlayer()

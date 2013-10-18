@@ -4,6 +4,7 @@ using System.Linq;
 using System.Text;
 using System.Text.RegularExpressions;
 using System.Threading.Tasks;
+using AutoMapper;
 using FoxMud.Game.Item;
 using FoxMud.Game.World;
 
@@ -654,4 +655,119 @@ namespace FoxMud.Game.Command
             }
         }
     }
+
+    [Command("list", false)]
+    class ListCommand : PlayerCommand
+    {
+        public void PrintSyntax(Session session)
+        {
+            session.WriteLine("Syntax: list");
+        }
+
+        public void Execute(Session session, CommandContext context)
+        {
+            // find shopkeeper
+            var room = RoomHelper.GetPlayerRoom(session.Player.Location);
+            var shopkeeper = room.GetNpcs().FirstOrDefault(s => s.IsShopkeeper);
+
+            if (shopkeeper == null)
+            {
+                session.WriteLine("There is notihng to buy here.");
+                return;
+            }
+
+            foreach (var key in shopkeeper.Inventory.Keys)
+            {
+                var item = Server.Current.Database.Get<PlayerItem>(key);
+                session.WriteLine("{0,-15}{1}", "[" + item.Value + "]", item.Name);
+            }
+        }
+    }
+
+
+    [Command("buy", false)]
+    [Command("b", false)]
+    class BuyCommand : PlayerCommand
+    {
+        public void PrintSyntax(Session session)
+        {
+            session.WriteLine("Syntax: buy <item>");
+            session.WriteLine("Syntax: buy <qty> <item>");
+        }
+
+        public void Execute(Session session, CommandContext context)
+        {
+            // find shopkeeper
+            var room = RoomHelper.GetPlayerRoom(session.Player.Location);
+            var shopkeeper = room.GetNpcs().FirstOrDefault(s => s.IsShopkeeper);
+
+            if (shopkeeper == null)
+            {
+                session.WriteLine("There is notihng to buy here.");
+                return;
+            }
+
+            int qty = 1;
+            if (!int.TryParse(context.Arguments[0], out qty))
+                qty = 1;
+            else
+                context.Arguments.RemoveAt(0);
+
+            // get item
+            PlayerItem item = null;
+            foreach (var key in shopkeeper.Inventory.Keys)
+            {
+                var template = Server.Current.Database.Get<PlayerItem>(key);
+                if (template.Keywords.Contains(context.Arguments[0]))
+                {
+                    item = template;
+                    break;
+                }
+            }
+
+            if (item == null)
+            {
+                session.WriteLine("They don't sell that here.");
+                return;
+            }
+
+            // calculate price
+            var price = item.Value * qty;
+            if (session.Player.Gold < price)
+            {
+                session.WriteLine("You can't afford that much.");
+                return;
+            }
+
+            session.Player.Gold -= price;
+
+            // duplicate in inventory, minding inventory and weight limits
+            // if over weight/inventory, dump on the floor
+            for (int i = 0; i < qty; i++)
+            {
+                var dupedItem = Mapper.Map<PlayerItem>(item);
+                if (session.Player.Inventory.Count + 1 <= session.Player.MaxInventory)
+                    session.Player.Inventory[dupedItem.Key] = dupedItem.Name;
+                else
+                    room.AddItem(dupedItem);
+            }
+
+            session.WriteLine("You buy {0} {1}", qty, item.Name);
+        }
+    }
+
+    [Command("sell", false)]
+    class SellCommand : PlayerCommand
+    {
+        public void PrintSyntax(Session session)
+        {
+            session.WriteLine("Not yet implemented...");
+        }
+
+        public void Execute(Session session, CommandContext context)
+        {
+            PrintSyntax(session);
+        }
+    }
+
 }

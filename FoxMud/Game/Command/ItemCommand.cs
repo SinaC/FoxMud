@@ -697,6 +697,12 @@ namespace FoxMud.Game.Command
 
         public void Execute(Session session, CommandContext context)
         {
+            if (string.IsNullOrWhiteSpace(context.ArgumentString))
+            {
+                session.WriteLine("Buy what?");
+                return;
+            }
+
             // find shopkeeper
             var room = RoomHelper.GetPlayerRoom(session.Player.Location);
             var shopkeeper = room.GetNpcs().FirstOrDefault(s => s.IsShopkeeper);
@@ -745,14 +751,17 @@ namespace FoxMud.Game.Command
             // if over weight/inventory, dump on the floor
             for (int i = 0; i < qty; i++)
             {
-                var dupedItem = Mapper.Map<PlayerItem>(item);
+                var dupedItem = item.Copy();
                 if (session.Player.Inventory.Count + 1 <= session.Player.MaxInventory)
                     session.Player.Inventory[dupedItem.Key] = dupedItem.Name;
                 else
                     room.AddItem(dupedItem);
+
+                Server.Current.Database.Save(dupedItem);
             }
 
             session.WriteLine("You buy {0} {1}", qty, item.Name);
+            room.SendPlayers("%d buys something.", session.Player, null, session.Player);
         }
     }
 

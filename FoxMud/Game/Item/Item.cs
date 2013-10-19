@@ -3,6 +3,7 @@ using System.Collections.Generic;
 using System.Linq;
 using System.Text;
 using System.Threading.Tasks;
+using AutoMapper;
 using FoxMud.Db;
 using FoxMud.Game.World;
 using Newtonsoft.Json;
@@ -105,13 +106,26 @@ namespace FoxMud.Game.Item
         // need this empty constructor for automapper
         public PlayerItem()
         {
+            _guid = getNewGuid();
+        }
+
+        public PlayerItem Copy()
+        {
+            var copy = Mapper.Map<PlayerItem>(this);
+            copy._guid = getNewGuid();
+
+            return copy;
+        }
+
+        private Guid getNewGuid()
+        {
             Guid guid = Guid.NewGuid();
             while (Server.Current.Database.Exists<PlayerItem>(guid.ToString()))
             {
                 guid = Guid.NewGuid();
             }
 
-            _guid = guid;
+            return guid;
         }
 
         public void LookAt(Session session)

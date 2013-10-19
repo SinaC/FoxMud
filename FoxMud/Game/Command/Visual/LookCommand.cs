@@ -9,6 +9,7 @@ using FoxMud.Game.World;
 namespace FoxMud.Game.Command.Visual
 {
     [Command("look", false)]
+    [Command("l", false)]
     class LookCommand : PlayerCommand
     {
         public void PrintSyntax(Session session)

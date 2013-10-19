@@ -1,6 +1,8 @@
 ﻿using System;
 using System.Collections.Generic;
+using System.IO;
 using System.Linq;
+using System.Runtime.Serialization.Formatters.Binary;
 using System.Text;
 using System.Text.RegularExpressions;
 using System.Threading.Tasks;
@@ -49,6 +51,18 @@ namespace FoxMud.Game.Command
             }
 
             return item;
+        }
+
+        public static T DeepClone<T>(T obj)
+        {
+            using (var ms = new MemoryStream())
+            {
+                var formatter = new BinaryFormatter();
+                formatter.Serialize(ms, obj);
+                ms.Position = 0;
+
+                return (T) formatter.Deserialize(ms);
+            }
         }
     }
 
@@ -770,12 +784,50 @@ namespace FoxMud.Game.Command
     {
         public void PrintSyntax(Session session)
         {
-            session.WriteLine("Not yet implemented...");
+            session.WriteLine("Syntax: sell <item>");
         }
 
         public void Execute(Session session, CommandContext context)
         {
-            PrintSyntax(session);
+            // validate item arg
+            if (string.IsNullOrWhiteSpace(context.ArgumentString))
+            {
+                session.WriteLine("Sell what?");
+                return;
+            }
+
+            PlayerItem itemToSell = ItemHelper.FindInventoryItem(session.Player, context.ArgumentString, false, false);
+            if (itemToSell == null)
+            {
+                session.WriteLine("You don't have that to sell.");
+                return;
+            }
+
+            // get shopkeeper in room
+            var room = RoomHelper.GetPlayerRoom(session.Player.Location);
+            NonPlayer shopkeeper = null;
+            foreach (var npc in room.GetNpcs())
+            {
+                if (npc.IsShopkeeper)
+                {
+                    shopkeeper = npc;
+                    break;
+                }
+            }
+
+            if (shopkeeper == null)
+            {
+                session.WriteLine("You can't sell that here.");
+                return;
+            }
+
+            // destroy item, remove from inventory, give gold, save player
+            var sellPrice = itemToSell.Value/2;
+            session.Player.Gold += sellPrice;
+            session.Player.Inventory.Remove(itemToSell.Key);
+            Server.Current.Database.Save(session.Player); // save so they can't try to sell again
+            session.WriteLine("You sold {0} for {1} gold.", itemToSell.Name, sellPrice);
+            Server.Current.Database.Delete<PlayerItem>(itemToSell.Key);
         }
     }
 

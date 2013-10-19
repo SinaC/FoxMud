@@ -5,6 +5,7 @@ using System.Text;
 using System.Threading.Tasks;
 using AutoMapper;
 using FoxMud.Db;
+using FoxMud.Game.Command;
 using FoxMud.Game.World;
 using Newtonsoft.Json;
 
@@ -41,6 +42,7 @@ namespace FoxMud.Game.Item
     /// a unique item, keyed by guid; these objects are used to store specific instances
     /// of an item so items can be renamed, have different attributes, etc 
     /// </summary>
+    [Serializable]
     class PlayerItem : Storable, Equipable
     {
         private Guid _guid;
@@ -111,7 +113,7 @@ namespace FoxMud.Game.Item
 
         public PlayerItem Copy()
         {
-            var copy = Mapper.Map<PlayerItem>(this);
+            var copy = ItemHelper.DeepClone(this);
             copy._guid = getNewGuid();
 
             return copy;

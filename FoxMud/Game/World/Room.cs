@@ -181,6 +181,7 @@ namespace FoxMud.Game.World
                 List<string> possibleNpcKeywords = new List<string>();
 
                 possibleNpcKeywords.AddRange(StringHelpers.GetKeywords(npc.Description));
+                possibleNpcKeywords.AddRange(npc.Keywords);
 
                 bool successful = true;
                 foreach (var keyword in lookUpKeywords)

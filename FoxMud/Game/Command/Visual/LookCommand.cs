@@ -10,6 +10,7 @@ namespace FoxMud.Game.Command.Visual
 {
     [Command("look", false)]
     [Command("l", false)]
+    [Command("examine", false)]
     class LookCommand : PlayerCommand
     {
         public void PrintSyntax(Session session)
@@ -99,8 +100,24 @@ namespace FoxMud.Game.Command.Visual
 
         private void PerformLookAtNpc(Session session, NonPlayer npc)
         {
-            session.WriteLine("You look at {0}", npc.Name.ToLower());
+            session.WriteLine("You look at {0}", npc.Name);
             session.WriteLine("{0}", npc.Description);
+
+            if (npc.IsShopkeeper)
+            {
+                session.WriteLine("{0} is carrying: ", npc.Name);
+                if (npc.Inventory.Count > 0)
+                {
+                    foreach (var item in npc.Inventory)
+                        session.WriteLine("\t{0}", item.Value);
+                }
+                else
+                {
+                    session.WriteLine("\tNothing");
+                }
+            }
+
+            session.WriteLine(string.Empty);
         }
 
         public void Execute(Session session, CommandContext context)
@@ -138,14 +155,14 @@ namespace FoxMud.Game.Command.Visual
             foreach (var key in session.Player.Inventory.Keys)
             {
                 var item = Server.Current.Database.Get<PlayerItem>(key);
-                if (item != null)
+                if (item != null && item.Keywords != null && item.Keywords.Contains(context.ArgumentString))
                 {
                     item.LookAt(session);
                     return;
                 }
             }
 
-            session.WriteLine("Couldn't find anything to look at");
+            session.WriteLine("You couldn't find anything like that.");
         }
     }
 }

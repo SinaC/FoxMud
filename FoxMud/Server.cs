@@ -33,7 +33,8 @@ namespace FoxMud
         public static int MobWalkInterval { get { return 5*60*1000; } } // 5 minutes
 
         private const int TickRate = 20;
-        private const long TickTime = 1000 / TickRate;
+        private const long TickTime = 1000/TickRate;
+        private const int CombatTickRate = TickRate*50; // 1 second, no clue if this will feel smooth or not
         private const string LogFilePath = @"Log\gamelog.log";
 
         private AutoResetEvent wait;
@@ -53,7 +54,7 @@ namespace FoxMud
             CommandLookup = new DynamicCommandLookup();
             Areas = Database.GetAll<Area>();
             RepopHandler = new RepopHandler(TickTime);
-            CombatHandler = new CombatHandler(TickTime);
+            CombatHandler = new CombatHandler(CombatTickRate);
             
             // Setup services
             ConnectionListener.ConnectionHandler = new StartupConnectionHandler(ConnectionMonitor, SessionMonitor);
@@ -79,7 +80,7 @@ namespace FoxMud
             running = true;
             ConnectionListener.Start();
             RepopHandler.Start();
-            //CombatHandler.Start();
+            CombatHandler.Start();
 
             DoLoop();
         }

@@ -34,8 +34,8 @@ namespace FoxMud.Game.World
         public int Hp { get; set; }
         public bool Aggro { get; set; }
         public int Armor { get; set; }
-        public int MinDamage { get; set; }
-        public int MaxDamage { get; set; }
+        public int HitRoll { get; set; }
+        public int DamRoll { get; set; }
         public List<string> AllowedRooms { get; private set; }
         public List<string> Inventory { get; private set; }
         public Dictionary<Wearlocation, string> Equipped { get; private set; }
@@ -76,8 +76,8 @@ namespace FoxMud.Game.World
         public long MinimumTalkInterval { get; set; }
         public bool Aggro { get; set; }
         public int Armor { get; set; }
-        public int MinDamage { get; set; }
-        public int MaxDamage { get; set; }
+        public int HitRoll { get; set; }
+        public int DamRoll { get; set; }
         public List<string> AllowedRooms { get; private set; }
         public Dictionary<string, string> Inventory { get; private set; }
         public Dictionary<Wearlocation, WearSlot> Equipped { get; private set; }
@@ -151,7 +151,7 @@ namespace FoxMud.Game.World
 
         [JsonConstructor]
         private NonPlayer(string key, string name, GameStatus status, string[] keywords, string description, string respawnRoom, int hp, bool aggro, int armor, string mobTemplateKey,
-            int minDamage, int maxDamage, List<string> allowedRooms, Dictionary<string, string> inventory, Dictionary<Wearlocation, WearSlot> equipped, string location,
+            int hitRoll, int damRoll, List<string> allowedRooms, Dictionary<string, string> inventory, Dictionary<Wearlocation, WearSlot> equipped, string location,
             string[] phrases, double talkProbability, long minimumTalkInterval, bool isShopkeeper)
         {
             _guid = new Guid(key);
@@ -169,8 +169,8 @@ namespace FoxMud.Game.World
             Hp = hp;
             Aggro = aggro;
             Armor = armor;
-            MinDamage = minDamage;
-            MaxDamage = maxDamage;
+            HitRoll = hitRoll;
+            DamRoll = damRoll;
             AllowedRooms = allowedRooms ?? new List<string>();
             Inventory = inventory ?? new Dictionary<string, string>();
             Equipped = equipped ?? new Dictionary<Wearlocation, WearSlot>();

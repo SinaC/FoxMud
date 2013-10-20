@@ -56,6 +56,7 @@
     <Compile Include="Game\Command\Admin\AdminRoomCommands.cs" />
     <Compile Include="Game\Command\Admin\ShutdownCommand.cs" />
     <Compile Include="Game\Command\ArgumentType.cs" />
+    <Compile Include="Game\Command\Combat\KillCommand.cs" />
     <Compile Include="Game\Command\CommandAttribute.cs" />
     <Compile Include="Game\Command\CommandBase.cs" />
     <Compile Include="Game\Command\CommandContext.cs" />
@@ -113,7 +114,6 @@
   </ItemGroup>
   <ItemGroup>
     <Folder Include="bin\Debug\" />
-    <Folder Include="Game\Command\Combat\" />
   </ItemGroup>
   <Import Project="$(MSBuildToolsPath)\Microsoft.CSharp.targets" />
   <!-- To modify your build process, add your task inside one of the targets below and uncomment it. 

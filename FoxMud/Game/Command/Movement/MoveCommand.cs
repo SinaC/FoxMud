@@ -46,6 +46,13 @@ namespace FoxMud.Game.Command.Movement
 
         public void Execute(Session session, CommandContext context)
         {
+            // todo: messages per position e.g. "can't do that while sitting", "you're fighting" etc
+            if (session.Player.Status != GameStatus.Standing)
+            {
+                session.WriteLine("You can't leave right now.");
+                return;
+            }
+
             Room room = Server.Current.Database.Get<Room>(session.Player.Location);
 
             if (room == null)
@@ -75,6 +82,9 @@ namespace FoxMud.Game.Command.Movement
 
                 var command = Server.Current.CommandLookup.FindCommand("look", false);
                 command.Execute(session, CommandContext.Create("look"));
+
+                // emit "event" for aggro mobs
+                Server.Current.CombatHandler.EnterRoom(session.Player, room);
             }
             else
             {

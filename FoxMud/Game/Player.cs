@@ -41,7 +41,8 @@ namespace FoxMud.Game
         [JsonConstructor]
         private Player(
             string name, string passwordHash, bool isAdmin, string prompt, Dictionary<string,string> rememberedNames, Dictionary<string, string> inventory, int hitPoints,
-            int maxHitPoints, long gold, int experience, int baseDamage, int baseArmor, int maxInventory, int maxWeight, Dictionary<Wearlocation, WearSlot> equipped)
+            int maxHitPoints, long gold, int experience, int baseDamage, int baseArmor, int maxInventory, int maxWeight, Dictionary<Wearlocation, WearSlot> equipped,
+            GameStatus status, int hitRoll, int damRoll)
         {
             Forename = name;
             _passwordHash = passwordHash;
@@ -58,6 +59,9 @@ namespace FoxMud.Game
             RememberedNames = rememberedNames ?? new Dictionary<string, string>();
             Inventory = inventory ?? new Dictionary<string, string>();
             Equipped = equipped ?? new Dictionary<Wearlocation, WearSlot>();
+            Status = status;
+            HitRoll = hitRoll;
+            DamRoll = damRoll;
         }
 
         public Player()
@@ -97,7 +101,10 @@ namespace FoxMud.Game
         public int MaxInventory { get; set; }
         public int MaxWeight { get; set; }
         public Dictionary<Wearlocation, WearSlot> Equipped { get; private set; }
-        
+        public GameStatus Status { get; set; }
+        public int HitRoll { get; set; }
+        public int DamRoll { get; set; }
+
         [JsonIgnore]
         public int Weight
         {

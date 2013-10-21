@@ -64,6 +64,19 @@ namespace FoxMud.Game.Command
                 return (T) formatter.Deserialize(ms);
             }
         }
+
+        public static void DeleteItem(string itemKey)
+        {
+            var itemToDelete = Server.Current.Database.Get<PlayerItem>(itemKey);
+
+            // delete contained items
+            if (itemToDelete.ContainedItems.Count > 0)
+                foreach (var containedItem in itemToDelete.ContainedItems)
+                    DeleteItem(containedItem.Key);
+
+            // delete parent item
+            Server.Current.Database.Delete<PlayerItem>(itemKey);
+        }
     }
 
     [Command("inventory", false)]
@@ -164,6 +177,13 @@ namespace FoxMud.Game.Command
                         return;
                     }
 
+                    // weight check
+                    if (target.Inventory.Count >= target.MaxInventory || target.Weight + item.Weight > target.MaxWeight)
+                    {
+                        session.WriteLine("{0} can't carry that much.", target.Forename);
+                        return;
+                    }
+
                     // remove from player inventory
                     session.Player.Inventory.Remove(item.Key);
 
@@ -177,7 +197,6 @@ namespace FoxMud.Game.Command
                 }
 
                 Server.Current.Database.Save(session.Player);
-                // should this be receiving player responsibility??
                 Server.Current.Database.Save(target);
             }
             catch
@@ -270,7 +289,10 @@ namespace FoxMud.Game.Command
                     }
 
                     if (pickedUpAnything)
+                    {
+                        Server.Current.Database.Save(session.Player);
                         room.SendPlayers("%d picked up some items.", session.Player, null, session.Player);
+                    }
                 }
                 return;
             }
@@ -294,6 +316,7 @@ namespace FoxMud.Game.Command
                             // move item from floor to inventory
                             room.RemoveItem(item);
                             session.Player.Inventory.Add(item.Key, item.Name);
+                            Server.Current.Database.Save(session.Player);
                             session.WriteLine("You pick up {0}", item.Name);
                             room.SendPlayers("%d picked up some something.", session.Player, null, session.Player);
                             return;
@@ -335,7 +358,9 @@ namespace FoxMud.Game.Command
                             {
                                 // attempt move item from container to inventory
                                 container.ContainedItems.Remove(containerItem.Key);
+                                Server.Current.Database.Save(container);
                                 session.Player.Inventory.Add(containerItem.Key, containerItem.Name);
+                                Server.Current.Database.Save(session.Player);
                                 session.WriteLine("You get {0} from {1}", containerItem.Name, container.Name);
                                 return;
                             }
@@ -381,7 +406,9 @@ namespace FoxMud.Game.Command
 
                                     // attempt move item from container to inventory
                                     container.ContainedItems.Remove(containerItem.Key);
+                                    Server.Current.Database.Save(container);
                                     session.Player.Inventory.Add(containerItem.Key, containerItem.Name);
+                                    Server.Current.Database.Save(session.Player);
                                     session.WriteLine("You get {0} from {1}", containerItem.Name, container.Name);
                                     string roomString = string.Format("%d gets {0} from {1}.", containerItem.Name, container.Name);
                                     room.SendPlayers(roomString, session.Player, null, session.Player);
@@ -480,10 +507,9 @@ namespace FoxMud.Game.Command
                 // move item
                 session.Player.Inventory.Remove(putItem.Key);
                 container.ContainedItems.Add(putItem.Key, putItem.Name);
+                Server.Current.Database.Save(session.Player);
                 session.WriteLine("You put {0} in {1}", putItem.Name, container.Name);
                 return;
-
-                // save??
             }
             catch
             {
@@ -523,10 +549,9 @@ namespace FoxMud.Game.Command
                 room.Items.Add(item.Key, item.Value);
             }
 
+            Server.Current.Database.Save(session.Player);
             session.WriteLine("You empty {0}", container.Name);
             room.SendPlayers(string.Format("%d empties {0}", container.Name), session.Player, null, session.Player);
-
-            // save?
         }
     }
 
@@ -558,20 +583,14 @@ namespace FoxMud.Game.Command
             {
                 // get item
                 var roomItem = Server.Current.Database.Get<PlayerItem>(key);
-                if (roomItem != null)
+                if (roomItem != null && session.Player.Weight + roomItem.Weight <= session.Player.MaxWeight)
                 {
-                    if (session.Player.Weight + roomItem.Weight <= session.Player.MaxWeight)
-                    {
-                        room.Items.Remove(roomItem.Key);
-                        container.ContainedItems[roomItem.Key] = roomItem.Name;
-                    }
-                    else
-                    {
-                        continue;
-                    }
+                    room.Items.Remove(roomItem.Key);
+                    container.ContainedItems[roomItem.Key] = roomItem.Name;
                 }
             }
 
+            Server.Current.Database.Save(session.Player);
             session.WriteLine("You filled your {0}", container.Name);
             room.SendPlayers(string.Format("%d filled %o {0}.", container.Name), session.Player, null, session.Player);
         }
@@ -772,6 +791,7 @@ namespace FoxMud.Game.Command
                     room.AddItem(dupedItem);
 
                 Server.Current.Database.Save(dupedItem);
+                Server.Current.Database.Save(session.Player);
             }
 
             session.WriteLine("You buy {0} {1}", qty, item.Name);

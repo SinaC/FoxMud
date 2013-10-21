@@ -43,7 +43,7 @@ namespace FoxMud.Game
         private Player(
             string name, string passwordHash, bool isAdmin, string prompt, Dictionary<string,string> rememberedNames, Dictionary<string, string> inventory, int hitPoints,
             int maxHitPoints, long gold, int experience, int baseDamage, int baseArmor, int maxInventory, int maxWeight, Dictionary<Wearlocation, WearSlot> equipped,
-            GameStatus status, int hitRoll, int damRoll)
+            GameStatus status, int hitRoll, int damRoll, int level)
         {
             Forename = name;
             _passwordHash = passwordHash;
@@ -63,6 +63,7 @@ namespace FoxMud.Game
             Status = status;
             HitRoll = hitRoll;
             DamRoll = damRoll;
+            Level = level;
         }
 
         public Player()
@@ -105,6 +106,7 @@ namespace FoxMud.Game
         public GameStatus Status { get; set; }
         public int HitRoll { get; set; }
         public int DamRoll { get; set; }
+        public int Level { get; set; }
 
         [JsonIgnore]
         public int Weight
@@ -200,33 +202,44 @@ namespace FoxMud.Game
 
         public CombatRound Hit(NonPlayer mob)
         {
-            var round = new CombatRound()
-            {
-                RoomText = string.Empty,
-                RoundText = string.Empty
-            };
+            var round = new CombatRound();
 
-            if (Server.Current.Random.Next(HitRoll) > mob.Armor)
+            if (Server.Current.Random.Next(HitRoll) + 1 >= mob.Armor)
             {
                 // hit
                 var damage = Server.Current.Random.Next(DamRoll) + 1;
                 mob.HitPoints -= damage;
-                round.RoundText += string.Format("You hit {0} for {1}", mob.Name, damage);
-                round.RoomText += string.Format("{0} hits {1}!", Forename, mob.Name);
+                var playerText = string.Format("You hit {0} for {1} damage!\n", mob.Name, damage);
+                if (round.PlayerText.ContainsKey(this))
+                    round.PlayerText[this] += playerText;
+                else
+                    round.PlayerText.Add(this, playerText);
+                round.RoomText += string.Format("{0} hits {1}!\n", Forename, mob.Name);
             }
             else
             {
-                // miss
-                round.RoundText += string.Format("You missed {1}!", mob.Name);
-                round.RoomText += string.Format("{0} msised {1}!", Forename, mob.Name);
+                var playerText = string.Format("You missed {0}!\n", mob.Name);
+                if (round.PlayerText.ContainsKey(this))
+                    round.PlayerText[this] += playerText;
+                else
+                    round.PlayerText.Add(this, playerText);
+                round.RoomText += string.Format("{0} missed {1}!\n", Forename, mob.Name);
             }
 
             return round;
         }
 
-        public void Die()
+        public CombatRound Die()
         {
-            throw new NotImplementedException();
+            var round = new CombatRound();
+
+            round.PlayerText[this] += "You are DEAD!!!\n";
+            round.RoomText += string.Format("{0} is DEAD!!!\n", Forename);
+            HitPoints = 100;
+            round.PlayerText[this] += "Hit points temporarily restored...\n";
+            Status = GameStatus.Dead;
+
+            return round;
         }
     }
 }

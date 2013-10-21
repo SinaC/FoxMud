@@ -55,7 +55,6 @@ namespace FoxMud.Game.World
     class NonPlayer : Storable
     {
         private Guid _guid;
-        private int _hp;
         private DateTime _lastTimeTalked;
         private DateTime _lastTimeWalked;
 
@@ -84,22 +83,10 @@ namespace FoxMud.Game.World
         public bool IsShopkeeper { get; set; }
         public int HitPoints { get; set; }
 
-        public int Hp
+        public CombatRound Die(bool shutdown = false)
         {
-            get
-            {
-                return _hp;
-            }
-            set
-            {
-                _hp = value;
-                if (_hp <= 0)
-                    Die(false);
-            }
-        }
+            CombatRound round = new CombatRound();
 
-        public void Die(bool shutdown = false)
-        {
             if (!shutdown)
             {
                 // create a corpse item with .ContainsItems equal to whatever was held/equipped
@@ -119,7 +106,17 @@ namespace FoxMud.Game.World
                 // put corpse in room
                 var room = RoomHelper.GetPlayerRoom(Location);
                 room.Items[dupedCorpse.Key] = dupedCorpse.Name;
+                Console.WriteLine("NEW CORPSE: {0}", dupedCorpse.Key);
                 room.CorpseQueue[dupedCorpse.Key] = DateTime.Now.AddMilliseconds(Server.CorpseDecayTime);
+
+                // must cache since we're not saving
+                Server.Current.Database.Put(dupedCorpse);
+
+                // delete mob
+                room.RemoveNpc(this);
+                Server.Current.Database.Delete<NonPlayer>(Key);
+
+                round.RoomText += string.Format("{0} is DEAD!!!", Name);
 
                 // get area from this.RespawnRoom
                 var area = Server.Current.Areas.FirstOrDefault(a => a.Key == room.Area);
@@ -136,6 +133,8 @@ namespace FoxMud.Game.World
 
             // delete .db file
             Server.Current.Database.Delete<NonPlayer>(Key);
+
+            return round;
         }
 
         [JsonIgnore]
@@ -151,12 +150,12 @@ namespace FoxMud.Game.World
         }
 
         [JsonConstructor]
-        private NonPlayer(string key, string name, GameStatus status, string[] keywords, string description, string respawnRoom, int hp, bool aggro, int armor, string mobTemplateKey,
+        private NonPlayer(string key, string name, GameStatus status, string[] keywords, string description, string respawnRoom, int hitPoints, bool aggro, int armor, string mobTemplateKey,
             int hitRoll, int damRoll, List<string> allowedRooms, Dictionary<string, string> inventory, Dictionary<Wearlocation, WearSlot> equipped, string location,
             string[] phrases, double talkProbability, long minimumTalkInterval, bool isShopkeeper)
         {
             _guid = new Guid(key);
-
+            
             Name = name;
             MobTemplateKey = mobTemplateKey;
             Status = status;
@@ -167,7 +166,7 @@ namespace FoxMud.Game.World
             Phrases = phrases;
             TalkProbability = talkProbability;
             MinimumTalkInterval = minimumTalkInterval;
-            Hp = hp;
+            HitPoints = hitPoints;
             Aggro = aggro;
             Armor = armor;
             HitRoll = hitRoll;
@@ -193,24 +192,35 @@ namespace FoxMud.Game.World
             _lastTimeWalked = DateTime.Now;
         }
 
-        public void Hit(Player player)
+        public CombatRound Hit(Player player)
         {
+            var round = new CombatRound();
+
             // roll to hit, if success, then hit
-            if (Server.Current.Random.Next(HitRoll) > player.Armor)
+            if (Server.Current.Random.Next(HitRoll) + 1 >= player.Armor)
             {
                 // hit
                 var damage = Server.Current.Random.Next(DamRoll) + 1;
                 player.HitPoints -= damage;
-                
-                player.Send(string.Format("{0} hits you for {1} damage!", Name, damage), player);
-                //round.RoomText += string.Format("{0} hits {1}!", Name, player.Forename);
+                var playerText = string.Format("{0} hits you for {1} damage!\n", Name, damage);
+                if (round.PlayerText.ContainsKey(player))
+                    round.PlayerText[player] += playerText;
+                else
+                    round.PlayerText.Add(player, playerText);
+                round.RoomText += string.Format("{0} hits {1}!\n", Name, player.Forename);
             }
             else
             {
                 // miss
-                //round.RoundText += string.Format("{0} missed you!", Name);
-                //round.RoomText += string.Format("{0} missed {1}.", Name, player.Forename);
+                var playerText = string.Format("{0} missed you!", Name);
+                if (round.PlayerText.ContainsKey(player))
+                    round.PlayerText[player] += playerText;
+                else
+                    round.PlayerText.Add(player, playerText);
+                round.RoomText += string.Format("{0} missed {1}!\n", Name, player.Forename);
             }
+
+            return round;
         }
 
         public void TalkOrWalk()

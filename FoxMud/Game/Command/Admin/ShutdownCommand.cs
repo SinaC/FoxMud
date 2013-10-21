@@ -3,6 +3,7 @@ using System.Collections.Generic;
 using System.Linq;
 using System.Text;
 using System.Threading.Tasks;
+using FoxMud.Game.Item;
 using FoxMud.Game.World;
 
 namespace FoxMud.Game.Command.Admin
@@ -37,6 +38,11 @@ namespace FoxMud.Game.Command.Admin
             // call NonPlayer.Die(true) for every nonplayer object
             foreach (var npc in Server.Current.Database.GetAll<NonPlayer>())
                 npc.Die(true);
+
+            session.WriteLine("Destroying items on floor, corpses, etc...");
+            foreach (var room in Server.Current.Database.GetAll<Room>())
+               foreach (var item in room.Items)
+                    ItemHelper.DeleteItem(item.Key);
 
             session.WriteLine("Shutting down now.");
 

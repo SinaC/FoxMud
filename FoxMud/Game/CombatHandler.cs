@@ -1,8 +1,10 @@
 ﻿using System;
 using System.Collections;
 using System.Collections.Generic;
+using System.Diagnostics;
 using System.Linq;
 using System.Text;
+using System.Threading;
 using System.Threading.Tasks;
 using System.Timers;
 using FoxMud.Game.World;
@@ -11,9 +13,32 @@ namespace FoxMud.Game
 {
     class CombatRound
     {
-        public string RoundText { get; set; }
+        public Dictionary<Player, string> PlayerText { get; set; }
         public string RoomText { get; set; }
-        public Room Room { get; set; }
+
+        public CombatRound()
+        {
+            PlayerText = new Dictionary<Player, string>();
+        }
+
+        public static CombatRound operator +(CombatRound r1, CombatRound r2)
+        {
+            foreach (var item in r2.PlayerText)
+            {
+                if (!string.IsNullOrWhiteSpace(item.Value))
+                {
+                    if (r1.PlayerText.ContainsKey(item.Key))
+                        r1.PlayerText[item.Key] += item.Value;
+                    else
+                        r1.PlayerText[item.Key] = item.Value;
+                }
+            }
+
+            if (!string.IsNullOrWhiteSpace(r2.RoomText))
+                r1.RoomText += r2.RoomText;
+
+            return r1;
+        }
     }
 
     class Combat
@@ -22,6 +47,12 @@ namespace FoxMud.Game
         private readonly List<NonPlayer> mobs = new List<NonPlayer>();
         private bool isAggro;
         private Room room;
+        private Dictionary<string, string> killingBlows = new Dictionary<string, string>();
+
+        public bool Fighting
+        {
+            get { return fighters.Count > 0 && mobs.Count > 0; }
+        }
 
         public void AddFighter(Player player)
         {
@@ -59,91 +90,165 @@ namespace FoxMud.Game
             }
         }
 
-        internal void Round()
+        internal void Round(long combatTickRate)
         {
-            Queue<CombatRound> roundText = new Queue<CombatRound>();
+            var roundText = new CombatRound();
 
             if (isAggro)
             {
-                DoMobHits(roundText);
+                roundText += DoMobHits();
 
-                HandleDeadPlayers();
+                roundText += HandleDeadPlayers();
 
-                DoPlayerHits(roundText);
+                roundText += DoPlayerHits();
 
-                HandleDeadMobs();
+                roundText += HandleDeadMobs();
             }
             else
             {
-                DoPlayerHits(roundText);
+                roundText += DoPlayerHits();
 
-                HandleDeadMobs();
+                roundText += HandleDeadMobs();
 
-                DoMobHits(roundText);
+                roundText += DoMobHits();
 
-                HandleDeadPlayers();
+                roundText += HandleDeadPlayers();
             }
 
-            while (roundText.Peek() != null)
-            {
-                var combatRound = roundText.Dequeue();
-                
-            }
+            // send text to each player
+            foreach (var player in roundText.PlayerText.Keys)
+                player.Send(roundText.PlayerText[player], player);
+
+            // send text to room
+            room.SendPlayers(roundText.RoomText, null, null, roundText.PlayerText.Keys.ToArray());
+
+            Thread.Sleep((int) combatTickRate);
         }
 
-        private void DoMobHits(Queue<CombatRound> roundText)
+        internal void End()
         {
-            // mob hits first
-            foreach (var npc in mobs)
+            foreach (var fighter in fighters)
+                fighter.Status = GameStatus.Standing;
+
+            foreach (var mob in mobs)
+                mob.Status = GameStatus.Standing;
+        }
+
+        private CombatRound DoMobHits()
+        {
+            //Console.WriteLine("Enter DoMobHits");
+            var round = new CombatRound();
+
+            try
             {
-                // only attempt to hit if there are players left to hit
-                if (fighters.Any(p => p.HitPoints > 0))
+                // mob hits first
+                foreach (var npc in mobs)
                 {
-                    // choose player to hit at random, and hit
-                    var playerToHit = fighters
-                        .Where(p => p.HitPoints > 0)
-                        .OrderBy(x => Guid.NewGuid()).FirstOrDefault();
-                    
-                    npc.Hit(playerToHit);
+                    // only attempt to hit if there are players left to hit
+                    if (fighters.Any(p => p.HitPoints > 0))
+                    {
+                        // choose player to hit at random, and hit
+                        var playerToHit = fighters
+                            .Where(p => p.HitPoints > 0)
+                            .OrderBy(x => Guid.NewGuid()).FirstOrDefault();
+
+                        round += npc.Hit(playerToHit);
+
+                        if (playerToHit.HitPoints <= 0)
+                        {
+                            round.PlayerText[playerToHit] += "You are DEAD!!!\n";
+                            round.RoomText += string.Format("{0} is DEAD!!!\n", playerToHit.Forename);
+                        }
+                    }
                 }
             }
-        }
-
-        private void HandleDeadPlayers()
-        {
-            // look for dead players
-            foreach (var player in fighters.Where(p => p.HitPoints < 0).ToArray())
+            catch (Exception ex)
             {
-                // kill player
-                fighters.Remove(player);
-                player.Die();
+                throw ex;
             }
+
+            return round;
         }
 
-        private void DoPlayerHits(Queue<CombatRound> roundText)
+        private CombatRound HandleDeadPlayers()
         {
-            // if still players, they hit
-            foreach (var player in fighters)
+            //Console.WriteLine("Enter HandleDeadPlayers");
+            var round = new CombatRound();
+
+            try
             {
-                if (mobs.Any(m => m.HitPoints > 0))
+                // look for dead players
+                foreach (var player in fighters.Where(p => p.HitPoints <= 0).ToArray())
                 {
-                    var mobToHit = mobs
-                        .Where(m => m.HitPoints > 0)
-                        .OrderBy(x => Guid.NewGuid()).FirstOrDefault();
-                    roundText.Enqueue(player.Hit(mobToHit));
+                    // kill player
+                    fighters.Remove(player);
+                    round += player.Die();
                 }
             }
+            catch (Exception ex)
+            {
+                throw ex;
+            }
+
+            return round;
         }
 
-        private void HandleDeadMobs()
+        private CombatRound DoPlayerHits()
         {
-            // look for dead mobs
-            foreach (var mob in mobs.Where(m => m.HitPoints < 0).ToArray())
+            //Console.WriteLine("Enter DoPlayerHits");
+            var round = new CombatRound();
+
+            try
             {
-                // kill mob
-                mobs.Remove(mob);
-                mob.Die();
+                // if still players, they hit
+                foreach (var player in fighters)
+                {
+                    if (mobs.Any(m => m.HitPoints > 0))
+                    {
+                        var mobToHit = mobs
+                            .Where(m => m.HitPoints > 0)
+                            .OrderBy(x => Guid.NewGuid()).FirstOrDefault();
+
+                        round += player.Hit(mobToHit);
+
+                        // check for killing blow
+                        if (mobToHit.HitPoints <= 0)
+                        {
+                            round.PlayerText[player] += string.Format("You killed {0}!!!\n", mobToHit.Name);
+                            round.RoomText += string.Format("{0} killed {1}!\n", player.Forename, mobToHit.Name);
+                        }
+                    }
+                }
             }
+            catch (Exception ex)
+            {
+                throw ex;
+            }
+
+            return round;
+        }
+
+        private CombatRound HandleDeadMobs()
+        {
+            //Console.WriteLine("Enter HandleDeadMobs");
+            var round = new CombatRound();
+
+            try
+            {
+                // look for dead mobs
+                foreach (var mob in mobs.Where(m => m.HitPoints <= 0).ToArray())
+                {
+                    // kill mob
+                    mobs.Remove(mob);
+                    round += mob.Die();
+                }
+            }
+            catch (Exception ex)
+            {
+                throw ex;
+            }
+
+            return round;
         }
     }
 
@@ -153,17 +258,20 @@ namespace FoxMud.Game
     class CombatHandler
     {
         private List<Combat> Fights { get; set; }
-        private Timer _timer { get; set; }
+        private System.Timers.Timer _timer { get; set; }
+        private long _combatTickRate;
 
         public CombatHandler(long combatTickRate)
         {
             Fights = new List<Combat>();
-            _timer = new Timer(combatTickRate);
+            _combatTickRate = combatTickRate;
+            _timer = new System.Timers.Timer(_combatTickRate);
             _timer.Elapsed += DoCombat;
         }
 
         public void StartFight(Combat combat)
         {
+            Fights.Add(combat);
             combat.Start();
         }
 
@@ -188,10 +296,26 @@ namespace FoxMud.Game
 
         private void DoCombat(object sender, ElapsedEventArgs e)
         {
-            foreach (var combat in Fights)
+            _timer.Stop();
+            foreach (var combat in Fights.ToArray())
             {
-                combat.Round();
+                try
+                {
+                    combat.Round(_combatTickRate);
+                }
+                catch (Exception ex)
+                {
+                    throw ex;
+                }
+
+                // end fight
+                if (!combat.Fighting)
+                {
+                    combat.End();
+                    Fights.Remove(combat);
+                }
             }
+            _timer.Start();
         }
 
         public void Start()

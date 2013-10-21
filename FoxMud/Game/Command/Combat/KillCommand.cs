@@ -29,7 +29,13 @@ namespace FoxMud.Game.Command.Combat
             var npc = room.GetNpcs().FirstOrDefault(n => n.Keywords.Contains(context.ArgumentString));
             if (npc == null)
             {
-                session.WriteLine(npc.IsShopkeeper ? "You can't fight a shopkeeper." : "You can't find that here.");
+                session.WriteLine("You can't find that here.");
+                return;
+            }
+
+            if (npc.IsShopkeeper)
+            {
+                session.WriteLine("You can't fight a shopkeeper.");
                 return;
             }
 

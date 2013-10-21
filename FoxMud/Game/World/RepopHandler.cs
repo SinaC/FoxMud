@@ -5,6 +5,7 @@ using System.Text;
 using System.Threading.Tasks;
 using System.Timers;
 using AutoMapper;
+using FoxMud.Game.Command;
 using FoxMud.Game.Item;
 
 namespace FoxMud.Game.World
@@ -80,15 +81,17 @@ namespace FoxMud.Game.World
                 foreach (var key in area.Rooms)
                 {
                     var room = Server.Current.Database.Get<Room>(key);
-                    foreach (var corpseKey in room.CorpseQueue.Where(k => k.Value < DateTime.Now))
+                    foreach (var corpse in room.CorpseQueue.Where(k => k.Value < DateTime.Now).ToArray())
                     {
-                        var corpse = Server.Current.Database.Get<PlayerItem>(corpseKey.Key);
+                        var corpseItem = Server.Current.Database.Get<PlayerItem>(corpse.Key);
                         
-                        // delete the corpse and all items in it
-                        foreach (var corpseItemKey in corpse.ContainedItems.Keys)
-                            Server.Current.Database.Delete<PlayerItem>(corpseItemKey);
+                        room.SendPlayers(string.Format("{0} withers and blows away...", corpseItem.Name), null, null, null);
 
-                        room.SendPlayers(string.Format("{0} withers and blows away...", corpse.Name), null, null, null);
+                        room.CorpseQueue.Remove(corpse.Key);
+                        room.Items.Remove(corpse.Key);
+
+                        // delete corpse and all items in it
+                        ItemHelper.DeleteItem(corpseItem.Key);
                     }
                 }
             }

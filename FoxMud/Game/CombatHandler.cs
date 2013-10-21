@@ -1,4 +1,5 @@
 ﻿using System;
+using System.Collections;
 using System.Collections.Generic;
 using System.Linq;
 using System.Text;
@@ -8,11 +9,19 @@ using FoxMud.Game.World;
 
 namespace FoxMud.Game
 {
+    class CombatRound
+    {
+        public string RoundText { get; set; }
+        public string RoomText { get; set; }
+        public Room Room { get; set; }
+    }
+
     class Combat
     {
         private readonly List<Player> fighters = new List<Player>();
         private readonly List<NonPlayer> mobs = new List<NonPlayer>();
         private bool isAggro;
+        private Room room;
 
         public void AddFighter(Player player)
         {
@@ -31,11 +40,17 @@ namespace FoxMud.Game
 
             foreach (var fighter in fighters)
             {
+                if (room == null)
+                    room = RoomHelper.GetPlayerRoom(fighter.Location);
+
                 fighter.Status = GameStatus.Fighting;
             }
 
             foreach (var mob in mobs)
             {
+                if (room == null)
+                    room = RoomHelper.GetPlayerRoom(mob.Location);
+
                 // if at least one mob is aggro, the whole fight is 'aggro' i.e. mob gets first hit each round
                 if (mob.Aggro)
                     isAggro = true;
@@ -46,35 +61,88 @@ namespace FoxMud.Game
 
         internal void Round()
         {
-            string roundText = string.Empty;
+            Queue<CombatRound> roundText = new Queue<CombatRound>();
 
             if (isAggro)
             {
-                // mob hits first
-                foreach (var npc in mobs)
-                {
-                    // choose player to hit
-                    var playerToHit = fighters.OrderBy(x => Guid.NewGuid()).FirstOrDefault();
+                DoMobHits(roundText);
 
-                    // roll to hit, if success, then hit
-                    if (Server.Current.Random.Next(npc.HitRoll) > playerToHit.Armor)
-                    {
-                        var damage = Server.Current.Random.Next(npc.DamRoll) + 1;
+                HandleDeadPlayers();
 
-                    }
-                    else
-                    {
-                        roundText += string.Format("{0} swung and missed {1}.", npc.Name, playerToHit.Forename);
-                    }
-                }
+                DoPlayerHits(roundText);
 
-                // if still players, they hit
+                HandleDeadMobs();
             }
             else
             {
-                // player hits first
+                DoPlayerHits(roundText);
 
-                // if still mobs, they hit
+                HandleDeadMobs();
+
+                DoMobHits(roundText);
+
+                HandleDeadPlayers();
+            }
+
+            while (roundText.Peek() != null)
+            {
+                var combatRound = roundText.Dequeue();
+                
+            }
+        }
+
+        private void DoMobHits(Queue<CombatRound> roundText)
+        {
+            // mob hits first
+            foreach (var npc in mobs)
+            {
+                // only attempt to hit if there are players left to hit
+                if (fighters.Any(p => p.HitPoints > 0))
+                {
+                    // choose player to hit at random, and hit
+                    var playerToHit = fighters
+                        .Where(p => p.HitPoints > 0)
+                        .OrderBy(x => Guid.NewGuid()).FirstOrDefault();
+                    
+                    npc.Hit(playerToHit);
+                }
+            }
+        }
+
+        private void HandleDeadPlayers()
+        {
+            // look for dead players
+            foreach (var player in fighters.Where(p => p.HitPoints < 0).ToArray())
+            {
+                // kill player
+                fighters.Remove(player);
+                player.Die();
+            }
+        }
+
+        private void DoPlayerHits(Queue<CombatRound> roundText)
+        {
+            // if still players, they hit
+            foreach (var player in fighters)
+            {
+                if (mobs.Any(m => m.HitPoints > 0))
+                {
+                    var mobToHit = mobs
+                        .Where(m => m.HitPoints > 0)
+                        .OrderBy(x => Guid.NewGuid()).FirstOrDefault();
+                    roundText.Enqueue(player.Hit(mobToHit));
+                }
+            }
+        }
+
+        private void HandleDeadMobs()
+        {
+            // look for dead mobs
+            foreach (var mob in mobs.Where(m => m.HitPoints < 0).ToArray())
+            {
+                // kill mob
+                mobs.Remove(mob);
+                mob.Die();
             }
         }
     }

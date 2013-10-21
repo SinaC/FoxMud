@@ -31,7 +31,7 @@ namespace FoxMud.Game.World
         public string[] Phrases { get; set; }
         public double TalkProbability { get; set; }
         public long MinimumTalkInterval { get; set; }
-        public int Hp { get; set; }
+        public int HitPoints { get; set; }
         public bool Aggro { get; set; }
         public int Armor { get; set; }
         public int HitRoll { get; set; }
@@ -82,6 +82,7 @@ namespace FoxMud.Game.World
         public Dictionary<string, string> Inventory { get; private set; }
         public Dictionary<Wearlocation, WearSlot> Equipped { get; private set; }
         public bool IsShopkeeper { get; set; }
+        public int HitPoints { get; set; }
 
         public int Hp
         {
@@ -97,7 +98,7 @@ namespace FoxMud.Game.World
             }
         }
 
-        public void Die(bool shutdown)
+        public void Die(bool shutdown = false)
         {
             if (!shutdown)
             {
@@ -190,6 +191,26 @@ namespace FoxMud.Game.World
             _guid = guid;
             _lastTimeTalked = DateTime.Now;
             _lastTimeWalked = DateTime.Now;
+        }
+
+        public void Hit(Player player)
+        {
+            // roll to hit, if success, then hit
+            if (Server.Current.Random.Next(HitRoll) > player.Armor)
+            {
+                // hit
+                var damage = Server.Current.Random.Next(DamRoll) + 1;
+                player.HitPoints -= damage;
+                
+                player.Send(string.Format("{0} hits you for {1} damage!", Name, damage), player);
+                //round.RoomText += string.Format("{0} hits {1}!", Name, player.Forename);
+            }
+            else
+            {
+                // miss
+                //round.RoundText += string.Format("{0} missed you!", Name);
+                //round.RoomText += string.Format("{0} missed {1}.", Name, player.Forename);
+            }
         }
 
         public void TalkOrWalk()

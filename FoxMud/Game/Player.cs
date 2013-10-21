@@ -5,6 +5,7 @@ using System.Security.Cryptography;
 using System.Text;
 using FoxMud.Db;
 using FoxMud.Game.Item;
+using FoxMud.Game.World;
 using FoxMud.Text;
 using Newtonsoft.Json;
 
@@ -195,6 +196,37 @@ namespace FoxMud.Game
         public static string NameToKey(string name)
         {
             return name.ToLower();
+        }
+
+        public CombatRound Hit(NonPlayer mob)
+        {
+            var round = new CombatRound()
+            {
+                RoomText = string.Empty,
+                RoundText = string.Empty
+            };
+
+            if (Server.Current.Random.Next(HitRoll) > mob.Armor)
+            {
+                // hit
+                var damage = Server.Current.Random.Next(DamRoll) + 1;
+                mob.HitPoints -= damage;
+                round.RoundText += string.Format("You hit {0} for {1}", mob.Name, damage);
+                round.RoomText += string.Format("{0} hits {1}!", Forename, mob.Name);
+            }
+            else
+            {
+                // miss
+                round.RoundText += string.Format("You missed {1}!", mob.Name);
+                round.RoomText += string.Format("{0} msised {1}!", Forename, mob.Name);
+            }
+
+            return round;
+        }
+
+        public void Die()
+        {
+            throw new NotImplementedException();
         }
     }
 }

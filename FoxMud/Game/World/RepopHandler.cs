@@ -33,7 +33,6 @@ namespace FoxMud.Game.World
             {
                 // copy into NonPlayer, mapping generates inventory and equipped
                 var npc = Mapper.Map<NonPlayer>(mob);
-                npc.MobTemplateKey = mob.Key;
                 Server.Current.Database.Save(npc); // do we even need to persist NonPlayer objects, or can they be managed in memory?
 
                 // get room, put in room

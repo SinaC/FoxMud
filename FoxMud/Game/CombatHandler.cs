@@ -14,23 +14,36 @@ namespace FoxMud.Game
     class CombatRound
     {
         public Dictionary<Player, string> PlayerText { get; set; }
+        public Dictionary<Player, string> ComplementGroupText { get; set; }
         public string RoomText { get; set; }
 
         public CombatRound()
         {
             PlayerText = new Dictionary<Player, string>();
+            ComplementGroupText = new Dictionary<Player, string>();
         }
 
         public static CombatRound operator +(CombatRound r1, CombatRound r2)
         {
-            foreach (var item in r2.PlayerText)
+            foreach (var player in r2.PlayerText)
             {
-                if (!string.IsNullOrWhiteSpace(item.Value))
+                if (!string.IsNullOrWhiteSpace(player.Value))
                 {
-                    if (r1.PlayerText.ContainsKey(item.Key))
-                        r1.PlayerText[item.Key] += item.Value;
+                    if (r1.PlayerText.ContainsKey(player.Key))
+                        r1.PlayerText[player.Key] += player.Value;
                     else
-                        r1.PlayerText[item.Key] = item.Value;
+                        r1.PlayerText[player.Key] = player.Value;
+                }
+            }
+
+            foreach (var player in r2.ComplementGroupText)
+            {
+                if (!string.IsNullOrWhiteSpace(player.Value))
+                {
+                    if (r1.ComplementGroupText.ContainsKey(player.Key))
+                        r1.ComplementGroupText[player.Key] += player.Value;
+                    else
+                        r1.ComplementGroupText[player.Key] = player.Value;
                 }
             }
 
@@ -48,6 +61,16 @@ namespace FoxMud.Game
         private bool isAggro;
         private Room room;
         private Dictionary<string, string> killingBlows = new Dictionary<string, string>();
+
+        public IEnumerable<Player> GetFighters()
+        {
+            return fighters.AsEnumerable();
+        }
+
+        public IEnumerable<NonPlayer> GetMobs()
+        {
+            return mobs.AsEnumerable();
+        }
 
         public bool Fighting
         {
@@ -115,12 +138,31 @@ namespace FoxMud.Game
                 roundText += HandleDeadPlayers();
             }
 
+            var textToSend = new Dictionary<Player, string>();
+
             // send text to each player
             foreach (var player in roundText.PlayerText.Keys)
-                player.Send(roundText.PlayerText[player], player);
+                textToSend[player] = roundText.PlayerText[player];
+
+            // send group text exclusively to other fighters
+            foreach (var excludedPlayer in roundText.ComplementGroupText.Keys)
+            {
+                var name = excludedPlayer.Forename;
+                foreach (var player in fighters.Where(f => f.Forename != name))
+                {
+                    if (textToSend.ContainsKey(player))
+                        textToSend[player] += roundText.ComplementGroupText[excludedPlayer];
+                    else
+                        textToSend[player] = roundText.ComplementGroupText[excludedPlayer];
+                }
+            }
+
+            foreach (var player in textToSend.Keys)
+                player.Send(textToSend[player], null);
 
             // send text to room
-            room.SendPlayers(roundText.RoomText, null, null, roundText.PlayerText.Keys.ToArray());
+            //room.SendPlayers(roundText.RoomText, null, null, roundText.PlayerText.Keys.ToArray());
+            room.SendPlayers(roundText.RoomText, null, null, fighters.ToArray());
 
             Thread.Sleep((int) combatTickRate);
         }
@@ -200,6 +242,8 @@ namespace FoxMud.Game
 
             try
             {
+                var killedBy = new Dictionary<NonPlayer, Player>();
+
                 // if still players, they hit
                 foreach (var player in fighters)
                 {
@@ -211,12 +255,26 @@ namespace FoxMud.Game
 
                         round += player.Hit(mobToHit);
 
-                        // check for killing blow
+                        // check for killing blow, could be multiple
                         if (mobToHit.HitPoints <= 0)
                         {
-                            round.PlayerText[player] += string.Format("You killed {0}!!!\n", mobToHit.Name);
-                            round.RoomText += string.Format("{0} killed {1}!\n", player.Forename, mobToHit.Name);
+                            killedBy.Add(mobToHit, player);
+                            // remove mob from combat, so it can't be hit any more
+                            mobs.Remove(mobToHit);
+                            if (mobs.Count == 0)
+                                break;
                         }
+                    }
+                }
+
+                if (killedBy.Count > 0)
+                {
+                    foreach (var kb in killedBy)
+                    {
+                        var groupText = string.Format("{0} is DEAD!!!\n", kb.Key.Name);
+                        round.PlayerText[kb.Value] += groupText;
+                        round.ComplementGroupText[kb.Value] += groupText;
+                        round.RoomText += string.Format("{0} killed {1}!\n", kb.Value.Forename, kb.Key.Name);
                     }
                 }
             }
@@ -321,6 +379,13 @@ namespace FoxMud.Game
         public void Start()
         {
             _timer.Start();
+        }
+
+        public void AddToCombat(Player player, string mobKey)
+        {
+            foreach (var fight in Fights)
+                if (fight.GetMobs().Any(m => m.Key == mobKey))
+                    fight.AddFighter(player);
         }
     }
 }

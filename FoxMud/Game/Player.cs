@@ -209,22 +209,38 @@ namespace FoxMud.Game
                 // hit
                 var damage = Server.Current.Random.Next(DamRoll) + 1;
                 mob.HitPoints -= damage;
+
+                // player text
                 var playerText = string.Format("You hit {0} for {1} damage!\n", mob.Name, damage);
                 if (round.PlayerText.ContainsKey(this))
                     round.PlayerText[this] += playerText;
                 else
                     round.PlayerText.Add(this, playerText);
-                round.RoomText += string.Format("{0} hits {1}!\n", Forename, mob.Name);
+
+                // group text (excludes player)
+                var groupText = string.Format("{0} hits {1}!\n", Forename, mob.Name);
+                if (round.ComplementGroupText.ContainsKey(this))
+                    round.ComplementGroupText[this] += groupText;
+                else
+                    round.ComplementGroupText.Add(this, groupText);
             }
             else
             {
-                var playerText = string.Format("You missed {0}!\n", mob.Name);
+                var playerText = string.Format("You miss {0}!\n", mob.Name);
                 if (round.PlayerText.ContainsKey(this))
                     round.PlayerText[this] += playerText;
                 else
                     round.PlayerText.Add(this, playerText);
-                round.RoomText += string.Format("{0} missed {1}!\n", Forename, mob.Name);
+
+                var groupText = string.Format("{0} hits {1}!\n", Forename, mob.Name);
+                if (round.ComplementGroupText.ContainsKey(this))
+                    round.ComplementGroupText[this] += groupText;
+                else
+                    round.ComplementGroupText.Add(this, groupText);
             }
+
+            // finally set some generic room text
+            round.RoomText += string.Format("{0} is fighting {1}!\n", Forename, mob.Name);
 
             return round;
         }

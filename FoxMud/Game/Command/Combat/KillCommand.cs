@@ -18,6 +18,21 @@ namespace FoxMud.Game.Command.Combat
 
         public void Execute(Session session, CommandContext context)
         {
+            // validate combat
+            switch (session.Player.Status)
+            {
+                case GameStatus.Sleeping:
+                case GameStatus.Sitting:
+                    session.WriteLine("Do you really think it's a good idea to fight while you're sitting or sleeping?");
+                    return;
+                case GameStatus.Fighting:
+                    session.WriteLine("You're already fighting!");
+                    return;
+                case GameStatus.Dead:
+                    session.WriteLine("You're dead...");
+                    return;
+            }
+
             if (string.IsNullOrWhiteSpace(context.ArgumentString))
             {
                 session.WriteLine("Kill what?");
@@ -39,17 +54,19 @@ namespace FoxMud.Game.Command.Combat
                 return;
             }
 
-            // validate combat
-            if (session.Player.Status != GameStatus.Standing)
-            {
-                session.WriteLine("You can't start a fight right now.");
-                return;
-            }
-
             var combat = new Game.Combat();
-            combat.AddFighter(session.Player);
-            combat.AddMob(npc);
-            Server.Current.CombatHandler.StartFight(combat);
+            if (npc.Status == GameStatus.Fighting)
+            {
+                // add player to combat
+                Server.Current.CombatHandler.AddToCombat(session.Player, npc.Key);
+            }
+            else
+            {
+                // start new combat
+                combat.AddFighter(session.Player);
+                combat.AddMob(npc);
+                Server.Current.CombatHandler.StartFight(combat);
+            }
         }
     }
 }

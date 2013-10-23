@@ -212,35 +212,23 @@ namespace FoxMud.Game
 
                 // player text
                 var playerText = string.Format("You hit {0} for {1} damage!\n", mob.Name, damage);
-                if (round.PlayerText.ContainsKey(this))
-                    round.PlayerText[this] += playerText;
-                else
-                    round.PlayerText.Add(this, playerText);
+                round.AddText(this, playerText, CombatTextType.Player);
 
                 // group text (excludes player)
                 var groupText = string.Format("{0} hits {1}!\n", Forename, mob.Name);
-                if (round.ComplementGroupText.ContainsKey(this))
-                    round.ComplementGroupText[this] += groupText;
-                else
-                    round.ComplementGroupText.Add(this, groupText);
+                round.AddText(this, groupText, CombatTextType.Group);
             }
             else
             {
                 var playerText = string.Format("You miss {0}!\n", mob.Name);
-                if (round.PlayerText.ContainsKey(this))
-                    round.PlayerText[this] += playerText;
-                else
-                    round.PlayerText.Add(this, playerText);
+                round.AddText(this, playerText, CombatTextType.Player);
 
                 var groupText = string.Format("{0} hits {1}!\n", Forename, mob.Name);
-                if (round.ComplementGroupText.ContainsKey(this))
-                    round.ComplementGroupText[this] += groupText;
-                else
-                    round.ComplementGroupText.Add(this, groupText);
+                round.AddText(this, groupText, CombatTextType.Group);
             }
 
             // finally set some generic room text
-            round.RoomText += string.Format("{0} is fighting {1}!\n", Forename, mob.Name);
+            round.AddText(null, string.Format("{0} is fighting {1}!\n", Forename, mob.Name), CombatTextType.Room);
 
             return round;
         }
@@ -249,10 +237,10 @@ namespace FoxMud.Game
         {
             var round = new CombatRound();
 
-            round.PlayerText[this] += "You are DEAD!!!\n";
-            round.RoomText += string.Format("{0} is DEAD!!!\n", Forename);
+            round.AddText(this, "You are DEAD!!!\n", CombatTextType.Player);
+            round.AddText(null, string.Format("{0} is DEAD!!!\n", Forename), CombatTextType.Room);
             HitPoints = 100;
-            round.PlayerText[this] += "Hit points temporarily restored...\n";
+            round.AddText(this, "Hit points temporarily restored...\n", CombatTextType.Player);
             Status = GameStatus.Dead;
 
             return round;

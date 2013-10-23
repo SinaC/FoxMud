@@ -116,7 +116,7 @@ namespace FoxMud.Game.World
                 room.RemoveNpc(this);
                 Server.Current.Database.Delete<NonPlayer>(Key);
 
-                round.RoomText += string.Format("{0} is DEAD!!!", Name);
+                round.AddText(null, string.Format("{0} is DEAD!!!", Name), CombatTextType.Room);
 
                 // get area from this.RespawnRoom
                 var area = Server.Current.Areas.FirstOrDefault(a => a.Key == room.Area);
@@ -204,35 +204,23 @@ namespace FoxMud.Game.World
                 player.HitPoints -= damage;
                 
                 var playerText = string.Format("{0} hits you for {1} damage!\n", Name, damage);
-                if (round.PlayerText.ContainsKey(player))
-                    round.PlayerText[player] += playerText;
-                else
-                    round.PlayerText.Add(player, playerText);
+                round.AddText(player, playerText, CombatTextType.Player);
 
                 var groupText = string.Format("{0} hits {1}!\n", Name, player.Forename);
-                if (round.ComplementGroupText.ContainsKey(player))
-                    round.ComplementGroupText[player] += groupText;
-                else
-                    round.ComplementGroupText.Add(player, groupText);
+                round.AddText(player, groupText, CombatTextType.Group);
 
-                round.RoomText += groupText;
+                round.AddText(null, groupText, CombatTextType.Room);
             }
             else
             {
                 // miss
                 var playerText = string.Format("{0} misses you!", Name);
-                if (round.PlayerText.ContainsKey(player))
-                    round.PlayerText[player] += playerText;
-                else
-                    round.PlayerText.Add(player, playerText);
+                round.AddText(player, playerText, CombatTextType.Player);
 
                 var groupText = string.Format("{0} misses {1}!\n", Name, player.Forename);
-                if (round.ComplementGroupText.ContainsKey(player))
-                    round.ComplementGroupText[player] += groupText;
-                else
-                    round.ComplementGroupText.Add(player, groupText);
+                round.AddText(player, groupText, CombatTextType.Group);
 
-                round.RoomText += groupText;
+                round.AddText(null, groupText, CombatTextType.Room);
             }
 
             return round;

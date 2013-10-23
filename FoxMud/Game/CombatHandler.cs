@@ -11,44 +11,127 @@ using FoxMud.Game.World;
 
 namespace FoxMud.Game
 {
+    enum CombatTextType
+    {
+        Player,
+        Group,
+        KillingBlow,
+        Room
+    }
+
     class CombatRound
     {
-        public Dictionary<Player, string> PlayerText { get; set; }
-        public Dictionary<Player, string> ComplementGroupText { get; set; }
-        public string RoomText { get; set; }
+        private Dictionary<Player, string> playerText { get; set; }
+        private Dictionary<Player, string> complementGroupText { get; set; }
+        private Dictionary<Player, string> killingBlowText { get; set; }
+        private string roomText { get; set; }
+        private LinkedList<Player> combatOrder;
 
         public CombatRound()
         {
-            PlayerText = new Dictionary<Player, string>();
-            ComplementGroupText = new Dictionary<Player, string>();
+            playerText = new Dictionary<Player, string>();
+            complementGroupText = new Dictionary<Player, string>();
+            killingBlowText = new Dictionary<Player, string>();
+            combatOrder = new LinkedList<Player>();
+        }
+
+        public Player[] PlayerKeys()
+        {
+            return playerText.Keys.ToArray();
+        }
+
+        public Player[] GroupKeys()
+        {
+            return complementGroupText.Keys.ToArray();
+        }
+
+        public Player[] KillingBlowKeys()
+        {
+            return killingBlowText.Keys.ToArray();
+        }
+
+        public string GetRoomText()
+        {
+            return roomText;
+        }
+
+        public void AddText(Player player, string text, CombatTextType type)
+        {
+            if (!combatOrder.Contains(player))
+                combatOrder.AddLast(player);
+
+            switch (type)
+            {
+                case CombatTextType.Player:
+                    if (playerText.ContainsKey(player))
+                        playerText[player] += text;
+                    else
+                        playerText.Add(player, text);
+                    break;
+                case CombatTextType.Group:
+                    if (complementGroupText.ContainsKey(player))
+                        complementGroupText[player] += text;
+                    else
+                        complementGroupText.Add(player, text);
+                    break;
+                case CombatTextType.KillingBlow:
+                    if (killingBlowText.ContainsKey(player))
+                        killingBlowText[player] += text;
+                    else
+                        killingBlowText.Add(player, text);
+                    break;
+                case CombatTextType.Room:
+                    roomText += text;
+                    break;
+            }
+        }
+
+        public Dictionary<Player, string> Print()
+        {
+            var result = new Dictionary<Player, string>();
+
+            // add text in order
+
+            return result;
         }
 
         public static CombatRound operator +(CombatRound r1, CombatRound r2)
         {
-            foreach (var player in r2.PlayerText)
+            foreach (var player in r2.playerText)
             {
                 if (!string.IsNullOrWhiteSpace(player.Value))
                 {
-                    if (r1.PlayerText.ContainsKey(player.Key))
-                        r1.PlayerText[player.Key] += player.Value;
+                    if (r1.playerText.ContainsKey(player.Key))
+                        r1.playerText[player.Key] += player.Value;
                     else
-                        r1.PlayerText[player.Key] = player.Value;
+                        r1.playerText[player.Key] = player.Value;
                 }
             }
 
-            foreach (var player in r2.ComplementGroupText)
+            foreach (var player in r2.complementGroupText)
             {
                 if (!string.IsNullOrWhiteSpace(player.Value))
                 {
-                    if (r1.ComplementGroupText.ContainsKey(player.Key))
-                        r1.ComplementGroupText[player.Key] += player.Value;
+                    if (r1.complementGroupText.ContainsKey(player.Key))
+                        r1.complementGroupText[player.Key] += player.Value;
                     else
-                        r1.ComplementGroupText[player.Key] = player.Value;
+                        r1.complementGroupText[player.Key] = player.Value;
                 }
             }
 
-            if (!string.IsNullOrWhiteSpace(r2.RoomText))
-                r1.RoomText += r2.RoomText;
+            foreach (var player in r2.killingBlowText)
+            {
+                if (!string.IsNullOrWhiteSpace(player.Value))
+                {
+                    if (r1.killingBlowText.ContainsKey(player.Key))
+                        r1.killingBlowText[player.Key] += player.Value;
+                    else
+                        r1.killingBlowText[player.Key] = player.Value;
+                }
+            }
+
+            if (!string.IsNullOrWhiteSpace(r2.roomText))
+                r1.roomText += r2.roomText;
 
             return r1;
         }
@@ -138,31 +221,31 @@ namespace FoxMud.Game
                 roundText += HandleDeadPlayers();
             }
 
-            var textToSend = new Dictionary<Player, string>();
+            var textToSend = roundText.Print();
 
-            // send text to each player
-            foreach (var player in roundText.PlayerText.Keys)
-                textToSend[player] = roundText.PlayerText[player];
+            //// send text to each player
+            //foreach (var player in roundText.playerText.Keys)
+            //    textToSend[player] = roundText.playerText[player];
 
-            // send group text exclusively to other fighters
-            foreach (var excludedPlayer in roundText.ComplementGroupText.Keys)
-            {
-                var name = excludedPlayer.Forename;
-                foreach (var player in fighters.Where(f => f.Forename != name))
-                {
-                    if (textToSend.ContainsKey(player))
-                        textToSend[player] += roundText.ComplementGroupText[excludedPlayer];
-                    else
-                        textToSend[player] = roundText.ComplementGroupText[excludedPlayer];
-                }
-            }
+            //// send group text exclusively to other fighters
+            //foreach (var excludedPlayer in roundText.complementGroupText.Keys)
+            //{
+            //    var name = excludedPlayer.Forename;
+            //    foreach (var player in fighters.Where(f => f.Forename != name))
+            //    {
+            //        if (textToSend.ContainsKey(player))
+            //            textToSend[player] += roundText.complementGroupText[excludedPlayer];
+            //        else
+            //            textToSend[player] = roundText.complementGroupText[excludedPlayer];
+            //    }
+            //}
 
             foreach (var player in textToSend.Keys)
                 player.Send(textToSend[player], null);
 
             // send text to room
             //room.SendPlayers(roundText.RoomText, null, null, roundText.PlayerText.Keys.ToArray());
-            room.SendPlayers(roundText.RoomText, null, null, fighters.ToArray());
+            room.SendPlayers(roundText.GetRoomText(), null, null, fighters.ToArray());
 
             Thread.Sleep((int) combatTickRate);
         }
@@ -198,8 +281,8 @@ namespace FoxMud.Game
 
                         if (playerToHit.HitPoints <= 0)
                         {
-                            round.PlayerText[playerToHit] += "You are DEAD!!!\n";
-                            round.RoomText += string.Format("{0} is DEAD!!!\n", playerToHit.Forename);
+                            round.AddText(playerToHit, "You are DEAD!!!\n", CombatTextType.Player);
+                            round.AddText(null, string.Format("{0} is DEAD!!!\n", playerToHit.Forename), CombatTextType.Room);
                         }
                     }
                 }
@@ -272,9 +355,8 @@ namespace FoxMud.Game
                     foreach (var kb in killedBy)
                     {
                         var groupText = string.Format("{0} is DEAD!!!\n", kb.Key.Name);
-                        round.PlayerText[kb.Value] += groupText;
-                        round.ComplementGroupText[kb.Value] += groupText;
-                        round.RoomText += string.Format("{0} killed {1}!\n", kb.Value.Forename, kb.Key.Name);
+                        round.AddText(kb.Value, groupText, CombatTextType.KillingBlow);
+                        round.AddText(null, string.Format("{0} killed {1}!\n", kb.Value.Forename, kb.Key.Name), CombatTextType.KillingBlow);
                     }
                 }
             }

@@ -100,7 +100,7 @@ namespace FoxMud.Game.World
                 }
 
                 dupedCorpse.Name = string.Format("The corpse of {0}", Name);
-                dupedCorpse.Description = string.Format("The corpse of {0} is rotting away.", Name.ToLower());
+                dupedCorpse.Description = string.Format("The corpse of {0}", Name.ToLower());
                 dupedCorpse.Keywords = new List<string>() {"corpse", Name}.ToArray();
 
                 // put corpse in room

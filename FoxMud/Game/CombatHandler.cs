@@ -25,14 +25,12 @@ namespace FoxMud.Game
         private Dictionary<Player, string> complementGroupText { get; set; }
         private Dictionary<Player, string> killingBlowText { get; set; }
         private string roomText { get; set; }
-        private LinkedList<Player> combatOrder;
 
         public CombatRound()
         {
             playerText = new Dictionary<Player, string>();
             complementGroupText = new Dictionary<Player, string>();
             killingBlowText = new Dictionary<Player, string>();
-            combatOrder = new LinkedList<Player>();
         }
 
         public Player[] PlayerKeys()
@@ -57,9 +55,6 @@ namespace FoxMud.Game
 
         public void AddText(Player player, string text, CombatTextType type)
         {
-            if (!combatOrder.Contains(player))
-                combatOrder.AddLast(player);
-
             switch (type)
             {
                 case CombatTextType.Player:
@@ -86,11 +81,62 @@ namespace FoxMud.Game
             }
         }
 
-        public Dictionary<Player, string> Print()
+        /// <summary>
+        /// handles proper ordering of combat text for fighters only
+        /// </summary>
+        /// <returns>a dictionary with each relevant player's text</returns>
+        public Dictionary<Player, string> Print(List<Player> combatOrder)
         {
             var result = new Dictionary<Player, string>();
 
-            // add text in order
+            try
+            {
+                // add text in order: players will see their own hits in the order they actually occurred
+                foreach (var player in combatOrder)
+                {
+                    // add player text for that player e.g. "You hit mob"
+                    if (playerText.ContainsKey(player))
+                    {
+                        if (result.ContainsKey(player))
+                            result[player] += playerText[player];
+                        else
+                            result[player] = playerText[player];
+                    }
+
+                    // for all other players, add this player's group text e.g. "player1 hit mob"
+                    var playerName = player.Forename;
+                    foreach (var otherPlayer in combatOrder.Where(p => p.Forename != playerName))
+                    {
+                        if (complementGroupText.ContainsKey(player))
+                        {
+                            if (result.ContainsKey(otherPlayer))
+                                result[otherPlayer] += complementGroupText[player];
+                            else
+                                result[otherPlayer] = complementGroupText[player];
+                        }
+
+                        // do group kb text "player1 killed mob"
+                        if (killingBlowText.ContainsKey(player))
+                            result[otherPlayer] += killingBlowText[player];
+                    }
+
+                    // do player kb e.g. "you killed mob"
+                    if (killingBlowText.ContainsKey(player))
+                    {
+                        if (player.HitPoints > 0)
+                        {
+                            // player killed mob
+                            result[player] += "You killed " +
+                                              killingBlowText[player].Replace("is DEAD!!!", string.Empty).Trim() + "!!!";
+                        }
+                        // else don't print anything, as player has already been advised of their status
+                    }
+                }
+            }
+            catch (Exception ex)
+            {
+                throw ex;
+            }
 
             return result;
         }
@@ -144,6 +190,8 @@ namespace FoxMud.Game
         private bool isAggro;
         private Room room;
         private Dictionary<string, string> killingBlows = new Dictionary<string, string>();
+        private readonly List<Player> fightersToIgnore = new List<Player>();
+        private readonly List<Player> combatOrder = new List<Player>();
 
         public IEnumerable<Player> GetFighters()
         {
@@ -163,6 +211,8 @@ namespace FoxMud.Game
         public void AddFighter(Player player)
         {
             fighters.Add(player);
+            fightersToIgnore.Add(player);
+            combatOrder.Add(player);
         }
 
         public void AddMob(NonPlayer npc)
@@ -204,48 +254,35 @@ namespace FoxMud.Game
             {
                 roundText += DoMobHits();
 
-                roundText += HandleDeadPlayers();
+                //roundText += HandleDeadPlayers();
 
                 roundText += DoPlayerHits();
 
-                roundText += HandleDeadMobs();
+                //roundText += HandleDeadMobs();
             }
             else
             {
                 roundText += DoPlayerHits();
 
-                roundText += HandleDeadMobs();
+                //roundText += HandleDeadMobs();
 
                 roundText += DoMobHits();
 
-                roundText += HandleDeadPlayers();
+                //roundText += HandleDeadPlayers();
             }
 
-            var textToSend = roundText.Print();
+            var textToSend = roundText.Print(combatOrder);
 
-            //// send text to each player
-            //foreach (var player in roundText.playerText.Keys)
-            //    textToSend[player] = roundText.playerText[player];
-
-            //// send group text exclusively to other fighters
-            //foreach (var excludedPlayer in roundText.complementGroupText.Keys)
-            //{
-            //    var name = excludedPlayer.Forename;
-            //    foreach (var player in fighters.Where(f => f.Forename != name))
-            //    {
-            //        if (textToSend.ContainsKey(player))
-            //            textToSend[player] += roundText.complementGroupText[excludedPlayer];
-            //        else
-            //            textToSend[player] = roundText.complementGroupText[excludedPlayer];
-            //    }
-            //}
+            combatOrder.RemoveAll(p => p.HitPoints < 0);
 
             foreach (var player in textToSend.Keys)
                 player.Send(textToSend[player], null);
 
             // send text to room
             //room.SendPlayers(roundText.RoomText, null, null, roundText.PlayerText.Keys.ToArray());
-            room.SendPlayers(roundText.GetRoomText(), null, null, fighters.ToArray());
+            room.SendPlayers(roundText.GetRoomText(), null, null, fightersToIgnore.ToArray());
+
+            fightersToIgnore.RemoveAll(p => p.HitPoints < 0);
 
             Thread.Sleep((int) combatTickRate);
         }
@@ -266,6 +303,8 @@ namespace FoxMud.Game
 
             try
             {
+                var killedBy = new Dictionary<Player, NonPlayer>();
+
                 // mob hits first
                 foreach (var npc in mobs)
                 {
@@ -281,33 +320,22 @@ namespace FoxMud.Game
 
                         if (playerToHit.HitPoints <= 0)
                         {
-                            round.AddText(playerToHit, "You are DEAD!!!\n", CombatTextType.Player);
-                            round.AddText(null, string.Format("{0} is DEAD!!!\n", playerToHit.Forename), CombatTextType.Room);
+                            killedBy.Add(playerToHit, npc);
+                            fighters.Remove(playerToHit);
+
+                            round += playerToHit.Die();
+                            if (fighters.Count == 0)
+                                break;
                         }
                     }
                 }
-            }
-            catch (Exception ex)
-            {
-                throw ex;
-            }
 
-            return round;
-        }
-
-        private CombatRound HandleDeadPlayers()
-        {
-            //Console.WriteLine("Enter HandleDeadPlayers");
-            var round = new CombatRound();
-
-            try
-            {
-                // look for dead players
-                foreach (var player in fighters.Where(p => p.HitPoints <= 0).ToArray())
+                if (killedBy.Count > 0)
                 {
-                    // kill player
-                    fighters.Remove(player);
-                    round += player.Die();
+                    foreach (var kb in killedBy)
+                    {
+                        round.AddText(kb.Key, string.Format("{0} is DEAD!!!\n", kb.Key.Forename), CombatTextType.KillingBlow);
+                    }
                 }
             }
             catch (Exception ex)
@@ -344,8 +372,9 @@ namespace FoxMud.Game
                             killedBy.Add(mobToHit, player);
                             // remove mob from combat, so it can't be hit any more
                             mobs.Remove(mobToHit);
+                            round += mobToHit.Die();
                             if (mobs.Count == 0)
-                                break;
+                                break; // stop fighting
                         }
                     }
                 }
@@ -354,33 +383,8 @@ namespace FoxMud.Game
                 {
                     foreach (var kb in killedBy)
                     {
-                        var groupText = string.Format("{0} is DEAD!!!\n", kb.Key.Name);
-                        round.AddText(kb.Value, groupText, CombatTextType.KillingBlow);
-                        round.AddText(null, string.Format("{0} killed {1}!\n", kb.Value.Forename, kb.Key.Name), CombatTextType.KillingBlow);
+                        round.AddText(kb.Value, string.Format("{0} is DEAD!!!\n", kb.Key.Name), CombatTextType.KillingBlow);
                     }
-                }
-            }
-            catch (Exception ex)
-            {
-                throw ex;
-            }
-
-            return round;
-        }
-
-        private CombatRound HandleDeadMobs()
-        {
-            //Console.WriteLine("Enter HandleDeadMobs");
-            var round = new CombatRound();
-
-            try
-            {
-                // look for dead mobs
-                foreach (var mob in mobs.Where(m => m.HitPoints <= 0).ToArray())
-                {
-                    // kill mob
-                    mobs.Remove(mob);
-                    round += mob.Die();
                 }
             }
             catch (Exception ex)
@@ -418,7 +422,7 @@ namespace FoxMud.Game
         public void EnterRoom(Player player, Room room)
         {
             // if player is first in room, check npc's for aggro
-            if (!room.GetPlayers().Any())
+            if (room.GetPlayers().Count() == 1)
             {
                 foreach (var npc in room.GetNpcs())
                 {
@@ -427,8 +431,14 @@ namespace FoxMud.Game
                         var combat = new Combat();
                         combat.AddFighter(player);
                         combat.AddMob(npc);
+                        
+                        // add any other aggro npc's
+                        var npcName = npc.Name;
+                        foreach (var otherNpc in room.GetNpcs().Where(n => n.Name != npcName))
+                            combat.AddMob(npc);
+
                         StartFight(combat);
-                        break; // this will only handle one aggro npc in the room at a time
+                        break;
                     }
                 }
             }

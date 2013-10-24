@@ -28,8 +28,9 @@ namespace FoxMud.Game.Command.Combat
                 case GameStatus.Fighting:
                     session.WriteLine("You're already fighting!");
                     return;
-                case GameStatus.Dead:
-                    session.WriteLine("You're dead...");
+                case GameStatus.Incapacitated:
+                case GameStatus.MortallyWounded:
+                    session.WriteLine("You're dying...");
                     return;
             }
 

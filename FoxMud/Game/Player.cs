@@ -24,8 +24,8 @@ namespace FoxMud.Game
         Standing,
         Sleeping,
         Fighting,
-        Dead,
-        Frozen,
+        Incapacitated, // something like >= -3 hp
+        MortallyWounded, // will die if unaided
     }
 
     struct WearSlot
@@ -43,7 +43,8 @@ namespace FoxMud.Game
         private Player(
             string name, string passwordHash, bool isAdmin, string prompt, Dictionary<string,string> rememberedNames, Dictionary<string, string> inventory, int hitPoints,
             int maxHitPoints, long gold, int experience, int baseDamage, int baseArmor, int maxInventory, int maxWeight, Dictionary<Wearlocation, WearSlot> equipped,
-            GameStatus status, int hitRoll, int damRoll, int level)
+            GameStatus status, int hitRoll, int damRoll, int level, string respawnRoom, int strength, int dexterity, int constitution, int intelligence, int wisdom,
+            int charisma, int luck, int age)
         {
             Forename = name;
             _passwordHash = passwordHash;
@@ -64,6 +65,15 @@ namespace FoxMud.Game
             HitRoll = hitRoll;
             DamRoll = damRoll;
             Level = level;
+            Age = age;
+            RespawnRoom = respawnRoom;
+            Strength = strength;
+            Dexterity = dexterity;
+            Constitution = constitution;
+            Intelligence = intelligence;
+            Wisdom = wisdom;
+            Charisma = charisma;
+            Luck = luck;
         }
 
         public Player()
@@ -107,6 +117,15 @@ namespace FoxMud.Game
         public int HitRoll { get; set; }
         public int DamRoll { get; set; }
         public int Level { get; set; }
+        public int Age { get; set; }
+        public string RespawnRoom { get; set; }
+        public int Strength { get; set; }
+        public int Dexterity { get; set; }
+        public int Constitution { get; set; }
+        public int Intelligence { get; set; }
+        public int Wisdom { get; set; }
+        public int Charisma { get; set; }
+        public int Luck { get; set; }
 
         [JsonIgnore]
         public int Weight
@@ -237,11 +256,12 @@ namespace FoxMud.Game
         {
             var round = new CombatRound();
 
-            round.AddText(this, "You are DEAD!!!\n", CombatTextType.Player);
+            round.AddText(this,
+                          string.Format("You're {0} and may die if unaided!!!\n",
+                                        HitPoints >= Server.IncapacitatedHitPoints ? "INCAPACITATED" : "MORTALLY WOUNDED"),
+                          CombatTextType.Player);
             round.AddText(null, string.Format("{0} is DEAD!!!\n", Forename), CombatTextType.Room);
-            HitPoints = 100;
-            round.AddText(this, "Hit points temporarily restored...\n", CombatTextType.Player);
-            Status = GameStatus.Dead;
+            Status = HitPoints >= Server.IncapacitatedHitPoints ? GameStatus.Incapacitated : GameStatus.MortallyWounded;
 
             return round;
         }

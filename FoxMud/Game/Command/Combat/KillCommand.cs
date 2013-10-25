@@ -11,12 +11,12 @@ namespace FoxMud.Game.Command.Combat
     [Command("attack", false)]
     class KillCommand : PlayerCommand
     {
-        public void PrintSyntax(Session session)
+        public override void PrintSyntax(Session session)
         {
             session.WriteLine("Syntax: kill <mob>");
         }
 
-        public void Execute(Session session, CommandContext context)
+        public override void Execute(Session session, CommandContext context)
         {
             // validate combat
             switch (session.Player.Status)

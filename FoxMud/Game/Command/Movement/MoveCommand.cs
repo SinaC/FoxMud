@@ -80,16 +80,10 @@ namespace FoxMud.Game.Command.Movement
                 newRoom.SendPlayers("%d arrives", session.Player, null, session.Player);
                 session.Player.Send("you head " + direction, session.Player);
 
-<<<<<<< HEAD
-                var command = Server.Current.CommandLookup.FindCommand("look", false);
-                command.Execute(session, CommandContext.Create("look"));
-
                 // emit "event" for aggro mobs
                 Server.Current.CombatHandler.EnterRoom(session.Player, newRoom);
-=======
                 var commandInfo = Server.Current.CommandLookup.FindCommand("look", false);
                 commandInfo.Command.Execute(session, CommandContext.Create("look"));
->>>>>>> origin/spam-command
             }
             else
             {

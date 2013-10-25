@@ -42,7 +42,7 @@ namespace FoxMud.Game.Command
                                      {
                                         Command = (PlayerCommand)Activator.CreateInstance(commandType, attribute.Parameters),
                                         IsAdmin = attribute.IsAdmin,
-                                        TickLength = attribute.TickLength,
+                                        TickLength = attribute.TickLength
                                      });
                 }
             }           

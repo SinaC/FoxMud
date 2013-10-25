@@ -27,12 +27,12 @@ namespace FoxMud.Game.Command.Admin
     [Command("makeroom", true)]
     class MakeRoomCommand : PlayerCommand
     {
-        public void PrintSyntax(Session session)
+        public override void PrintSyntax(Session session)
         {
             session.WriteLine("Syntax: makeroom <room name>");
         }
 
-        public void Execute(Session session, CommandContext context)
+        public override void Execute(Session session, CommandContext context)
         {
             if (string.IsNullOrWhiteSpace(context.ArgumentString))
             {
@@ -71,19 +71,19 @@ namespace FoxMud.Game.Command.Admin
     [Command("goto", true)]
     class GotoCommand : CallbackCommand
     {
-        public void PrintSyntax(Session session)
+        public override void PrintSyntax(Session session)
         {
             session.WriteLine("Syntax: goto <room key>");
         }
 
-        public void Execute(Session session, CommandContext context)
+        public override void Execute(Session session, CommandContext context)
         {
             // this feels hacky, maybe could use an extension method here instead of interface inheritance
             string dummyString;
             Execute(session, context, out dummyString);
         }
 
-        public void Execute(Session session, CommandContext context, out string callbackCommand)
+        public override void Execute(Session session, CommandContext context, out string callbackCommand)
         {
             // make player "look" as cue to show the jump
             callbackCommand = "look";
@@ -108,12 +108,12 @@ namespace FoxMud.Game.Command.Admin
     [Command("roomtitle", true)]
     class RoomTitleCommand : PlayerCommand
     {
-        public void PrintSyntax(Session session)
+        public override void PrintSyntax(Session session)
         {
             session.WriteLine("Syntax: roomtitle <new room title>");
         }
 
-        public void Execute(Session session, CommandContext context)
+        public override void Execute(Session session, CommandContext context)
         {
             var room = RoomHelper.GetRoom(session.Player.Location);
             if (room != null)
@@ -128,12 +128,12 @@ namespace FoxMud.Game.Command.Admin
     [Command("roomdesc", true)]
     class DescriptionCommand : PlayerCommand
     {
-        public void PrintSyntax(Session session)
+        public override void PrintSyntax(Session session)
         {
             session.WriteLine("Syntax: roomdesc <new room description>");
         }
 
-        public void Execute(Session session, CommandContext context)
+        public override void Execute(Session session, CommandContext context)
         {
             var room = RoomHelper.GetRoom(session.Player.Location);
             if (room != null)
@@ -154,18 +154,18 @@ namespace FoxMud.Game.Command.Admin
     [Command("makeexit", true)]
     class MakeExitCommand : CallbackCommand
     {
-        public void PrintSyntax(Session session)
+        public override void PrintSyntax(Session session)
         {
             session.WriteLine("Syntax: makeexit north <close> room of awesomeness");
         }
 
-        public void Execute(Session session, CommandContext context)
+        public override void Execute(Session session, CommandContext context)
         {
             string dummyString;
             Execute(session, context, out dummyString);
         }
         
-        public void Execute(Session session, CommandContext context, out string callbackCommand)
+        public override void Execute(Session session, CommandContext context, out string callbackCommand)
         {
             callbackCommand = "look";
 

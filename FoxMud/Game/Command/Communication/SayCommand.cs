@@ -10,12 +10,12 @@ namespace FoxMud.Game.Command.Communication
     [Command("say", false)]
     class SayCommand : PlayerCommand
     {
-        public void PrintSyntax(Session session)
+        public override void PrintSyntax(Session session)
         {
             session.WriteLine("Syntax: say <message>");
         }
 
-        public void Execute(Session session, CommandContext context)
+        public override void Execute(Session session, CommandContext context)
         {
             if (string.IsNullOrWhiteSpace(context.ArgumentString))
             {

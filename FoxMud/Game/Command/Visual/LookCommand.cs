@@ -8,12 +8,12 @@ using FoxMud.Game.World;
 
 namespace FoxMud.Game.Command.Visual
 {
-    [Command("look", false)]
-    [Command("l", false)]
-    [Command("examine", false)]
+    [Command("look", false, TickDelay.Instant)]
+    [Command("l", false, TickDelay.Instant)]
+    [Command("examine", false, TickDelay.Instant)]
     class LookCommand : PlayerCommand
     {
-        public void PrintSyntax(Session session)
+        public override void PrintSyntax(Session session)
         {
             session.WriteLine("Syntax: look");
             session.WriteLine("Syntax: look <player>");
@@ -120,7 +120,7 @@ namespace FoxMud.Game.Command.Visual
             session.WriteLine(string.Empty);
         }
 
-        public void Execute(Session session, CommandContext context)
+        public override void Execute(Session session, CommandContext context)
         {
             if (context.Arguments.Count == 0)
             {

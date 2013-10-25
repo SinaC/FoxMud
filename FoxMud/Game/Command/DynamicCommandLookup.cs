@@ -6,15 +6,16 @@ using System.Reflection;
 
 namespace FoxMud.Game.Command
 {
+    class CommandInfo
+    {
+        public bool IsAdmin { get; set; }
+        public PlayerCommand Command { get; set; }
+        public TickDelay TickLength { get; set; }
+    }
+
     class DynamicCommandLookup : CommandLookup
     {
         SortedDictionary<string, CommandInfo> commandTable;
-
-        private class CommandInfo
-        {
-            public bool IsAdmin { get; set; }
-            public PlayerCommand Command { get; set; }
-        }
 
         public DynamicCommandLookup()
         {
@@ -40,18 +41,19 @@ namespace FoxMud.Game.Command
                                      new CommandInfo()
                                      {
                                         Command = (PlayerCommand)Activator.CreateInstance(commandType, attribute.Parameters),
-                                        IsAdmin = attribute.IsAdmin
+                                        IsAdmin = attribute.IsAdmin,
+                                        TickLength = attribute.TickLength,
                                      });
                 }
             }           
         }
 
-        public PlayerCommand FindCommand(string commandName)
+        public CommandInfo FindCommand(string commandName)
         {
             return FindCommand(commandName, false);
         }
 
-        public PlayerCommand FindCommand(string commandName, bool includeAdmin)
+        public CommandInfo FindCommand(string commandName, bool includeAdmin)
         {
             if (string.IsNullOrWhiteSpace(commandName))
                 return null;
@@ -65,7 +67,7 @@ namespace FoxMud.Game.Command
                     if (item.Value.IsAdmin && !includeAdmin)
                         continue;
 
-                    return item.Value.Command;
+                    return item.Value;
                 }
             }
 

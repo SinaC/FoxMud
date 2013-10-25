@@ -10,12 +10,12 @@ namespace FoxMud.Game.Command.Admin
     [Command("shutdown", true)]
     class ShutdownCommand : PlayerCommand
     {
-        public void PrintSyntax(Session session)
+        public override void PrintSyntax(Session session)
         {
             session.WriteLine("Syntax: shutdown [time in ms]");
         }
 
-        public void Execute(Session session, CommandContext context)
+        public override void Execute(Session session, CommandContext context)
         {
             int shutdownDelay = 20000;
 

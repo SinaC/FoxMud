@@ -70,13 +70,13 @@ namespace FoxMud.Game.Command
     [Command("i", false)]
     class InventoryCommand : PlayerCommand
     {
-        public void PrintSyntax(Session session)
+        public override void PrintSyntax(Session session)
         {
             session.WriteLine("Syntax: inventory");
             session.WriteLine("Syntax: i");
         }
 
-        public void Execute(Session session, CommandContext context)
+        public override void Execute(Session session, CommandContext context)
         {
             session.WriteLine("Your inventory:");
 
@@ -106,13 +106,13 @@ namespace FoxMud.Game.Command
     [Command("give", false)]
     class GiveCommand : PlayerCommand
     {
-        public void PrintSyntax(Session session)
+        public override void PrintSyntax(Session session)
         {
             session.WriteLine("Syntax: give <item> <player>");
             session.WriteLine("Syntax: give <number> coin <player>");
         }
 
-        public void Execute(Session session, CommandContext context)
+        public override void Execute(Session session, CommandContext context)
         {
             try
             {
@@ -191,13 +191,13 @@ namespace FoxMud.Game.Command
     [Command("dr", false)]
     class DropCommand : PlayerCommand
     {
-        public void PrintSyntax(Session session)
+        public override void PrintSyntax(Session session)
         {
             session.WriteLine("Syntax: drop <item>");
             session.WriteLine("Syntax: dr <item>");
         }
         
-        public void Execute(Session session, CommandContext context)
+        public override void Execute(Session session, CommandContext context)
         {
             // does player have item?
             PlayerItem item = ItemHelper.FindInventoryItem(session.Player, context.Arguments[0]);
@@ -225,7 +225,7 @@ namespace FoxMud.Game.Command
     [Command("get", false)]
     class GetCommand : PlayerCommand
     {
-        public void PrintSyntax(Session session)
+        public override void PrintSyntax(Session session)
         {
             session.WriteLine("get <item>");
             session.WriteLine("get all");
@@ -234,7 +234,7 @@ namespace FoxMud.Game.Command
             session.WriteLine("get <item> <container>");
         }
 
-        public void Execute(Session session, CommandContext context)
+        public override void Execute(Session session, CommandContext context)
         {
             if (string.IsNullOrWhiteSpace(context.ArgumentString))
             {
@@ -404,12 +404,12 @@ namespace FoxMud.Game.Command
     [Command("p", false)]
     class PutCommand : PlayerCommand
     {
-        public void PrintSyntax(Session session)
+        public override void PrintSyntax(Session session)
         {
             session.WriteLine("put <item> <container>");
         }
 
-        public void Execute(Session session, CommandContext context)
+        public override void Execute(Session session, CommandContext context)
         {
             try
             {
@@ -497,12 +497,12 @@ namespace FoxMud.Game.Command
     [Command("empty", false)]
     class EmptyCommand : PlayerCommand
     {
-        public void PrintSyntax(Session session)
+        public override void PrintSyntax(Session session)
         {
             session.WriteLine("empty <container>");
         }
 
-        public void Execute(Session session, CommandContext context)
+        public override void Execute(Session session, CommandContext context)
         {
             string argContainer = context.Arguments[0];
 
@@ -534,12 +534,12 @@ namespace FoxMud.Game.Command
     [Command("f", false)]
     class FillCommand : PlayerCommand
     {
-        public void PrintSyntax(Session session)
+        public override void PrintSyntax(Session session)
         {
             session.WriteLine("fill <container>");
         }
 
-        public void Execute(Session session, CommandContext context)
+        public override void Execute(Session session, CommandContext context)
         {
             string argContainer = context.Arguments[0];
 
@@ -593,7 +593,7 @@ namespace FoxMud.Game.Command
             this.command = command;
         }
 
-        public void PrintSyntax(Session session)
+        public override void PrintSyntax(Session session)
         {
             session.WriteLine("Syntax: equip <item>");
             session.WriteLine("Syntax: don <item>");
@@ -603,7 +603,7 @@ namespace FoxMud.Game.Command
             session.WriteLine("Syntax: rem <item>");
         }
 
-        public void Execute(Session session, CommandContext context)
+        public override void Execute(Session session, CommandContext context)
         {
             if (command == "eq")
             {
@@ -673,12 +673,12 @@ namespace FoxMud.Game.Command
     [Command("list", false)]
     class ListCommand : PlayerCommand
     {
-        public void PrintSyntax(Session session)
+        public override void PrintSyntax(Session session)
         {
             session.WriteLine("Syntax: list");
         }
 
-        public void Execute(Session session, CommandContext context)
+        public override void Execute(Session session, CommandContext context)
         {
             // find shopkeeper
             var room = RoomHelper.GetPlayerRoom(session.Player.Location);
@@ -703,13 +703,13 @@ namespace FoxMud.Game.Command
     [Command("b", false)]
     class BuyCommand : PlayerCommand
     {
-        public void PrintSyntax(Session session)
+        public override void PrintSyntax(Session session)
         {
             session.WriteLine("Syntax: buy <item>");
             session.WriteLine("Syntax: buy <qty> <item>");
         }
 
-        public void Execute(Session session, CommandContext context)
+        public override void Execute(Session session, CommandContext context)
         {
             if (string.IsNullOrWhiteSpace(context.ArgumentString))
             {
@@ -782,12 +782,12 @@ namespace FoxMud.Game.Command
     [Command("sell", false)]
     class SellCommand : PlayerCommand
     {
-        public void PrintSyntax(Session session)
+        public override void PrintSyntax(Session session)
         {
             session.WriteLine("Syntax: sell <item>");
         }
 
-        public void Execute(Session session, CommandContext context)
+        public override void Execute(Session session, CommandContext context)
         {
             // validate item arg
             if (string.IsNullOrWhiteSpace(context.ArgumentString))

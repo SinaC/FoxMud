@@ -159,13 +159,18 @@ namespace FoxMud
                 return;
             }
 
-            // Get line contents            
-            string input = Encoding.ASCII.GetString(inputBuffer, 0, indexOfNewLine);
-            // Remove line from buffer
-            inputBufferLength -= indexOfEndOfNewLine;
-            Buffer.BlockCopy(inputBuffer, indexOfEndOfNewLine, inputBuffer, 0, inputBufferLength);
-            // Trigger line recieved event
-            OnLineRecieved(input);
+            // this loop will parse multiple commands from advanced mud clients e.g.
+            // in Zmud, look;look will send two new lines, so need to queue up both
+            while (inputBufferLength > 0)
+            {
+                // Get line contents            
+                string input = Encoding.ASCII.GetString(inputBuffer, 0, indexOfNewLine);
+                // Remove line from buffer
+                inputBufferLength -= indexOfEndOfNewLine;
+                Buffer.BlockCopy(inputBuffer, indexOfEndOfNewLine, inputBuffer, 0, inputBufferLength);
+                // Trigger line recieved event
+                OnLineRecieved(input);
+            }
         }
 
         private int IndexOfNewLine(byte[] buffer, int length)

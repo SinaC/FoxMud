@@ -27,13 +27,13 @@ namespace FoxMud.Game.Command.Admin
                 
             };
 
-        public void PrintSyntax(Session session)
+        public override void PrintSyntax(Session session)
         {
             session.WriteLine("Syntax: template \"name of item\" \"description\" <wear> <weight> <$> <min> <max> <hp> <armor> \"keywords\" ]");
             session.WriteLine("Syntax: makeitem \"name of item\" [ \"description\" <wear> <weight> <$> <min> <max> <hp> <armor> \"keywords\" ]");
         }
 
-        public void Execute(Session session, CommandContext context)
+        public override void Execute(Session session, CommandContext context)
         {
             /*
              * order of arguments:
@@ -165,13 +165,13 @@ namespace FoxMud.Game.Command.Admin
                 { ContainerArgType.Value, 5 },
             };
 
-        public void PrintSyntax(Session session)
+        public override void PrintSyntax(Session session)
         {
             session.WriteLine("Syntax: container \"name\" \"description\" \"keywords\" <capacity> <weight> <value> ");
             session.WriteLine("Syntax: container \"name\" (when container template exists)");
         }
 
-        public void Execute(Session session, CommandContext context)
+        public override void Execute(Session session, CommandContext context)
         {
             // validate
             try

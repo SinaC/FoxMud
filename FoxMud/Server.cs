@@ -19,6 +19,19 @@ namespace FoxMud
         Error,
     }
 
+    /// <summary>
+    /// artificial delay for commands
+    /// </summary>
+    public enum TickDelay
+    {
+        Instant = 1,
+        Single = 500,
+        Double = Single * 2,
+        Triple = Single * 3,
+        Quadruple = Single * 4,
+        Quintuple = Single * 5,
+    }
+
     class Server : IDisposable
     {
         public static Server Current { get; private set; }

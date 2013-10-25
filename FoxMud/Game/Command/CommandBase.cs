@@ -5,14 +5,27 @@ using System.Text;
 
 namespace FoxMud.Game.Command
 {
-    interface PlayerCommand
+    abstract class PlayerCommand
     {
-        void PrintSyntax(Session session);
-        void Execute(Session session, CommandContext context);
+        public TickDelay TickLength { get; private set; }
+
+        public PlayerCommand(TickDelay tickLength)
+        {
+            TickLength = TickLength;
+        }
+
+        public PlayerCommand()
+            : this(TickDelay.Single)
+        {
+
+        }
+
+        public abstract void PrintSyntax(Session session);
+        public abstract void Execute(Session session, CommandContext context);
     }
 
-    interface CallbackCommand : PlayerCommand
+    abstract class CallbackCommand : PlayerCommand
     {
-        void Execute(Session session, CommandContext context, out string callbackCommand);
+        public abstract void Execute(Session session, CommandContext context, out string callbackCommand);
     }
 }

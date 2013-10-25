@@ -7,7 +7,7 @@ namespace FoxMud.Game.Command
 {
     interface CommandLookup
     {
-        PlayerCommand FindCommand(string commandName);
-        PlayerCommand FindCommand(string commandName, bool includeAdmin);
+        CommandInfo FindCommand(string commandName);
+        CommandInfo FindCommand(string commandName, bool includeAdmin);
     }
 }

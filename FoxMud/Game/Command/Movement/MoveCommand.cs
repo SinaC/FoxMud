@@ -37,14 +37,14 @@ namespace FoxMud.Game.Command.Movement
             this.direction = direction;
         }
 
-        public void PrintSyntax(Session session)
+        public override void PrintSyntax(Session session)
         {
             session.WriteLine("Syntax: <direction>");
             session.WriteLine("Example: \"ne\" is short for northeast");
             session.WriteLine("Example: \"up\" will move you up");
         }
 
-        public void Execute(Session session, CommandContext context)
+        public override void Execute(Session session, CommandContext context)
         {
             // todo: messages per position e.g. "can't do that while sitting", "you're fighting" etc
             if (session.Player.Status != GameStatus.Standing)
@@ -80,11 +80,16 @@ namespace FoxMud.Game.Command.Movement
                 newRoom.SendPlayers("%d arrives", session.Player, null, session.Player);
                 session.Player.Send("you head " + direction, session.Player);
 
+<<<<<<< HEAD
                 var command = Server.Current.CommandLookup.FindCommand("look", false);
                 command.Execute(session, CommandContext.Create("look"));
 
                 // emit "event" for aggro mobs
                 Server.Current.CombatHandler.EnterRoom(session.Player, newRoom);
+=======
+                var commandInfo = Server.Current.CommandLookup.FindCommand("look", false);
+                commandInfo.Command.Execute(session, CommandContext.Create("look"));
+>>>>>>> origin/spam-command
             }
             else
             {

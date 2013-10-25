@@ -11,13 +11,13 @@ namespace FoxMud.Game.Command
     [Command("quit", false)]
     class ExitCommand : PlayerCommand
     {
-        public void PrintSyntax(Session session)
+        public override void PrintSyntax(Session session)
         {
             session.WriteLine("Syntax: exit");
             session.WriteLine("Syntax: quit");
         }
 
-        public void Execute(Session session, CommandContext context)
+        public override void Execute(Session session, CommandContext context)
         {
             var player = Server.Current.Database.Get<Player>(session.Player.Key);
             if (player != null)

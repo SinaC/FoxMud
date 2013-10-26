@@ -12,29 +12,43 @@ using FoxMud.Game.World;
 
 namespace FoxMud.Game.Command
 {
+    struct OrdinalKeyword
+    {
+        public int Ordinal;
+        public string Keyword;
+    }
+
     static class ItemHelper
     {
         public static PlayerItem FindInventoryItem(Player player, string keyword, bool isContainer = false, bool isEquipped = false)
         {
+            return
+                LookForItem(
+                    isEquipped ? player.Equipped.Values.Select(w => w.Key).ToArray() : player.Inventory.Keys.ToArray(),
+                    keyword,
+                    isContainer);
+        }
+
+        public static PlayerItem FindFloorItem(Room room, string keyword, bool isContainer = false)
+        {
+            return LookForItem(room.Items.Keys.ToArray(), keyword, isContainer);
+        }
+
+        public static PlayerItem FindContainerItem(PlayerItem container, string keyword)
+        {
+            return LookForItem(container.ContainedItems.Keys.ToArray(), keyword);
+        }
+
+        public static PlayerItem LookForItem(IEnumerable<string> keys, string keyword, bool isContainer = false)
+        {
             PlayerItem item = null;
-            int ordinal = 1;
             int count = 0;
 
-            Regex regex = new Regex(@"^((\d+)\.)");
-            Match match = regex.Match(keyword);
+            var parsedOrdinal = ParseOrdinal(keyword);
+            keyword = parsedOrdinal.Keyword;
+            var ordinal = parsedOrdinal.Ordinal;
 
-            // parse ordinal number of item
-            if (match.Success)
-            {
-                ordinal = Convert.ToInt32(match.Groups[2].Value);
-                // remove X. from string so it doesn't try to match on e.g. "2.knife"
-                keyword = keyword.Replace(match.Groups[1].Value, String.Empty);
-            }
-
-            foreach (string guid in 
-                isEquipped 
-                ? player.Equipped.Values.Select(w => w.Key) 
-                : player.Inventory.Keys)
+            foreach (string guid in keys)
             {
                 var temp = Server.Current.Database.Get<PlayerItem>(guid);
 
@@ -51,6 +65,27 @@ namespace FoxMud.Game.Command
             }
 
             return item;
+        }
+
+        public static OrdinalKeyword ParseOrdinal(string keyword)
+        {
+            Regex regex = new Regex(@"^((\d+)\.)");
+            Match match = regex.Match(keyword);
+            int ordinal = 1;
+            
+            // parse ordinal number of item
+            if (match.Success)
+            {
+                ordinal = Convert.ToInt32(match.Groups[2].Value);
+                // remove X. from string so it doesn't try to match on e.g. "2.knife"
+                keyword = keyword.Replace(match.Groups[1].Value, String.Empty);
+            }
+
+            return new OrdinalKeyword()
+                {
+                    Keyword = keyword,
+                    Ordinal = ordinal,
+                };
         }
 
         public static T DeepClone<T>(T obj)
@@ -79,8 +114,7 @@ namespace FoxMud.Game.Command
         }
     }
 
-    [Command("inventory", false)]
-    [Command("i", false)]
+    [Command("inventory", false, TickDelay.Instant)]
     class InventoryCommand : PlayerCommand
     {
         public override void PrintSyntax(Session session)
@@ -116,7 +150,7 @@ namespace FoxMud.Game.Command
         }
     }
 
-    [Command("give", false)]
+    [Command("give", false, TickDelay.Instant)]
     class GiveCommand : PlayerCommand
     {
         public override void PrintSyntax(Session session)
@@ -206,8 +240,7 @@ namespace FoxMud.Game.Command
         }
     }
 
-    [Command("drop", false)]
-    [Command("dr", false)]
+    [Command("drop", false, TickDelay.Instant)]
     class DropCommand : PlayerCommand
     {
         public override void PrintSyntax(Session session)
@@ -241,14 +274,14 @@ namespace FoxMud.Game.Command
         }
     }
 
-    [Command("get", false)]
+    [Command("get", false, TickDelay.Instant)]
     class GetCommand : PlayerCommand
     {
         public override void PrintSyntax(Session session)
         {
             session.WriteLine("get <item>");
             session.WriteLine("get all");
-            session.WriteLine("get <item> corpse (not yet implemented...");
+            session.WriteLine("get <item> corpse");
             session.WriteLine("get all corpse (not yet implemented...");
             session.WriteLine("get <item> <container>");
         }
@@ -297,21 +330,22 @@ namespace FoxMud.Game.Command
                 return;
             }
 
+            var argItem = context.Arguments[0].ToLower();
+
             // get <item>
             // this item should be in the room
             if (context.Arguments.Count == 1)
             {
+                
                 var room = Server.Current.Database.Get<Room>(session.Player.Location);
                 if (room != null)
                 {
                     // find item on floor by keyword
-                    foreach (var key in room.Items.Keys)
+                    var item = ItemHelper.FindFloorItem(room, argItem);
+                    if (item != null)
                     {
-                        var item = Server.Current.Database.Get<PlayerItem>(key);
-                        if (item != null
-                            && session.Player.Inventory.Count + 1 < session.Player.MaxInventory // not over inventory
-                            && session.Player.Weight + item.Weight < session.Player.MaxWeight // not over weight
-                            && item.Keywords.Contains(context.Arguments[0])) // found by keyword
+                        if (session.Player.Inventory.Count + 1 < session.Player.MaxInventory // not over inventory
+                        && session.Player.Weight + item.Weight < session.Player.MaxWeight) // not over weight
                         {
                             // move item from floor to inventory
                             room.RemoveItem(item);
@@ -321,54 +355,45 @@ namespace FoxMud.Game.Command
                             room.SendPlayers("%d picked up some something.", session.Player, null, session.Player);
                             return;
                         }
-                        else
-                        {
-                            session.WriteLine("You couldn't pick that up.");
-                            return;
-                        }
+
+                        session.WriteLine("You couldn't pick that up.");
+                        return;
                     }
+
+                    session.WriteLine("You coulnd't find that.");
+                    return;
                 }
+
                 return;
             }
 
             // must've been get <item> <container>
             // check inventory for container by keyword
-            PlayerItem container = null;
-            PlayerItem containerItem = null;
+            var argContainer = context.Arguments[1].ToLower();
+            PlayerItem container = ItemHelper.FindInventoryItem(session.Player, argContainer, true);
             bool containerFound = false;
-            string argContainer = context.Arguments[1].ToLower();
-            string argItem = context.Arguments[0].ToLower();
 
-            foreach (var key in session.Player.Inventory.Keys)
+            if (container != null && container.WearLocation == Wearlocation.Container)
             {
-                container = Server.Current.Database.Get<PlayerItem>(key);
-                if (container != null
-                    && container.WearLocation == Wearlocation.Container
-                    && container.Keywords.Contains(argContainer))
-                {
-                    containerFound = true;
-                    // look at items inside container
-                    foreach (var innerKey in container.ContainedItems.Keys)
-                    {
-                        containerItem = Server.Current.Database.Get<PlayerItem>(innerKey);
-                        if (containerItem != null
-                            && containerItem.Keywords.Contains(argItem))
-                        {
-                            if (session.Player.Inventory.Count + 1 < session.Player.MaxInventory)
-                            {
-                                // attempt move item from container to inventory
-                                container.ContainedItems.Remove(containerItem.Key);
-                                Server.Current.Database.Save(container);
-                                session.Player.Inventory.Add(containerItem.Key, containerItem.Name);
-                                Server.Current.Database.Save(session.Player);
-                                session.WriteLine("You get {0} from {1}", containerItem.Name, container.Name);
-                                return;
-                            }
+                containerFound = true;
+                PlayerItem containerItem = ItemHelper.FindContainerItem(container, argItem);
 
-                            session.WriteLine("Your hands are too full.");
-                            return;
-                        }
+                // look at items inside container
+                if (containerItem != null)
+                {
+                    if (session.Player.Inventory.Count + 1 < session.Player.MaxInventory)
+                    {
+                        // attempt move item from container to inventory
+                        container.ContainedItems.Remove(containerItem.Key);
+                        Server.Current.Database.Save(container);
+                        session.Player.Inventory.Add(containerItem.Key, containerItem.Name);
+                        Server.Current.Database.Save(session.Player);
+                        session.WriteLine("You get {0} from {1}", containerItem.Name, container.Name);
+                        return;
                     }
+
+                    session.WriteLine("Your hands are too full.");
+                    return;
                 }
             }
 
@@ -378,44 +403,49 @@ namespace FoxMud.Game.Command
                 var room = Server.Current.Database.Get<Room>(session.Player.Location);
                 if (room != null)
                 {
-                    foreach (var key in room.Items.Keys)
+                    container = ItemHelper.FindFloorItem(room, argContainer);
+                    if (container != null
+                        && (container.WearLocation == Wearlocation.Container || container.WearLocation == Wearlocation.Corpse))
                     {
-                        container = Server.Current.Database.Get<PlayerItem>(key);
-                        if (container != null
-                            && container.WearLocation == Wearlocation.Container
-                            && container.Keywords.Contains(argContainer))
+                        // validate this player is allowed to get from this container
+                        if (!string.IsNullOrEmpty(container.AllowedToLoot))
                         {
-                            containerFound = true;
-                            // look at items inside container
-                            foreach (var innerKey in container.ContainedItems.Keys)
+                            if (session.Player.Key != container.AllowedToLoot)
                             {
-                                containerItem = Server.Current.Database.Get<PlayerItem>(innerKey);
-                                if (containerItem != null
-                                    && containerItem.Keywords.Contains(argItem))
-                                {
-                                    if (session.Player.Inventory.Count + 1 > session.Player.MaxInventory)
-                                    {
-                                        session.WriteLine("Your hands are too full.");
-                                        return;
-                                    }
-                                    else if (session.Player.Weight + containerItem.Weight > session.Player.MaxWeight)
-                                    {
-                                        session.WriteLine("You can't carry that much weight.");
-                                        return;
-                                    }
-
-                                    // attempt move item from container to inventory
-                                    container.ContainedItems.Remove(containerItem.Key);
-                                    Server.Current.Database.Save(container);
-                                    session.Player.Inventory.Add(containerItem.Key, containerItem.Name);
-                                    Server.Current.Database.Save(session.Player);
-                                    session.WriteLine("You get {0} from {1}", containerItem.Name, container.Name);
-                                    string roomString = string.Format("%d gets {0} from {1}.", containerItem.Name, container.Name);
-                                    room.SendPlayers(roomString, session.Player, null, session.Player);
-                                    return;
-                                }
+                                session.WriteLine("You can't get anything from that.");
+                                return;
                             }
                         }
+
+                        // look at items inside container
+                        PlayerItem containerItem = ItemHelper.FindContainerItem(container, argItem);
+                        if (containerItem != null)
+                        {
+                            if (session.Player.Inventory.Count + 1 > session.Player.MaxInventory)
+                            {
+                                session.WriteLine("Your hands are too full.");
+                                return;
+                            }
+                                    
+                            if (session.Player.Weight + containerItem.Weight > session.Player.MaxWeight)
+                            {
+                                session.WriteLine("You can't carry that much weight.");
+                                return;
+                            }
+
+                            // attempt move item from container to inventory
+                            container.ContainedItems.Remove(containerItem.Key);
+                            Server.Current.Database.Save(container);
+                            session.Player.Inventory.Add(containerItem.Key, containerItem.Name);
+                            Server.Current.Database.Save(session.Player);
+                            session.WriteLine("You get {0} from {1}", containerItem.Name, container.Name);
+                            string roomString = string.Format("%d gets {0} from {1}.", containerItem.Name, container.Name);
+                            room.SendPlayers(roomString, session.Player, null, session.Player);
+                            return;
+                        }
+
+                        session.WriteLine("Couldn't find that item in {0}", container.Name);
+                        return;
                     }
 
                     session.WriteLine("Can't find a container called {0}", argContainer);
@@ -427,8 +457,7 @@ namespace FoxMud.Game.Command
         }
     }
 
-    [Command("put", false)]
-    [Command("p", false)]
+    [Command("put", false, TickDelay.Instant)]
     class PutCommand : PlayerCommand
     {
         public override void PrintSyntax(Session session)
@@ -520,7 +549,7 @@ namespace FoxMud.Game.Command
         }
     }
 
-    [Command("empty", false)]
+    [Command("empty", false, TickDelay.Instant)]
     class EmptyCommand : PlayerCommand
     {
         public override void PrintSyntax(Session session)
@@ -555,8 +584,7 @@ namespace FoxMud.Game.Command
         }
     }
 
-    [Command("fill", false)]
-    [Command("f", false)]
+    [Command("fill", false, TickDelay.Instant)]
     class FillCommand : PlayerCommand
     {
         public override void PrintSyntax(Session session)
@@ -596,13 +624,12 @@ namespace FoxMud.Game.Command
         }
     }
 
-    [Command("eq", false, "eq")]
-    [Command("equip", false, "equip")]
-    [Command("don", false, "equip")]
-    [Command("wear", false, "equip")]
-    [Command("unequip", false, "unequip")]
-    [Command("remove", false, "unequip")]
-    [Command("rem", false, "unequip")]
+    [Command("eq", false, TickDelay.Instant, "eq")]
+    [Command("equip", false, TickDelay.Instant, "equip")]
+    [Command("don", false, TickDelay.Instant, "equip")]
+    [Command("wear", false, TickDelay.Instant, "equip")]
+    [Command("unequip", false, TickDelay.Instant, "unequip")]
+    [Command("remove", false, TickDelay.Instant, "unequip")]
     class EquipCommand : PlayerCommand
     {
         private readonly string command;
@@ -619,7 +646,6 @@ namespace FoxMud.Game.Command
             session.WriteLine("Syntax: wear <item>");
             session.WriteLine("Syntax: unequip <item>");
             session.WriteLine("Syntax: remove <item>");
-            session.WriteLine("Syntax: rem <item>");
         }
 
         public override void Execute(Session session, CommandContext context)
@@ -628,7 +654,7 @@ namespace FoxMud.Game.Command
             {
                 foreach (var location in Enum.GetValues(typeof(Wearlocation)).Cast<Wearlocation>())
                 {
-                    if (location == Wearlocation.Key || location == Wearlocation.Container || location == Wearlocation.None)
+                    if (location == Wearlocation.Key || location == Wearlocation.Container || location == Wearlocation.None || location == Wearlocation.Corpse)
                         continue;
 
                     // don't display 
@@ -689,7 +715,7 @@ namespace FoxMud.Game.Command
         }
     }
 
-    [Command("list", false)]
+    [Command("list", false, TickDelay.Instant)]
     class ListCommand : PlayerCommand
     {
         public override void PrintSyntax(Session session)
@@ -718,8 +744,7 @@ namespace FoxMud.Game.Command
     }
 
 
-    [Command("buy", false)]
-    [Command("b", false)]
+    [Command("buy", false, TickDelay.Instant)]
     class BuyCommand : PlayerCommand
     {
         public override void PrintSyntax(Session session)
@@ -799,7 +824,7 @@ namespace FoxMud.Game.Command
         }
     }
 
-    [Command("sell", false)]
+    [Command("sell", false, TickDelay.Instant)]
     class SellCommand : PlayerCommand
     {
         public override void PrintSyntax(Session session)
@@ -850,5 +875,4 @@ namespace FoxMud.Game.Command
             Server.Current.Database.Delete<PlayerItem>(itemToSell.Key);
         }
     }
-
 }

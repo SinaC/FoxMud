@@ -24,7 +24,7 @@ namespace FoxMud.Game.Command.Admin
     /// <summary>
     /// admin command to create a room
     /// </summary>
-    [Command("makeroom", true)]
+    [Command("makeroom", true, TickDelay.Instant)]
     class MakeRoomCommand : PlayerCommand
     {
         public override void PrintSyntax(Session session)
@@ -68,7 +68,7 @@ namespace FoxMud.Game.Command.Admin
     /// <summary>
     /// admin command to jump to a specific room
     /// </summary>
-    [Command("goto", true)]
+    [Command("goto", true, TickDelay.Instant)]
     class GotoCommand : CallbackCommand
     {
         public override void PrintSyntax(Session session)
@@ -105,7 +105,7 @@ namespace FoxMud.Game.Command.Admin
         }
     }
 
-    [Command("roomtitle", true)]
+    [Command("roomtitle", true, TickDelay.Instant)]
     class RoomTitleCommand : PlayerCommand
     {
         public override void PrintSyntax(Session session)
@@ -125,7 +125,7 @@ namespace FoxMud.Game.Command.Admin
         }
     }
 
-    [Command("roomdesc", true)]
+    [Command("roomdesc", true, TickDelay.Instant)]
     class DescriptionCommand : PlayerCommand
     {
         public override void PrintSyntax(Session session)
@@ -151,7 +151,7 @@ namespace FoxMud.Game.Command.Admin
     /// example: makeexit north void
     /// example: makeexit south <close> awesome room
     /// </summary>
-    [Command("makeexit", true)]
+    [Command("makeexit", true, TickDelay.Instant)]
     class MakeExitCommand : CallbackCommand
     {
         public override void PrintSyntax(Session session)

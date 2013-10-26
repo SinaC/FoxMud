@@ -8,7 +8,7 @@ using FoxMud.Game.Item;
 
 namespace FoxMud.Game.Command.Admin
 {
-    [Command("template", true)]
+    [Command("template", true, TickDelay.Instant)]
     [Command("makeitem", true)]
     class TemplateCommand : PlayerCommand
     {
@@ -152,7 +152,7 @@ namespace FoxMud.Game.Command.Admin
     /// <summary>
     /// both templates and duplicates an item into inventory
     /// </summary>
-    [Command("container", true)]
+    [Command("container", true, TickDelay.Instant)]
     class ContainerCommand : PlayerCommand
     {
         protected readonly Dictionary<ContainerArgType, int> args = new Dictionary<ContainerArgType, int>()

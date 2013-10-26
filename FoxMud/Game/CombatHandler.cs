@@ -141,6 +141,16 @@ namespace FoxMud.Game
             return result;
         }
 
+        public void Print(Player player)
+        {
+            if (playerText.ContainsKey(player))
+            {
+                // do an immediate print for player
+                player.Send(playerText.FirstOrDefault(p => p.Key == player).Value, null);
+                playerText.Remove(player);
+            }
+        }
+
         public static CombatRound operator +(CombatRound r1, CombatRound r2)
         {
             foreach (var player in r2.playerText)
@@ -189,9 +199,9 @@ namespace FoxMud.Game
         private readonly List<NonPlayer> mobs = new List<NonPlayer>();
         private bool isAggro;
         private Room room;
-        private Dictionary<string, string> killingBlows = new Dictionary<string, string>();
         private readonly List<Player> fightersToIgnore = new List<Player>();
         private readonly List<Player> combatOrder = new List<Player>();
+        private readonly List<Player> removeFromCombatLater = new List<Player>();
 
         public IEnumerable<Player> GetFighters()
         {
@@ -210,14 +220,18 @@ namespace FoxMud.Game
 
         public void AddFighter(Player player)
         {
-            fighters.Add(player);
-            fightersToIgnore.Add(player);
-            combatOrder.Add(player);
+            if (!fighters.Contains(player))
+                fighters.Add(player);
+            if (!fightersToIgnore.Contains(player))
+                fightersToIgnore.Add(player);
+            if (!combatOrder.Contains(player))
+                combatOrder.Add(player);
         }
 
         public void AddMob(NonPlayer npc)
         {
-            mobs.Add(npc);
+            if (!mobs.Contains(npc))
+                mobs.Add(npc);
         }
 
         internal void Start()
@@ -254,36 +268,38 @@ namespace FoxMud.Game
             {
                 roundText += DoMobHits();
 
-                //roundText += HandleDeadPlayers();
-
                 roundText += DoPlayerHits();
-
-                //roundText += HandleDeadMobs();
             }
             else
             {
                 roundText += DoPlayerHits();
 
-                //roundText += HandleDeadMobs();
-
                 roundText += DoMobHits();
-
-                //roundText += HandleDeadPlayers();
             }
 
             var textToSend = roundText.Print(combatOrder);
 
-            combatOrder.RemoveAll(p => p.HitPoints < 0);
-
             foreach (var player in textToSend.Keys)
                 player.Send(textToSend[player], null);
 
+            foreach (var removing in removeFromCombatLater)
+                combatOrder.Remove(removing);
+
             // send text to room
-            //room.SendPlayers(roundText.RoomText, null, null, roundText.PlayerText.Keys.ToArray());
             room.SendPlayers(roundText.GetRoomText(), null, null, fightersToIgnore.ToArray());
 
-            fightersToIgnore.RemoveAll(p => p.HitPoints < 0);
-
+            // no longer ignore incapacitated players
+            foreach (var removing in removeFromCombatLater)
+            {
+                fightersToIgnore.Remove(removing);
+                
+                if (removing.HitPoints < Server.DeadHitPoints)
+                    removing.DieForReal();
+            }
+            
+            // reset each round
+            removeFromCombatLater.Clear();
+            
             Thread.Sleep((int) combatTickRate);
         }
 
@@ -303,8 +319,6 @@ namespace FoxMud.Game
 
             try
             {
-                var killedBy = new Dictionary<Player, NonPlayer>();
-
                 // mob hits first
                 foreach (var npc in mobs)
                 {
@@ -316,25 +330,32 @@ namespace FoxMud.Game
                             .Where(p => p.HitPoints > 0)
                             .OrderBy(x => Guid.NewGuid()).FirstOrDefault();
 
-                        round += npc.Hit(playerToHit);
+                        round += npc.Hit(playerToHit); // queues "mob hit you" and "mob hit <player>" text
 
                         if (playerToHit.HitPoints <= 0)
                         {
-                            killedBy.Add(playerToHit, npc);
-                            fighters.Remove(playerToHit);
+                            playerToHit.Die(); // changes status
 
-                            round += playerToHit.Die();
+                            var statusText = Player.GetStatusText(playerToHit.Status).ToUpper();
+                            
+                            var playerText = string.Format("You are {0}!!!", statusText);
+                            if (playerToHit.HitPoints < Server.DeadHitPoints)
+                                playerText += " You have respawned, but you're in a different location.\n" +
+                                              "Your corpse will remain for a short while, but you'll want to retrieve your\n" +
+                                              "items in short order.";
+                            
+                            var groupText = string.Format("{0} is {1}!!!", playerToHit.Forename, statusText);
+
+                            round.AddText(playerToHit, playerText, CombatTextType.Player);
+                            round.AddText(playerToHit, groupText, CombatTextType.Group);
+                            round.AddText(playerToHit, groupText, CombatTextType.Room);
+
+                            fighters.Remove(playerToHit);
+                            removeFromCombatLater.Add(playerToHit);
+
                             if (fighters.Count == 0)
                                 break;
                         }
-                    }
-                }
-
-                if (killedBy.Count > 0)
-                {
-                    foreach (var kb in killedBy)
-                    {
-                        round.AddText(kb.Key, string.Format("{0} is DEAD!!!\n", kb.Key.Forename), CombatTextType.KillingBlow);
                     }
                 }
             }

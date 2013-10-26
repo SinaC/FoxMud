@@ -32,6 +32,7 @@ namespace FoxMud.Game.World
         public double TalkProbability { get; set; }
         public long MinimumTalkInterval { get; set; }
         public int HitPoints { get; set; }
+        public int MaxHitPoints { get; set; }
         public bool Aggro { get; set; }
         public int Armor { get; set; }
         public int HitRoll { get; set; }
@@ -40,6 +41,13 @@ namespace FoxMud.Game.World
         public List<string> Inventory { get; private set; }
         public Dictionary<Wearlocation, string> Equipped { get; private set; }
         public bool IsShopkeeper { get; set; }
+        public int Strength { get; set; }
+        public int Dexterity { get; set; }
+        public int Constitution { get; set; }
+        public int Intelligence { get; set; }
+        public int Wisdom { get; set; }
+        public int Charisma { get; set; }
+        public int Luck { get; set; }
 
         public MobTemplate()
         {
@@ -82,6 +90,14 @@ namespace FoxMud.Game.World
         public Dictionary<Wearlocation, WearSlot> Equipped { get; private set; }
         public bool IsShopkeeper { get; set; }
         public int HitPoints { get; set; }
+        public int MaxHitPoints { get; set; }
+        public int Strength { get; set; }
+        public int Dexterity { get; set; }
+        public int Constitution { get; set; }
+        public int Intelligence { get; set; }
+        public int Wisdom { get; set; }
+        public int Charisma { get; set; }
+        public int Luck { get; set; }
 
         public CombatRound Die(bool shutdown = false)
         {
@@ -102,10 +118,11 @@ namespace FoxMud.Game.World
                 dupedCorpse.Name = string.Format("The corpse of {0}", Name);
                 dupedCorpse.Description = string.Format("The corpse of {0}", Name.ToLower());
                 dupedCorpse.Keywords = new List<string>() {"corpse", Name}.ToArray();
+                dupedCorpse.WearLocation = Wearlocation.Corpse;
 
                 // put corpse in room
                 var room = RoomHelper.GetPlayerRoom(Location);
-                room.Items[dupedCorpse.Key] = dupedCorpse.Name;
+                room.AddItem(dupedCorpse);
                 Console.WriteLine("NEW CORPSE: {0}", dupedCorpse.Key);
                 room.CorpseQueue[dupedCorpse.Key] = DateTime.Now.AddMilliseconds(Server.CorpseDecayTime);
 
@@ -208,8 +225,6 @@ namespace FoxMud.Game.World
 
                 var groupText = string.Format("{0} hits {1}!\n", Name, player.Forename);
                 round.AddText(player, groupText, CombatTextType.Group);
-
-                round.AddText(null, groupText, CombatTextType.Room);
             }
             else
             {
@@ -219,8 +234,6 @@ namespace FoxMud.Game.World
 
                 var groupText = string.Format("{0} misses {1}!\n", Name, player.Forename);
                 round.AddText(player, groupText, CombatTextType.Group);
-
-                round.AddText(null, groupText, CombatTextType.Room);
             }
 
             return round;

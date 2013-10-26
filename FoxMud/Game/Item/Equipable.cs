@@ -20,7 +20,8 @@ namespace FoxMud.Game.Item
         Feet,
         None,
         Container,
-        Key
+        Key,
+        Corpse,
     }
 
     enum Capacity

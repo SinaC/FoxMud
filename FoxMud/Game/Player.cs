@@ -3,6 +3,7 @@ using System.Collections.Generic;
 using System.Linq;
 using System.Security.Cryptography;
 using System.Text;
+using AutoMapper;
 using FoxMud.Db;
 using FoxMud.Game.Item;
 using FoxMud.Game.World;
@@ -26,6 +27,7 @@ namespace FoxMud.Game
         Fighting,
         Incapacitated, // something like >= -3 hp
         MortallyWounded, // will die if unaided
+        Dead,
     }
 
     struct WearSlot
@@ -104,7 +106,6 @@ namespace FoxMud.Game
         public bool IsAdmin { get; set; }
         public string Prompt { get; set; }
         public Dictionary<string, string> Inventory { get; private set; }
-        public int HitPoints { get; set; }
         public int MaxHitPoints { get; set; }
         public long Gold { get; set; }
         public int Experience { get; set; }
@@ -126,12 +127,28 @@ namespace FoxMud.Game
         public int Wisdom { get; set; }
         public int Charisma { get; set; }
         public int Luck { get; set; }
+        public int HitPoints { get; set; }
+        //public int HitPoints
+        //{
+        //    get { return _hitPoints; }
+        //    set
+        //    {
+        //        if (value < Server.DeadHitPoints)
+        //            DieForReal();
+        //        else if (value < Server.IncapacitatedHitPoints)
+        //            Die();
+        //        else
+        //            _hitPoints = value;
+        //    }
+        //}
 
         [JsonIgnore]
         public int Weight
         {
             get
             {
+                _weight = 0;
+
                 foreach (var key in Inventory.Keys.Union(Equipped.Values.Select(w => w.Key)))
                 {
                     var item = Server.Current.Database.Get<PlayerItem>(key);
@@ -252,18 +269,85 @@ namespace FoxMud.Game
             return round;
         }
 
-        public CombatRound Die()
+        public void Die()
         {
-            var round = new CombatRound();
+            if (HitPoints >= Server.DeadHitPoints)
+            {
+                Status = HitPoints >= Server.IncapacitatedHitPoints
+                             ? GameStatus.Incapacitated
+                             : GameStatus.MortallyWounded;
+            }
+            else
+            {
+                Status = GameStatus.Dead;
+            }
+        }
 
-            round.AddText(this,
-                          string.Format("You're {0} and may die if unaided!!!\n",
-                                        HitPoints >= Server.IncapacitatedHitPoints ? "INCAPACITATED" : "MORTALLY WOUNDED"),
-                          CombatTextType.Player);
-            round.AddText(null, string.Format("{0} is DEAD!!!\n", Forename), CombatTextType.Room);
-            Status = HitPoints >= Server.IncapacitatedHitPoints ? GameStatus.Incapacitated : GameStatus.MortallyWounded;
+        public void DieForReal()
+        {
+            Status = GameStatus.Sitting;
+            HitPoints = 1;
+            
+            var deathRoom = RoomHelper.GetPlayerRoom(Location);
+            deathRoom.RemovePlayer(this);
 
-            return round;
+            // create corpse
+            var corpse = Server.Current.Database.Get<Template>("corpse");
+            var dupedCorpse = Mapper.Map<PlayerItem>(corpse);
+            var corpseName = string.Format("The corpse of {0}", Forename);
+            dupedCorpse.AllowedToLoot = Key; // this should be the only place this is used
+            dupedCorpse.Name = corpseName;
+            dupedCorpse.Description = corpseName;
+            dupedCorpse.Keywords = new [] {"corpse", Forename};
+            dupedCorpse.WearLocation = Wearlocation.Corpse;
+            Console.WriteLine("NEW CORPSE: {0}", dupedCorpse.Key);
+            deathRoom.CorpseQueue[dupedCorpse.Key] = DateTime.Now.AddMilliseconds(Server.CorpseDecayTime);
+
+            // copy player items to corpse
+            foreach (var item in Inventory
+                .Select(x => new {Key = x.Key, Value = x.Value})
+                .Union(Equipped.Values.Select(x => new {Key = x.Key, Value = x.Name})
+                .ToArray()))
+            {
+                dupedCorpse.ContainedItems.Add(item.Key, item.Value);
+            }
+
+            // clear inventory/equipped
+            Inventory.Clear();
+            Equipped.Clear();
+
+            // cache, don't save
+            Server.Current.Database.Put(dupedCorpse);
+            deathRoom.AddItem(dupedCorpse);
+            
+            var room = RoomHelper.GetPlayerRoom(RespawnRoom);
+            Location = RespawnRoom;
+            room.AddPlayer(this);
+            
+            Server.Current.Database.Save(this);
+        }
+
+        public static string GetStatusText(GameStatus status)
+        {
+            switch (status)
+            {
+                case GameStatus.Dead:
+                    return "Dead";
+                case GameStatus.Fighting:
+                    return "Fighting";
+                case GameStatus.Incapacitated:
+                    return "Incapacitated";
+                case GameStatus.MortallyWounded:
+                    return "Mortally wounded";
+                case GameStatus.Sitting:
+                    return "Sitting";
+                case GameStatus.Sleeping:
+                    return "Sleeping";
+                case GameStatus.Standing:
+                    return "Standing";
+                default:
+                    return string.Empty;
+            }
         }
     }
 }

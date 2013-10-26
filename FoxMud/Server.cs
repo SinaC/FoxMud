@@ -45,6 +45,7 @@ namespace FoxMud
         public static int CorpseDecayTime { get { return 10*60*1000; } } // 10 minutes
         public static int MobWalkInterval { get { return 5*60*1000; } } // 5 minutes
         public static int IncapacitatedHitPoints { get { return -3; } }
+        public static int DeadHitPoints { get { return -10; } }
         public static int RegenTime { get { return 30*1000; } } // 30 seconds
 
         private const int TickRate = 20;
@@ -70,6 +71,7 @@ namespace FoxMud
             Areas = Database.GetAll<Area>();
             RepopHandler = new RepopHandler(TickTime);
             CombatHandler = new CombatHandler(CombatTickRate);
+            RegenHandler = new RegenHandler(RegenTime);
             
             // Setup services
             ConnectionListener.ConnectionHandler = new StartupConnectionHandler(ConnectionMonitor, SessionMonitor);
@@ -83,6 +85,7 @@ namespace FoxMud
         public Database Database { get; private set; }
         public CommandLookup CommandLookup { get; private set; }
         public CombatHandler CombatHandler { get; private set; }
+        public RegenHandler RegenHandler { get; private set; }
         public RepopHandler RepopHandler { get; private set; }
         public IEnumerable<Area> Areas { get; private set; }
         public Random Random { get; private set; }
@@ -96,6 +99,7 @@ namespace FoxMud
             ConnectionListener.Start();
             RepopHandler.Start();
             CombatHandler.Start();
+            RegenHandler.Start();
 
             DoLoop();
         }

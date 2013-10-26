@@ -67,6 +67,9 @@ namespace FoxMud.Game.Item
         public Dictionary<string, string> ContainedItems { get; set; }
 
         [JsonIgnore]
+        public string AllowedToLoot { get; set; }
+
+        [JsonIgnore]
         public int ContainerWeight
         {
             get
@@ -134,7 +137,7 @@ namespace FoxMud.Game.Item
         {
             session.WriteLine(Description);
 
-            if (WearLocation == Wearlocation.Container)
+            if (WearLocation == Wearlocation.Container || WearLocation == Wearlocation.Corpse)
             {
                 if (ContainedItems.Count == 0)
                 {

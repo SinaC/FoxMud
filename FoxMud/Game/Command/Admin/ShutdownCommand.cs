@@ -8,7 +8,7 @@ using FoxMud.Game.World;
 
 namespace FoxMud.Game.Command.Admin
 {
-    [Command("shutdown", true)]
+    [Command("shutdown", true, TickDelay.Instant)]
     class ShutdownCommand : PlayerCommand
     {
         public override void PrintSyntax(Session session)

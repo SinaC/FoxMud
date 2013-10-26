@@ -71,6 +71,7 @@
     <Compile Include="Game\Command\ItemCommand.cs" />
     <Compile Include="Game\Command\Movement\DoorCommand.cs" />
     <Compile Include="Game\Command\Movement\MoveCommand.cs" />
+    <Compile Include="Game\Command\Movement\PositionCommand.cs" />
     <Compile Include="Game\Command\SaveCommand.cs" />
     <Compile Include="Game\Command\Visual\LookCommand.cs" />
     <Compile Include="Game\DirectionHelper.cs" />
@@ -78,6 +79,7 @@
     <Compile Include="Game\Item\Item.cs" />
     <Compile Include="Game\NonPlayerResolver.cs" />
     <Compile Include="Game\Player.cs" />
+    <Compile Include="Game\RegenHandler.cs" />
     <Compile Include="Game\State\CreateNewPlayer.cs" />
     <Compile Include="Game\State\EnterWorld.cs" />
     <Compile Include="Game\State\PlayerLogin.cs" />

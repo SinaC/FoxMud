@@ -152,7 +152,7 @@ namespace FoxMud.Game.Command.Visual
             }
 
             // find item to look at
-            foreach (var key in session.Player.Inventory.Keys)
+            foreach (var key in session.Player.Inventory.Keys.Union(room.Items.Keys))
             {
                 var item = Server.Current.Database.Get<PlayerItem>(key);
                 if (item != null && item.Keywords != null && item.Keywords.Contains(context.ArgumentString))

@@ -150,11 +150,7 @@ namespace FoxMud.Game
 
                 _experience += value;
                 if (ExperienceResolver.CanLevelUp(Level, _experience))
-                {
-                    Level++;
-                    if (OutputWriter != null)
-                        Send(string.Format("You gained enough experience to advance to level {0}", Level), null);
-                }
+                    ExperienceResolver.LevelUp(this);
             }
         }
 

@@ -104,7 +104,13 @@ namespace FoxMud.Game.State
                 Location = Server.StartRoom,
                 Approved = Server.AutoApprovedEnabled,
                 Gender = gender,
-                Prompt = ">"
+                Prompt = ">",
+                Age = 1,
+                Gold = 10,
+                Level = 1,
+                Experience = ExperienceResolver.FirstLevel,
+                RespawnRoom = Server.StartRoom,
+                Status = GameStatus.Standing,
             };
 
             Server.Current.Database.Save(player);

@@ -35,12 +35,12 @@ namespace FoxMud.Game.Command.Visual
                 if (player == session.Player)
                     continue;
 
-                session.WriteLine("{0} is here.\n", session.Player.GetOtherPlayerDescription(player));
+                session.WriteLine("{0} is here.", session.Player.GetOtherPlayerDescription(player));
             }
 
             foreach (var npc in room.GetNpcs())
             {
-                session.WriteLine("{0} is here.\n", npc.Name);
+                session.WriteLine("{0} is here.", npc.Name);
             }
         }
 

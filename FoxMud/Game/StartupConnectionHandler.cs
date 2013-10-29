@@ -5,6 +5,7 @@ using System.Net.Sockets;
 using System.Text;
 using System.Threading.Tasks;
 using FoxMud.Game.State;
+using FoxMud.Text.Transformers;
 
 namespace FoxMud.Game
 {
@@ -26,6 +27,7 @@ namespace FoxMud.Game
             connectionMonitor.RegisterConnection(connection);
             Session session = new Session(connection);
             sessionMonitor.RegisterSession(session);
+            session.OutputTransformer = new ColorCodeToAnsiTransformer();
             session.PushState(new SplashState());
         }
     }

@@ -37,7 +37,7 @@ namespace FoxMud.Game.State
 
             if (room != null)
             {
-                room.SendPlayers("%d arrives\n", Session.Player, null, Session.Player);
+                room.SendPlayers("%d arrives.\n", Session.Player, null, Session.Player);
             }
 
             base.OnStateEnter();

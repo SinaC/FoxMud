@@ -73,8 +73,11 @@
     <Compile Include="Game\Command\Movement\MoveCommand.cs" />
     <Compile Include="Game\Command\Movement\PositionCommand.cs" />
     <Compile Include="Game\Command\SaveCommand.cs" />
+    <Compile Include="Game\Command\Stat\LevelCommand.cs" />
+    <Compile Include="Game\Command\Visual\ColorCommand.cs" />
     <Compile Include="Game\Command\Visual\LookCommand.cs" />
     <Compile Include="Game\DirectionHelper.cs" />
+    <Compile Include="Game\ExperienceResolver.cs" />
     <Compile Include="Game\Item\Equipable.cs" />
     <Compile Include="Game\Item\Item.cs" />
     <Compile Include="Game\NonPlayerResolver.cs" />
@@ -87,6 +90,7 @@
     <Compile Include="Game\State\SplashState.cs" />
     <Compile Include="Game\State\TextEditor.cs" />
     <Compile Include="Game\State\TextToken.cs" />
+    <Compile Include="Game\StatResolver.cs" />
     <Compile Include="Game\World\Area.cs" />
     <Compile Include="Game\World\NonPlayer.cs" />
     <Compile Include="Game\World\RepopHandler.cs" />
@@ -106,6 +110,8 @@
     <Compile Include="Game\StartupConnectionHandler.cs" />
     <Compile Include="StringHelpers.cs" />
     <Compile Include="Text\OutputTextWriter.cs" />
+    <Compile Include="Text\TextTransformer.cs" />
+    <Compile Include="Text\Transformers\ColorCodeToAnsiTransformer.cs" />
   </ItemGroup>
   <ItemGroup>
     <None Include="App.config" />

@@ -20,6 +20,7 @@ namespace FoxMud
             this.connection.Closed += OnConnectionClosed;
         }
 
+        public TextTransformer OutputTransformer { get; set; }
         public Player Player { get; set; }
 
         private SessionStateBase CurrentState
@@ -123,6 +124,9 @@ namespace FoxMud
             if (connection == null)
                 return;
 
+            if (OutputTransformer != null)
+                value = OutputTransformer.Transform(value);
+
             connection.Write(value);
         }
 
@@ -140,6 +144,9 @@ namespace FoxMud
         {
             if (connection == null)
                 return;
+
+            if (OutputTransformer != null)
+                value = OutputTransformer.Transform(value);
 
             connection.WriteLine(value);
         }

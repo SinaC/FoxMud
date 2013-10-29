@@ -32,9 +32,19 @@ namespace FoxMud.Game.Item
         // in-game item attributes
         public int HpBonus { get; set; }
         public int ArmorBonus { get; set; }
+        public int DamRoll { get; set; }
+        public int HitRoll { get; set; }
         public int MinDamage { get; set; }
         public int MaxDamage { get; set; }
         public Dictionary<string, string> ContainedItems { get; set; }
+
+        public int StrengthBonus { get; set; }
+        public int DexterityBonus { get; set; }
+        public int ConstitutionBonus { get; set; }
+        public int IntelligenceBonus { get; set; }
+        public int WisdomBonus { get; set; }
+        public int CharismaBonus { get; set; }
+        public int LuckBonus { get; set; }
     }
 
 
@@ -62,9 +72,19 @@ namespace FoxMud.Game.Item
         // in-game item attributes
         public int HpBonus { get; set; }
         public int ArmorBonus { get; set; }
+        public int DamRoll { get; set; }
+        public int HitRoll { get; set; }
         public int MinDamage { get; set; }
         public int MaxDamage { get; set; }
         public Dictionary<string, string> ContainedItems { get; set; }
+
+        public int StrengthBonus { get; set; }
+        public int DexterityBonus { get; set; }
+        public int ConstitutionBonus { get; set; }
+        public int IntelligenceBonus { get; set; }
+        public int WisdomBonus { get; set; }
+        public int CharismaBonus { get; set; }
+        public int LuckBonus { get; set; }
 
         [JsonIgnore]
         public string AllowedToLoot { get; set; }
@@ -74,10 +94,10 @@ namespace FoxMud.Game.Item
         {
             get
             {
-                if (this.WearLocation != Wearlocation.Container)
+                if (WearLocation != Wearlocation.Container)
                     return Weight;
 
-                int _weight = this.Weight;
+                int _weight = Weight;
                 foreach (var key in ContainedItems.Keys)
                 {
                     var item = Server.Current.Database.Get<PlayerItem>(key);
@@ -93,7 +113,8 @@ namespace FoxMud.Game.Item
 
         [JsonConstructor]
         private PlayerItem(string key, string name, string description, string[] keywords, int weight, int value, Wearlocation wearLocation,
-            int hpBonus, int armorBonus, int mindDamage, int maxDamage)
+            int hpBonus, int armorBonus, int mindDamage, int maxDamage, int strengthBonus, int dexterityBonus, int constitutionBonus,
+            int intelligenceBonus, int wisdomBonus, int charismaBonus, int luckBonus)
         {
             _guid = new Guid(key);
             Name = name;
@@ -106,6 +127,13 @@ namespace FoxMud.Game.Item
             ArmorBonus = armorBonus;
             MinDamage = mindDamage;
             MaxDamage = maxDamage;
+            StrengthBonus = strengthBonus;
+            DexterityBonus = dexterityBonus;
+            ConstitutionBonus = constitutionBonus;
+            IntelligenceBonus = intelligenceBonus;
+            WisdomBonus = wisdomBonus;
+            CharismaBonus = charismaBonus;
+            LuckBonus = LuckBonus;
         }
 
         // need this empty constructor for automapper
@@ -161,22 +189,22 @@ namespace FoxMud.Game.Item
         public virtual void Equip(Session session)
         {
             // don't equip .None or .Key
-            if (this.WearLocation == Wearlocation.None 
-                || this.WearLocation == Wearlocation.Key 
-                || this.WearLocation == Wearlocation.Container)
+            if (WearLocation == Wearlocation.None 
+                || WearLocation == Wearlocation.Key 
+                || WearLocation == Wearlocation.Container)
             {
                 session.WriteLine("You can't equip that.");
                 return;
             }
 
-            if (session.Player.Equipped.ContainsKey(this.WearLocation))
+            if (session.Player.Equipped.ContainsKey(WearLocation))
             {
                 session.WriteLine("You've already equipped that slot.");
                 return;
             }
 
             // can't equip both hands if either single hand is equipped
-            if (this.WearLocation == Wearlocation.BothHands
+            if (WearLocation == Wearlocation.BothHands
                 && (session.Player.Equipped.ContainsKey(Wearlocation.LeftHand)
                     || session.Player.Equipped.ContainsKey(Wearlocation.RightHand)))
             {
@@ -185,35 +213,35 @@ namespace FoxMud.Game.Item
             }
 
             // can't eqiup either hand if both hands is equipped
-            if ((this.WearLocation == Wearlocation.RightHand || this.WearLocation == Wearlocation.LeftHand)
+            if ((WearLocation == Wearlocation.RightHand || WearLocation == Wearlocation.LeftHand)
                 && session.Player.Equipped.ContainsKey(Wearlocation.BothHands))
             {
                 session.WriteLine("You're already using both hands.");
                 return;
             }
 
-            session.Player.Equipped[this.WearLocation] = new WearSlot()
+            session.Player.Equipped[WearLocation] = new WearSlot()
             {
-                Key = this.Key,
-                Name = this.Name
+                Key = Key,
+                Name = Name
             };
 
             // remove from inventory
-            session.Player.Inventory.Remove(this.Key);
+            session.Player.Inventory.Remove(Key);
 
-            session.WriteLine("You don {0}.", this.Name);
+            session.WriteLine("You don {0}.", Name);
             RoomHelper.GetPlayerRoom(session.Player)
-                .SendPlayers(string.Format("%d dons {0}", this.Name), session.Player, null, session.Player);
+                .SendPlayers(string.Format("%d dons {0}", Name), session.Player, null, session.Player);
         }
 
         public virtual void Unequip(Session session)
         {
-            session.Player.Equipped.Remove(this.WearLocation);
-            session.Player.Inventory[this.Key] = this.Name;
+            session.Player.Equipped.Remove(WearLocation);
+            session.Player.Inventory[Key] = Name;
 
-            session.WriteLine("You remove {0}", this.Name);
+            session.WriteLine("You remove {0}", Name);
             RoomHelper.GetPlayerRoom(session.Player)
-                .SendPlayers(string.Format("%d removes {0}", this.Name), session.Player, null, session.Player);
+                .SendPlayers(string.Format("%d removes {0}", Name), session.Player, null, session.Player);
         }
     }
 }

@@ -19,7 +19,7 @@ namespace FoxMud.Game
         {
             int oldXp = Convert.ToInt32(A * Math.Exp(B * (level - 1)));
             int newXp = Convert.ToInt32(A * Math.Exp(B * level));
-            return newXp - oldXp > 0;
+            return newXp - oldXp > experience;
         }
 
         public static int ExperienceRequired(int level)
@@ -57,7 +57,11 @@ namespace FoxMud.Game
                 hp++;
 
             player.BaseHp += hp;
-            player.Send(string.Format("`YYou gained enough experience to advance to level {0}!\nYou gained {1} hit points!", player.Level, hp), null);
+            if (player.OutputWriter != null)
+                player.Send(
+                    string.Format(
+                        "`YYou gained enough experience to advance to level {0}!\nYou gained {1} hit points!",
+                        player.Level, hp), null);
         }
     }
 }

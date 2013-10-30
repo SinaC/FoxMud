@@ -14,8 +14,6 @@ namespace FoxMud.Game.Command
         WearLocation,
         Weight,
         Value,
-        MinDamage,
-        MaxDamage,
         HpBonus,
         ArmorBonus,
         Keywords,

@@ -19,18 +19,16 @@ namespace FoxMud.Game.Command.Admin
                 { ItemArgType.WearLocation, 2 },
                 { ItemArgType.Weight, 3 },
                 { ItemArgType.Value, 4 },
-                { ItemArgType.MinDamage, 5 },
-                { ItemArgType.MaxDamage, 6 },
-                { ItemArgType.HpBonus, 7 },
-                { ItemArgType.ArmorBonus, 8 },
-                { ItemArgType.Keywords, 9 },
+                { ItemArgType.HpBonus, 5 },
+                { ItemArgType.ArmorBonus, 6 },
+                { ItemArgType.Keywords, 7 },
                 
             };
 
         public override void PrintSyntax(Session session)
         {
-            session.WriteLine("Syntax: template \"name of item\" \"description\" <wear> <weight> <$> <min> <max> <hp> <armor> \"keywords\" ]");
-            session.WriteLine("Syntax: makeitem \"name of item\" [ \"description\" <wear> <weight> <$> <min> <max> <hp> <armor> \"keywords\" ]");
+            session.WriteLine("Syntax: template \"name of item\" \"description\" <wear> <weight> <$> <hp> <armor> \"keywords\" ]");
+            session.WriteLine("Syntax: makeitem \"name of item\" [ \"description\" <wear> <weight> <$> <hp> <armor> \"keywords\" ]");
         }
 
         public override void Execute(Session session, CommandContext context)
@@ -95,8 +93,6 @@ namespace FoxMud.Game.Command.Admin
                         dupedItem.Weight = Convert.ToInt32(context.Arguments[args[ItemArgType.Weight]]);
                         dupedItem.Value = Convert.ToInt32(context.Arguments[args[ItemArgType.Value]]);
                         dupedItem.WearLocation = (Wearlocation) Enum.Parse(typeof (Wearlocation), context.Arguments[args[ItemArgType.WearLocation]]);
-                        dupedItem.MinDamage = Convert.ToInt32(context.Arguments[args[ItemArgType.MinDamage]]);
-                        dupedItem.MaxDamage = Convert.ToInt32(context.Arguments[args[ItemArgType.MaxDamage]]);
                         dupedItem.ArmorBonus = Convert.ToInt32(context.Arguments[args[ItemArgType.ArmorBonus]]);
                         dupedItem.HpBonus = Convert.ToInt32(context.Arguments[args[ItemArgType.HpBonus]]);
                     }
@@ -124,8 +120,6 @@ namespace FoxMud.Game.Command.Admin
                     WearLocation = (Wearlocation)Enum.Parse(typeof(Wearlocation), values[args[ItemArgType.WearLocation]]),
                     Weight = Convert.ToInt32(values[args[ItemArgType.Weight]]),
                     Value = Convert.ToInt32(values[args[ItemArgType.Value]]),
-                    MinDamage = Convert.ToInt32(values[args[ItemArgType.MinDamage]]),
-                    MaxDamage = Convert.ToInt32(values[args[ItemArgType.MaxDamage]]),
                     HpBonus = Convert.ToInt32(values[args[ItemArgType.HpBonus]]),
                     ArmorBonus = Convert.ToInt32(values[args[ItemArgType.ArmorBonus]]),
                 };
@@ -137,14 +131,8 @@ namespace FoxMud.Game.Command.Admin
             Enum.Parse(typeof (Wearlocation), values[args[ItemArgType.WearLocation]]);
 
             // unacceptable negative values (will throw FormatExceptions if they're not numbers
-            if (Convert.ToInt32(values[args[ItemArgType.MinDamage]]) < 0 ||
-                Convert.ToInt32(values[args[ItemArgType.MaxDamage]]) < 0 ||
-                Convert.ToInt32(values[args[ItemArgType.Weight]]) < 0 ||
+            if (Convert.ToInt32(values[args[ItemArgType.Weight]]) < 0 ||
                 Convert.ToInt32(values[args[ItemArgType.Value]]) < 0)
-                throw new Exception();
-
-            // min must be less than max
-            if (Convert.ToInt32(values[args[ItemArgType.MinDamage]]) > Convert.ToInt32(values[args[ItemArgType.MaxDamage]]))
                 throw new Exception();
         }
     }

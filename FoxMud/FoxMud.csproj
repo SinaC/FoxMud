@@ -54,6 +54,7 @@
     <Compile Include="Game\CombatHandler.cs" />
     <Compile Include="Game\Command\Admin\AdminItemCommand.cs" />
     <Compile Include="Game\Command\Admin\AdminRoomCommands.cs" />
+    <Compile Include="Game\Command\Admin\MobCommand.cs" />
     <Compile Include="Game\Command\Admin\ShutdownCommand.cs" />
     <Compile Include="Game\Command\ArgumentType.cs" />
     <Compile Include="Game\Command\Combat\KillCommand.cs" />
@@ -78,6 +79,7 @@
     <Compile Include="Game\Command\Visual\LookCommand.cs" />
     <Compile Include="Game\DirectionHelper.cs" />
     <Compile Include="Game\ExperienceResolver.cs" />
+    <Compile Include="Game\GenericCharacter.cs" />
     <Compile Include="Game\Item\Equipable.cs" />
     <Compile Include="Game\Item\Item.cs" />
     <Compile Include="Game\NonPlayerResolver.cs" />

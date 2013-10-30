@@ -36,7 +36,7 @@ namespace FoxMud.Game
         public string Name { get; set; }
     }
 
-    class Player : Storable
+    class Player : GenericCharacter, Storable
     {
         private string _passwordHash;
         private int _weight;
@@ -97,17 +97,7 @@ namespace FoxMud.Game
         {
             get { return Forename.ToLower(); }
         }
-
-        public int BaseStrength { get; set; }
-        public int BaseDexterity { get; set; }
-        public int BaseConstitution { get; set; }
-        public int BaseIntelligence { get; set; }
-        public int BaseWisdom { get; set; }
-        public int BaseCharisma { get; set; }
-        public int BaseLuck { get; set; }
-        public int BaseDamRoll { get; set; }
-        public int BaseHitRoll { get; set; }
-        public int BaseHp { get; set; }
+        
         public Dictionary<string, string> RememberedNames { get; private set; }
         public string Forename { get; set; }
         public string ShortDescription { get; set; }
@@ -117,9 +107,7 @@ namespace FoxMud.Game
         public bool Approved { get; set; }
         public bool IsAdmin { get; set; }
         public string Prompt { get; set; }
-        public Dictionary<string, string> Inventory { get; private set; }
         public long Gold { get; set; }
-        public Dictionary<Wearlocation, WearSlot> Equipped { get; private set; }
         public GameStatus Status { get; set; }
         public int Level { get; set; }
         public int Age { get; set; }
@@ -148,105 +136,9 @@ namespace FoxMud.Game
                 if (Level == ExperienceResolver.Levels)
                     return;
 
-                _experience += value;
+                _experience = value;
                 if (ExperienceResolver.CanLevelUp(Level, _experience))
                     ExperienceResolver.LevelUp(this);
-            }
-        }
-
-        [JsonIgnore]
-        public int MaxHitPoints
-        {
-            get { return BaseHp + Equipped.Sum(e => Server.Current.Database.Get<PlayerItem>(e.Value.Key).HpBonus); }
-        }
-        
-        [JsonIgnore]
-        public int HitRoll
-        {
-            get
-            {
-                return BaseHitRoll +
-                     Equipped.Sum(e => Server.Current.Database.Get<PlayerItem>(e.Value.Key).HitRoll);
-            }
-        }
-        
-        [JsonIgnore]
-        public int DamRoll
-        {
-            get
-            {
-                return BaseDamRoll +
-                   Equipped.Sum(e => Server.Current.Database.Get<PlayerItem>(e.Value.Key).DamRoll);
-            }
-        }
-        
-        [JsonIgnore]
-        public int Strength
-        {
-            get
-            {
-                return BaseStrength +
-                       Equipped.Sum(e => Server.Current.Database.Get<PlayerItem>(e.Value.Key).StrengthBonus);
-            }
-        }
-
-        [JsonIgnore]
-        public int Dexterity
-        {
-            get
-            {
-                return BaseDexterity +
-                       Equipped.Sum(e => Server.Current.Database.Get<PlayerItem>(e.Value.Key).DexterityBonus);
-            }
-        }
-
-        [JsonIgnore]
-        public int Constitution
-        {
-            get
-            {
-                return BaseConstitution +
-                       Equipped.Sum(e => Server.Current.Database.Get<PlayerItem>(e.Value.Key).ConstitutionBonus);
-            }
-        }
-
-        [JsonIgnore]
-        public int Intelligence
-        {
-            get
-            {
-                return BaseIntelligence +
-                       Equipped.Sum(e => Server.Current.Database.Get<PlayerItem>(e.Value.Key).IntelligenceBonus);
-            }
-        }
-
-        [JsonIgnore]
-        public int Wisdom
-        {
-            get
-            {
-                return BaseWisdom +
-                       Equipped.Sum(e => Server.Current.Database.Get<PlayerItem>(e.Value.Key).WisdomBonus);
-            }
-        }
-
-        [JsonIgnore]
-        public int Charisma
-        {
-            get
-            {
-                return BaseCharisma +
-                       Equipped.Sum(e => Server.Current.Database.Get<PlayerItem>(e.Value.Key).CharismaBonus);
-            }
-        }
-
-        [JsonIgnore]
-        public int Luck
-        {
-            get
-            {
-                return BaseLuck +
-                       Equipped.Sum(e => Server.Current.Database.Get<PlayerItem>(e.Value.Key).LuckBonus);
             }
         }
 
@@ -276,7 +168,7 @@ namespace FoxMud.Game
         [JsonIgnore]
         public int Armor
         {
-            get { return Equipped.Sum(e => Server.Current.Database.Get<PlayerItem>(e.Value.Key).ArmorBonus); }
+            get { return BaseArmor + Equipped.Sum(e => Server.Current.Database.Get<PlayerItem>(e.Value.Key).ArmorBonus); }
         }
 
         [JsonIgnore]

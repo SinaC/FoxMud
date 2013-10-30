@@ -34,8 +34,6 @@ namespace FoxMud.Game.Item
         public int ArmorBonus { get; set; }
         public int DamRoll { get; set; }
         public int HitRoll { get; set; }
-        public int MinDamage { get; set; }
-        public int MaxDamage { get; set; }
         public Dictionary<string, string> ContainedItems { get; set; }
 
         public int StrengthBonus { get; set; }
@@ -74,8 +72,6 @@ namespace FoxMud.Game.Item
         public int ArmorBonus { get; set; }
         public int DamRoll { get; set; }
         public int HitRoll { get; set; }
-        public int MinDamage { get; set; }
-        public int MaxDamage { get; set; }
         public Dictionary<string, string> ContainedItems { get; set; }
 
         public int StrengthBonus { get; set; }
@@ -97,26 +93,34 @@ namespace FoxMud.Game.Item
                 if (WearLocation != Wearlocation.Container)
                     return Weight;
 
-                int _weight = Weight;
+                int weight = Weight;
                 foreach (var key in ContainedItems.Keys)
                 {
                     var item = Server.Current.Database.Get<PlayerItem>(key);
                     if (item.WearLocation == Wearlocation.Container)
-                        _weight += item.ContainerWeight;
+                        weight += item.ContainerWeight;
                     else
-                        _weight += item.Weight;
+                        weight += item.Weight;
                 }
 
-                return _weight;
+                return weight;
             }
         }
 
         [JsonConstructor]
         private PlayerItem(string key, string name, string description, string[] keywords, int weight, int value, Wearlocation wearLocation,
-            int hpBonus, int armorBonus, int mindDamage, int maxDamage, int strengthBonus, int dexterityBonus, int constitutionBonus,
-            int intelligenceBonus, int wisdomBonus, int charismaBonus, int luckBonus)
+            int hpBonus, int armorBonus, int strengthBonus, int dexterityBonus, int constitutionBonus, int intelligenceBonus, int wisdomBonus, 
+            int charismaBonus, int luckBonus)
         {
-            _guid = new Guid(key);
+            try
+            {
+                _guid = new Guid(key);
+            }
+            catch
+            {
+                _guid = Guid.NewGuid(); // item is being mapped for the first time
+            }
+            
             Name = name;
             Description = description;
             Keywords = keywords;
@@ -125,15 +129,13 @@ namespace FoxMud.Game.Item
             WearLocation = wearLocation;
             HpBonus = hpBonus;
             ArmorBonus = armorBonus;
-            MinDamage = mindDamage;
-            MaxDamage = maxDamage;
             StrengthBonus = strengthBonus;
             DexterityBonus = dexterityBonus;
             ConstitutionBonus = constitutionBonus;
             IntelligenceBonus = intelligenceBonus;
             WisdomBonus = wisdomBonus;
             CharismaBonus = charismaBonus;
-            LuckBonus = LuckBonus;
+            LuckBonus = luckBonus;
         }
 
         // need this empty constructor for automapper

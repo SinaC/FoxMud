@@ -15,7 +15,7 @@ namespace FoxMud.Game.World
     /// this is similar to the Template class for items, in that concrete
     /// NPC's will be generated with another class
     /// </summary>
-    class MobTemplate : Storable
+    class MobTemplate : GenericCharacter, Storable
     {
         public string Key
         {
@@ -32,22 +32,11 @@ namespace FoxMud.Game.World
         public double TalkProbability { get; set; }
         public long MinimumTalkInterval { get; set; }
         public int HitPoints { get; set; }
-        public int MaxHitPoints { get; set; }
         public bool Aggro { get; set; }
-        public int Armor { get; set; }
-        public int HitRoll { get; set; }
-        public int DamRoll { get; set; }
         public List<string> AllowedRooms { get; private set; }
-        public List<string> Inventory { get; private set; }
-        public Dictionary<Wearlocation, string> Equipped { get; private set; }
+        public new List<string> Inventory { get; private set; }
+        public new Dictionary<Wearlocation, string> Equipped { get; private set; }
         public bool IsShopkeeper { get; set; }
-        public int Strength { get; set; }
-        public int Dexterity { get; set; }
-        public int Constitution { get; set; }
-        public int Intelligence { get; set; }
-        public int Wisdom { get; set; }
-        public int Charisma { get; set; }
-        public int Luck { get; set; }
 
         public MobTemplate()
         {
@@ -60,7 +49,7 @@ namespace FoxMud.Game.World
     /// <summary>
     /// the concrete version of MobTemplate i.e. the spawning mob
     /// </summary>
-    class NonPlayer : Storable
+    class NonPlayer : GenericCharacter, Storable
     {
         private Guid _guid;
         private DateTime _lastTimeTalked;
@@ -82,26 +71,68 @@ namespace FoxMud.Game.World
         public double TalkProbability { get; set; }
         public long MinimumTalkInterval { get; set; }
         public bool Aggro { get; set; }
-        public int Armor { get; set; }
-        public int HitRoll { get; set; }
-        public int DamRoll { get; set; }
         public List<string> AllowedRooms { get; private set; }
-        public Dictionary<string, string> Inventory { get; private set; }
-        public Dictionary<Wearlocation, WearSlot> Equipped { get; private set; }
         public bool IsShopkeeper { get; set; }
         public int HitPoints { get; set; }
-        public int MaxHitPoints { get; set; }
-        public int Strength { get; set; }
-        public int Dexterity { get; set; }
-        public int Constitution { get; set; }
-        public int Intelligence { get; set; }
-        public int Wisdom { get; set; }
-        public int Charisma { get; set; }
-        public int Luck { get; set; }
+
+        [JsonConstructor]
+        private NonPlayer(string key, string name, GameStatus status, string[] keywords, string description, string respawnRoom, int hitPoints, bool aggro, int baseArmor, 
+            string mobTemplateKey, int baseHitRoll, int baseDamRoll, List<string> allowedRooms, Dictionary<string, string> inventory, 
+            Dictionary<Wearlocation, WearSlot> equipped, string location, string[] phrases, double talkProbability, long minimumTalkInterval, bool isShopkeeper)
+        {
+            _guid = new Guid(key);
+            
+            Name = name;
+            MobTemplateKey = mobTemplateKey;
+            Status = status;
+            Keywords = keywords;
+            Description = description;
+            RespawnRoom = respawnRoom;
+            Location = location;
+            Phrases = phrases;
+            TalkProbability = talkProbability;
+            MinimumTalkInterval = minimumTalkInterval;
+            HitPoints = hitPoints;
+            Aggro = aggro;
+            BaseArmor = baseArmor;
+            BaseHitRoll = baseHitRoll;
+            BaseDamRoll = baseDamRoll;
+            AllowedRooms = allowedRooms ?? new List<string>();
+            Inventory = inventory ?? new Dictionary<string, string>();
+            Equipped = equipped ?? new Dictionary<Wearlocation, WearSlot>();
+            _lastTimeTalked = DateTime.Now;
+            _lastTimeWalked = DateTime.Now;
+            IsShopkeeper = isShopkeeper;
+        }
+
+        public NonPlayer()
+        {
+            var guid = Guid.NewGuid();
+            while (Server.Current.Database.Exists<NonPlayer>(guid.ToString()))
+            {
+                guid = Guid.NewGuid();
+            }
+
+            _guid = guid;
+            _lastTimeTalked = DateTime.Now;
+            _lastTimeWalked = DateTime.Now;
+        }
+
+        [JsonIgnore]
+        public bool DoesWander
+        {
+            get
+            {
+                if (AllowedRooms != null)
+                    return AllowedRooms.Count > 1;
+
+                return false;
+            }
+        }
 
         public CombatRound Die(bool shutdown = false)
         {
-            CombatRound round = new CombatRound();
+            var round = new CombatRound();
 
             if (!shutdown)
             {
@@ -117,7 +148,7 @@ namespace FoxMud.Game.World
 
                 dupedCorpse.Name = string.Format("The corpse of {0}", Name);
                 dupedCorpse.Description = string.Format("The corpse of {0}", Name.ToLower());
-                dupedCorpse.Keywords = new List<string>() {"corpse", Name}.ToArray();
+                dupedCorpse.Keywords = new List<string>() { "corpse", Name }.ToArray();
                 dupedCorpse.WearLocation = Wearlocation.Corpse;
 
                 // put corpse in room
@@ -152,61 +183,6 @@ namespace FoxMud.Game.World
             Server.Current.Database.Delete<NonPlayer>(Key);
 
             return round;
-        }
-
-        [JsonIgnore]
-        public bool DoesWander
-        {
-            get
-            {
-                if (AllowedRooms != null)
-                    return AllowedRooms.Count > 1;
-
-                return false;
-            }
-        }
-
-        [JsonConstructor]
-        private NonPlayer(string key, string name, GameStatus status, string[] keywords, string description, string respawnRoom, int hitPoints, bool aggro, int armor, string mobTemplateKey,
-            int hitRoll, int damRoll, List<string> allowedRooms, Dictionary<string, string> inventory, Dictionary<Wearlocation, WearSlot> equipped, string location,
-            string[] phrases, double talkProbability, long minimumTalkInterval, bool isShopkeeper)
-        {
-            _guid = new Guid(key);
-            
-            Name = name;
-            MobTemplateKey = mobTemplateKey;
-            Status = status;
-            Keywords = keywords;
-            Description = description;
-            RespawnRoom = respawnRoom;
-            Location = location;
-            Phrases = phrases;
-            TalkProbability = talkProbability;
-            MinimumTalkInterval = minimumTalkInterval;
-            HitPoints = hitPoints;
-            Aggro = aggro;
-            Armor = armor;
-            HitRoll = hitRoll;
-            DamRoll = damRoll;
-            AllowedRooms = allowedRooms ?? new List<string>();
-            Inventory = inventory ?? new Dictionary<string, string>();
-            Equipped = equipped ?? new Dictionary<Wearlocation, WearSlot>();
-            _lastTimeTalked = DateTime.Now;
-            _lastTimeWalked = DateTime.Now;
-            IsShopkeeper = IsShopkeeper;
-        }
-
-        public NonPlayer()
-        {
-            Guid guid = Guid.NewGuid();
-            while (Server.Current.Database.Exists<NonPlayer>(guid.ToString()))
-            {
-                guid = Guid.NewGuid();
-            }
-
-            _guid = guid;
-            _lastTimeTalked = DateTime.Now;
-            _lastTimeWalked = DateTime.Now;
         }
 
         public CombatRound Hit(Player player)
@@ -257,53 +233,53 @@ namespace FoxMud.Game.World
 
         protected void Talk()
         {
-            if ((DateTime.Now - _lastTimeTalked).TotalMilliseconds > MinimumTalkInterval)
+            if ((DateTime.Now - _lastTimeTalked).TotalMilliseconds <= MinimumTalkInterval)
+                return;
+
+            // set the new interval
+            _lastTimeTalked = DateTime.Now;
+
+            // talk at random
+            double prob = Server.Current.Random.NextDouble();
+            if (prob < TalkProbability && Phrases != null && Phrases.Length > 0)
             {
-                // set the new interval
-                _lastTimeTalked = DateTime.Now;
+                var phrase = Phrases[Server.Current.Random.Next(Phrases.Length)];
 
-                // talk at random
-                double prob = Server.Current.Random.NextDouble();
-                if (prob < TalkProbability && Phrases != null && Phrases.Length > 0)
+                // say it to the room
+                var room = RoomHelper.GetPlayerRoom(Location);
+                if (room != null)
                 {
-                    var phrase = Phrases[Server.Current.Random.Next(Phrases.Length)];
-
-                    // say it to the room
-                    var room = RoomHelper.GetPlayerRoom(Location);
-                    if (room != null)
-                    {
-                        string message = string.Format("{0} says, \"{1}\"", Name, phrase);
-                        room.SendPlayers(message, null, null, null);
-                    }
+                    string message = string.Format("{0} says, \"{1}\"", Name, phrase);
+                    room.SendPlayers(message, null, null, null);
                 }
             }
         }
 
         protected void Walk()
         {
-            if ((DateTime.Now - _lastTimeWalked).TotalMilliseconds > Server.MobWalkInterval)
+            if ((DateTime.Now - _lastTimeWalked).TotalMilliseconds <= Server.MobWalkInterval)
+                return;
+
+            _lastTimeWalked = DateTime.Now;
+
+            var room = RoomHelper.GetPlayerRoom(Location);
+
+            // get allowed exits
+            var allowedExits = room.Exits.Where(e => AllowedRooms.Contains(e.Value.LeadsTo) && e.Value.IsOpen).ToList();
+
+            if (allowedExits.Any() && Server.Current.Random.NextDouble() < 0.5)
             {
-                _lastTimeWalked = DateTime.Now;
+                var exit = allowedExits.Skip(Server.Current.Random.Next(allowedExits.Count())).FirstOrDefault();
 
-                var room = RoomHelper.GetPlayerRoom(Location);
-
-                // get allowed exits
-                var allowedExits = room.Exits.Where(e => AllowedRooms.Contains(e.Value.LeadsTo) && e.Value.IsOpen).ToList();
-
-                if (allowedExits.Any() && Server.Current.Random.NextDouble() < 0.5)
-                {
-                    var exit = allowedExits.Skip(Server.Current.Random.Next(allowedExits.Count())).FirstOrDefault();
-
-                    room.RemoveNpc(this);
-                    var newRoom = RoomHelper.GetPlayerRoom(exit.Value.LeadsTo);
-                    newRoom.AddNpc(this);
-                    Location = newRoom.Key;
-                    room.SendPlayers(string.Format("{0} heads {1}.", Name, DirectionHelper.GetDirectionWord(exit.Key)),
-                                     null, null, null);
-                    newRoom.SendPlayers(
-                        string.Format("{0} arrives from the {1}.", Name, DirectionHelper.GetOppositeDirection(exit.Key)),
-                        null, null, null);
-                }
+                room.RemoveNpc(this);
+                var newRoom = RoomHelper.GetPlayerRoom(exit.Value.LeadsTo);
+                newRoom.AddNpc(this);
+                Location = newRoom.Key;
+                room.SendPlayers(string.Format("{0} heads {1}.", Name, DirectionHelper.GetDirectionWord(exit.Key)),
+                                    null, null, null);
+                newRoom.SendPlayers(
+                    string.Format("{0} arrives from the {1}.", Name, DirectionHelper.GetOppositeDirection(exit.Key)),
+                    null, null, null);
             }
         }
     }

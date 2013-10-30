@@ -324,6 +324,20 @@ namespace FoxMud.Game
             Server.Current.Database.Save(this);
         }
 
+        public string Whois()
+        {
+            var result = new StringBuilder();
+
+            result.AppendLine(string.Format("{0} is a level {1} player.", Forename, Level));
+            result.AppendLine(string.Format("{0} is currently in {1}.",
+                                            Gender == PlayerGender.Male
+                                                ? "He"
+                                                : Gender == PlayerGender.Female ? "She" : "It",
+                                            RoomHelper.GetPlayerRoom(Location).Title));
+
+            return result.ToString();
+        }
+
         public static string GetStatusText(GameStatus status)
         {
             switch (status)

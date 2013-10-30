@@ -76,6 +76,7 @@
     <Compile Include="Game\Command\SaveCommand.cs" />
     <Compile Include="Game\Command\Stat\LevelCommand.cs" />
     <Compile Include="Game\Command\Stat\ScorecardCommand.cs" />
+    <Compile Include="Game\Command\Stat\WhoisCommand.cs" />
     <Compile Include="Game\Command\Visual\ColorCommand.cs" />
     <Compile Include="Game\Command\Visual\LookCommand.cs" />
     <Compile Include="Game\DirectionHelper.cs" />

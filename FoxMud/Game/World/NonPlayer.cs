@@ -33,10 +33,12 @@ namespace FoxMud.Game.World
         public long MinimumTalkInterval { get; set; }
         public int HitPoints { get; set; }
         public bool Aggro { get; set; }
-        public List<string> AllowedRooms { get; private set; }
+        public List<string> AllowedRooms { get; set; }
         public new List<string> Inventory { get; private set; }
         public new Dictionary<Wearlocation, string> Equipped { get; private set; }
-        public bool IsShopkeeper { get; set; }
+        public int Gold { get; set; }
+        public int MaxGold { get; set; }
+        public int MinGold { get; set; }
 
         public MobTemplate()
         {
@@ -72,12 +74,14 @@ namespace FoxMud.Game.World
         public long MinimumTalkInterval { get; set; }
         public bool Aggro { get; set; }
         public List<string> AllowedRooms { get; private set; }
-        public bool IsShopkeeper { get; set; }
         public int HitPoints { get; set; }
+        public int Gold { get; set; }
+        public int MaxGold { get; set; }
+        public int MinGold { get; set; }
 
         [JsonConstructor]
         private NonPlayer(string key, string name, GameStatus status, string[] keywords, string description, string respawnRoom, int hitPoints, bool aggro, int baseArmor, 
-            string mobTemplateKey, int baseHitRoll, int baseDamRoll, List<string> allowedRooms, Dictionary<string, string> inventory, 
+            string mobTemplateKey, int baseHitRoll, int baseDamRoll, List<string> allowedRooms, Dictionary<string, string> inventory, int gold, int maxGold, int minGold,
             Dictionary<Wearlocation, WearSlot> equipped, string location, string[] phrases, double talkProbability, long minimumTalkInterval, bool isShopkeeper)
         {
             _guid = new Guid(key);
@@ -103,6 +107,9 @@ namespace FoxMud.Game.World
             _lastTimeTalked = DateTime.Now;
             _lastTimeWalked = DateTime.Now;
             IsShopkeeper = isShopkeeper;
+            Gold = gold;
+            MaxGold = maxGold;
+            MinGold = minGold;
         }
 
         public NonPlayer()
@@ -150,6 +157,7 @@ namespace FoxMud.Game.World
                 dupedCorpse.Description = string.Format("The corpse of {0}", Name.ToLower());
                 dupedCorpse.Keywords = new List<string>() { "corpse", Name }.ToArray();
                 dupedCorpse.WearLocation = Wearlocation.Corpse;
+                dupedCorpse.Gold = getRandomGold(Gold);
 
                 // put corpse in room
                 var room = RoomHelper.GetPlayerRoom(Location);
@@ -183,6 +191,14 @@ namespace FoxMud.Game.World
             Server.Current.Database.Delete<NonPlayer>(Key);
 
             return round;
+        }
+
+        private int getRandomGold(int gold)
+        {
+            if (gold == 0)
+                return 0;
+
+            return Server.Current.Random.Next(MinGold, MaxGold);
         }
 
         public CombatRound Hit(Player player)

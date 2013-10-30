@@ -164,8 +164,7 @@ namespace FoxMud.Game.Command.Admin
             // validate
             try
             {
-                Template newItem = Server.Current.Database.Get<Template>(context.Arguments[args[ContainerArgType.Name]].ToLower());
-                PlayerItem dupedItem;
+                var newItem = Server.Current.Database.Get<Template>(context.Arguments[args[ContainerArgType.Name]].ToLower());
                 if (newItem != null)
                 {
                     Duplicate(session, newItem);

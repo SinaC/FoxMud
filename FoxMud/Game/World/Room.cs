@@ -21,10 +21,10 @@ namespace FoxMud.Game.World
     class Room : Storable
     {
         [JsonIgnore]
-        private List<Player> players;
+        private readonly List<Player> players;
 
         [JsonIgnore]
-        private List<NonPlayer> npcs;
+        private readonly List<NonPlayer> npcs;
 
         public Room()
         {
@@ -40,6 +40,9 @@ namespace FoxMud.Game.World
         public string Title { get; set; }
         public string Description { get; set; }
         public Dictionary<string, RoomExit> Exits { get; private set; }
+
+        [JsonIgnore]
+        public long Gold { get; set; }
 
         [JsonIgnore]
         public Dictionary<string, string> Items { get; private set; }

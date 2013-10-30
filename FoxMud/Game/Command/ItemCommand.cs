@@ -34,7 +34,7 @@ namespace FoxMud.Game.Command
             return LookForItem(room.Items.Keys.ToArray(), keyword, isContainer);
         }
 
-        public static PlayerItem FindContainerItem(PlayerItem container, string keyword)
+        public static PlayerItem FindItemInContainer(PlayerItem container, string keyword)
         {
             return LookForItem(container.ContainedItems.Keys.ToArray(), keyword);
         }
@@ -120,12 +120,11 @@ namespace FoxMud.Game.Command
         public override void PrintSyntax(Session session)
         {
             session.WriteLine("Syntax: inventory");
-            session.WriteLine("Syntax: i");
         }
 
         public override void Execute(Session session, CommandContext context)
         {
-            session.WriteLine("Your inventory:");
+            session.WriteLine("`RYour inventory:");
 
             if (session.Player.Inventory.Count == 0)
             {
@@ -145,7 +144,7 @@ namespace FoxMud.Game.Command
                         Count = group.Count()
                     }))
             {
-                session.WriteLine("\t{0} ({1})", itemLine.ItemName, itemLine.Count);
+                session.WriteLine("\t`G{0} ({1})", itemLine.ItemName, itemLine.Count);
             }
         }
     }
@@ -166,18 +165,16 @@ namespace FoxMud.Game.Command
                 bool givingGold = context.Arguments[1] == "coin";
                 context.Arguments.Remove("coin");
 
-                Player target = Server.Current.Database.Get<Player>(context.Arguments[1]);
+                var target = Server.Current.Database.Get<Player>(context.Arguments[1]);
                 if (target == null)
                 {
                     session.WriteLine("Who is {0}?", context.Arguments[1]);
                     return;
                 }
 
-                Room room = Server.Current.Database.Get<Room>(session.Player.Location);
+                var room = RoomHelper.GetPlayerRoom(session.Player.Location);
                 if (room == null)
-                {
                     throw new Exception();
-                }
 
                 // players must be in the same room
                 if (target.Location != room.Key)
@@ -207,7 +204,7 @@ namespace FoxMud.Game.Command
                     
                     if (item == null)
                     {
-                        session.WriteLine("Couldn't find {0}", context.Arguments[0]);
+                        session.WriteLine("Couldn't find {0}.", context.Arguments[0]);
                         return;
                     }
 
@@ -224,7 +221,7 @@ namespace FoxMud.Game.Command
                     // messages
                     session.WriteLine("You give {0} to {1}.", item.Name, target.Forename);
                     target.Send(string.Format("{0} gives you {1}.", session.Player.Forename, item.Name), session.Player, target);
-                    room.SendPlayers("%d gives something to %D", session.Player, target, new[] { session.Player, target });
+                    room.SendPlayers("%d gives something to %D.", session.Player, target, new[] { session.Player, target });
 
                     // add to target inventory
                     target.Inventory.Add(item.Key, item.Name);
@@ -246,30 +243,58 @@ namespace FoxMud.Game.Command
         public override void PrintSyntax(Session session)
         {
             session.WriteLine("Syntax: drop <item>");
-            session.WriteLine("Syntax: dr <item>");
+            session.WriteLine("Syntax: drop <number> <coin>");
         }
         
         public override void Execute(Session session, CommandContext context)
         {
-            // does player have item?
-            PlayerItem item = ItemHelper.FindInventoryItem(session.Player, context.Arguments[0]);
-            if (item == null)
+            try
             {
-                session.WriteLine("Can't find item: {0}", context.Arguments[0]);
-                return;
-            }
+                var room = RoomHelper.GetPlayerRoom(session.Player.Location);
 
-            // remove from player inventory
-            session.Player.Inventory.Remove(item.Key);
-            Server.Current.Database.Save(session.Player);
+                // dropping gold
+                if (context.Arguments.Count == 2 && context.Arguments[1].ToLower() == "coin")
+                {
+                    int gold = 0;
+                    if (int.TryParse(context.Arguments[0], out gold))
+                    {
+                        if (session.Player.Gold < gold)
+                        {
+                            session.WriteLine("You don't have that much.");
+                            return;
+                        }
 
-            // drop in room
-            var room = Server.Current.Database.Get<Room>(session.Player.Location);
-            if (room != null)
-            {
+                        session.Player.Gold -= gold;
+                        room.Gold += gold;
+                        session.WriteLine("`YYou drop {0} coin{1}.", gold, gold > 1 ? "s" : string.Empty);
+                        room.SendPlayers("%d drops some coins.", session.Player, null, session.Player);
+                        Server.Current.Database.Save(session.Player);
+                        return;
+                    }
+
+                    PrintSyntax(session);
+                    return;
+                }
+
+                // does player have item?
+                PlayerItem item = ItemHelper.FindInventoryItem(session.Player, context.Arguments[0]);
+                if (item == null)
+                {
+                    session.WriteLine("Can't find item: {0}", context.Arguments[0]);
+                    return;
+                }
+
+                // remove from player inventory
+                session.Player.Inventory.Remove(item.Key);
+                Server.Current.Database.Save(session.Player);
+
                 room.AddItem(item); // this saves the room
                 session.WriteLine("You drop {0}.", item.Name);
                 room.SendPlayers("%d drops something.", session.Player, null, session.Player);
+            }
+            catch
+            {
+                PrintSyntax(session);
             }
         }
     }
@@ -282,8 +307,10 @@ namespace FoxMud.Game.Command
             session.WriteLine("get <item>");
             session.WriteLine("get all");
             session.WriteLine("get <item> corpse");
-            session.WriteLine("get all corpse (not yet implemented...");
+            session.WriteLine("get all corpse");
             session.WriteLine("get <item> <container>");
+            session.WriteLine("get gold");
+            session.WriteLine("get gold corpse");
         }
 
         public override void Execute(Session session, CommandContext context)
@@ -294,30 +321,48 @@ namespace FoxMud.Game.Command
                 return;
             }
 
-            // pick up everything in room, minding weight and max inventory
-            if (context.Arguments[0] == "all")
+            var room = RoomHelper.GetPlayerRoom(session.Player.Location);
+
+            // 1 argument, "get all", "get x.item", "get gold" must be on ground
+            var arg1 = context.Arguments[0];
+            if (context.Arguments.Count == 1)
             {
-                bool pickedUpAnything = false;
-                var room = Server.Current.Database.Get<Room>(session.Player.Location);
-                if (room != null)
+                if (arg1.ToLower() == "gold")
                 {
+                    if (room.Gold > 0)
+                    {
+                        pickupGold(session, room);
+                        return;
+                    }
+
+                    session.WriteLine("There are no coins here.");
+                    return;
+                }
+
+                PlayerItem itemToPickup = null;
+
+                if (arg1 == "all") // "get all"
+                {
+                    // attempt to get gold
+                    pickupGold(session, room);
+
+                    var pickedUpAnything = false;
                     foreach (var key in room.Items.Keys)
                     {
-                        var item = Server.Current.Database.Get<PlayerItem>(key);
-                        if (item != null
+                        itemToPickup = ItemHelper.FindFloorItem(room, key);
+                        if (itemToPickup != null
                             && session.Player.Inventory.Count + 1 < session.Player.MaxInventory // not over inventory
-                            && session.Player.Weight + item.Weight < session.Player.MaxWeight) // not over weight
+                            && session.Player.Weight + itemToPickup.Weight < session.Player.MaxWeight) // not over weight
                         {
                             // move item from floor to inventory
-                            room.RemoveItem(item);
-                            session.Player.Inventory.Add(item.Key, item.Name);
-                            session.WriteLine("You pick up {0}", item.Name);
+                            room.RemoveItem(itemToPickup);
+                            session.Player.Inventory.Add(itemToPickup.Key, itemToPickup.Name);
+                            session.WriteLine("You pick up {0}", itemToPickup.Name);
                             pickedUpAnything = true;
                         }
                         else
                         {
                             session.WriteLine("You picked up all you could.");
-                            return;
                         }
                     }
 
@@ -326,134 +371,270 @@ namespace FoxMud.Game.Command
                         Server.Current.Database.Save(session.Player);
                         room.SendPlayers("%d picked up some items.", session.Player, null, session.Player);
                     }
-                }
-                return;
-            }
-
-            var argItem = context.Arguments[0].ToLower();
-
-            // get <item>
-            // this item should be in the room
-            if (context.Arguments.Count == 1)
-            {
-                
-                var room = Server.Current.Database.Get<Room>(session.Player.Location);
-                if (room != null)
-                {
-                    // find item on floor by keyword
-                    var item = ItemHelper.FindFloorItem(room, argItem);
-                    if (item != null)
-                    {
-                        if (session.Player.Inventory.Count + 1 < session.Player.MaxInventory // not over inventory
-                        && session.Player.Weight + item.Weight < session.Player.MaxWeight) // not over weight
-                        {
-                            // move item from floor to inventory
-                            room.RemoveItem(item);
-                            session.Player.Inventory.Add(item.Key, item.Name);
-                            Server.Current.Database.Save(session.Player);
-                            session.WriteLine("You pick up {0}", item.Name);
-                            room.SendPlayers("%d picked up some something.", session.Player, null, session.Player);
-                            return;
-                        }
-
-                        session.WriteLine("You couldn't pick that up.");
-                        return;
-                    }
-
-                    session.WriteLine("You coulnd't find that.");
                     return;
                 }
 
-                return;
-            }
-
-            // must've been get <item> <container>
-            // check inventory for container by keyword
-            var argContainer = context.Arguments[1].ToLower();
-            PlayerItem container = ItemHelper.FindInventoryItem(session.Player, argContainer, true);
-            bool containerFound = false;
-
-            if (container != null && container.WearLocation == Wearlocation.Container)
-            {
-                containerFound = true;
-                PlayerItem containerItem = ItemHelper.FindContainerItem(container, argItem);
-
-                // look at items inside container
-                if (containerItem != null)
+                if (arg1.ToLower() == "coin" || arg1.ToLower() == "coins" || arg1.ToLower() == "gold")
                 {
-                    if (session.Player.Inventory.Count + 1 < session.Player.MaxInventory)
+                    if (room.Gold > 0)
                     {
-                        // attempt move item from container to inventory
-                        container.ContainedItems.Remove(containerItem.Key);
-                        Server.Current.Database.Save(container);
-                        session.Player.Inventory.Add(containerItem.Key, containerItem.Name);
+                        pickupGold(session, room);
+                        return;
+                    }
+
+                    session.WriteLine("There are no coins here.");
+                    return;
+                }
+
+                // arg1 is x.item, and it's on the floor
+                itemToPickup = ItemHelper.FindFloorItem(room, arg1);
+                if (itemToPickup != null)
+                {
+                    if (session.Player.Inventory.Count + 1 < session.Player.MaxInventory // not over inventory
+                    && session.Player.Weight + itemToPickup.Weight < session.Player.MaxWeight) // not over weight
+                    {
+                        // move item from floor to inventory
+                        room.RemoveItem(itemToPickup);
+                        session.Player.Inventory.Add(itemToPickup.Key, itemToPickup.Name);
                         Server.Current.Database.Save(session.Player);
-                        session.WriteLine("You get {0} from {1}", containerItem.Name, container.Name);
+                        session.WriteLine("You pick up {0}", itemToPickup.Name);
+                        room.SendPlayers("%d picked up some something.", session.Player, null, session.Player);
                         return;
                     }
 
-                    session.WriteLine("Your hands are too full.");
+                    session.WriteLine("You couldn't pick that up.");
                     return;
                 }
+
+                session.WriteLine("You coulnd't find that.");
+                return;
             }
 
-            // check floor for container by keyword if container wasn't found in inventory
-            if (!containerFound)
+            // 2 arguments, "all x.container", "x.item x.container", "gold corpse"
+            var arg2 = context.Arguments[1];
+            var inventoryContainer = ItemHelper.FindInventoryItem(session.Player, arg2, true);
+            var groundContainer = ItemHelper.FindFloorItem(room, arg2, true);
+            PlayerItem itemLookup = null;
+
+            if (arg1 == "all")
             {
-                var room = Server.Current.Database.Get<Room>(session.Player.Location);
-                if (room != null)
+                if (arg2 == "coin")
                 {
-                    container = ItemHelper.FindFloorItem(room, argContainer);
-                    if (container != null
-                        && (container.WearLocation == Wearlocation.Container || container.WearLocation == Wearlocation.Corpse))
+                    if (room.Gold > 0)
                     {
-                        // validate this player is allowed to get from this container
-                        if (!string.IsNullOrEmpty(container.AllowedToLoot))
-                        {
-                            if (session.Player.Key != container.AllowedToLoot)
-                            {
-                                session.WriteLine("You can't get anything from that.");
-                                return;
-                            }
-                        }
+                        var amountOfGold = room.Gold;
+                        room.Gold = 0;
+                        session.Player.Gold += amountOfGold;
+                        Server.Current.Database.Save(room);
+                        session.WriteLine("You pick up {0} coin{1}", amountOfGold, amountOfGold > 1 ? "s" : string.Empty);
+                        room.SendPlayers("%d picked up some gold.", session.Player, null, session.Player);
+                    }
 
-                        // look at items inside container
-                        PlayerItem containerItem = ItemHelper.FindContainerItem(container, argItem);
-                        if (containerItem != null)
+                    session.WriteLine("There is no gold here.");
+                    return;
+                }
+                else // arg2 is x.container
+                {
+                    if (inventoryContainer != null)
+                    {
+                        if (inventoryContainer.ContainedItems.Count == 0)
                         {
-                            if (session.Player.Inventory.Count + 1 > session.Player.MaxInventory)
-                            {
-                                session.WriteLine("Your hands are too full.");
-                                return;
-                            }
-                                    
-                            if (session.Player.Weight + containerItem.Weight > session.Player.MaxWeight)
-                            {
-                                session.WriteLine("You can't carry that much weight.");
-                                return;
-                            }
-
-                            // attempt move item from container to inventory
-                            container.ContainedItems.Remove(containerItem.Key);
-                            Server.Current.Database.Save(container);
-                            session.Player.Inventory.Add(containerItem.Key, containerItem.Name);
-                            Server.Current.Database.Save(session.Player);
-                            session.WriteLine("You get {0} from {1}", containerItem.Name, container.Name);
-                            string roomString = string.Format("%d gets {0} from {1}.", containerItem.Name, container.Name);
-                            room.SendPlayers(roomString, session.Player, null, session.Player);
+                            session.WriteLine("There is nothing in there.");
                             return;
                         }
 
-                        session.WriteLine("Couldn't find that item in {0}", container.Name);
+                        // get gold from container
+                        if (inventoryContainer.Gold > 0)
+                        {
+                            int gold = inventoryContainer.Gold;
+                            inventoryContainer.Gold = 0;
+                            session.Player.Gold += gold;
+                            session.WriteLine("`YYou get {0} coin{1} from {2}", gold, gold > 1 ? "s" : string.Empty,
+                                              inventoryContainer.Name);
+                        }
+
+                        foreach (var containerItem in inventoryContainer.ContainedItems.ToArray())
+                        {
+                            // room in inventory?
+                            if (session.Player.Inventory.Count + 1 <= session.Player.MaxInventory)
+                            {
+                                // move item from container to inventory
+                                session.Player.Inventory.Add(containerItem.Key, containerItem.Value);
+                                inventoryContainer.ContainedItems.Remove(containerItem.Key);
+                                session.WriteLine("You get {0} from {1}.", containerItem.Value, inventoryContainer.Name);
+                                room.SendPlayers(string.Format("%d gets {0} from %o {1}.", containerItem.Value,
+                                                               inventoryContainer.Name), session.Player, null,
+                                                 session.Player);
+                            }
+                            else
+                            {
+                                session.WriteLine("Your hands are full.");
+                            }
+                        }
+
+                        Server.Current.Database.Save(inventoryContainer);
+                        Server.Current.Database.Save(session.Player);
                         return;
                     }
 
-                    session.WriteLine("Can't find a container called {0}", argContainer);
+                    if (groundContainer == null)
+                    {
+                        session.WriteLine("You can't find that.");
+                        return;
+                    }
+
+                    // get gold from container
+                    if (groundContainer.Gold > 0)
+                    {
+                        int gold = groundContainer.Gold;
+                        groundContainer.Gold = 0;
+                        session.Player.Gold += gold;
+                        session.WriteLine("`YYou get {0} coin{1} from {2}", gold, gold > 1 ? "s" : string.Empty,
+                                          groundContainer.Name);
+                    }
+
+                    // use ground container and check weight
+                    foreach (var containerItem in groundContainer.ContainedItems.ToArray())
+                    {
+                        itemLookup = Server.Current.Database.Get<PlayerItem>(containerItem.Key);
+                        
+                        if (session.Player.Weight + itemLookup.Weight > session.Player.MaxWeight)
+                        {
+                            session.WriteLine("You can't carry that much weight.");
+                            break;
+                        }
+
+                        if (session.Player.Inventory.Count + 1 > session.Player.MaxInventory)
+                        {
+                            session.WriteLine("Your hands are full.");
+                            break;
+                        }
+
+                        if (itemLookup.WearLocation == Wearlocation.Corpse &&
+                            !itemLookup.AllowedToLoot.Contains(session.Player.Key))
+                        {
+                            session.WriteLine("You can't get anything from there.");
+                            break;
+                        }
+
+                        groundContainer.ContainedItems.Remove(containerItem.Key);
+                        session.Player.Inventory.Add(containerItem.Key, containerItem.Value);
+                        session.WriteLine("You get {0} from {1}.", containerItem.Value, groundContainer.Name);
+                        room.SendPlayers(
+                            string.Format("%d gets {0} from %o {1}.", containerItem.Value, groundContainer.Name),
+                            session.Player, null, session.Player);
+                    }
+
+                    Server.Current.Database.Save(groundContainer);
+                    Server.Current.Database.Save(session.Player);
                     return;
                 }
             }
 
-            session.WriteLine("Get what from what?");
+            // assume corpse/container
+            if (arg1 == "gold")
+            {
+                var corpse = ItemHelper.FindFloorItem(room, arg2);
+                if (corpse == null)
+                {
+                    session.WriteLine("Can't find that.");
+                    return;
+                }
+
+                if (corpse.Gold <= 0)
+                {
+                    session.WriteLine("There are no coins in there.");
+                    return;
+                }
+
+                var gold = corpse.Gold;
+                corpse.Gold = 0;
+                session.Player.Gold += gold;
+                session.WriteLine("You pick up {0} coin{1}.", gold, gold > 1 ? "s" : string.Empty);
+                return;
+            }
+
+            // must be "get x.item x.container"
+            if (inventoryContainer != null)
+            {
+                if (inventoryContainer.ContainedItems.Count == 0)
+                {
+                    session.WriteLine("There is nothing in there.");
+                    return;
+                }
+
+                itemLookup = ItemHelper.FindItemInContainer(inventoryContainer, arg1);
+                if (itemLookup == null)
+                {
+                    session.WriteLine("You can't find that.");
+                    return;
+                }
+
+                inventoryContainer.ContainedItems.Remove(itemLookup.Key);
+                session.Player.Inventory.Add(itemLookup.Key, itemLookup.Name);
+                session.WriteLine("You get {0} from {1}.", itemLookup.Name, inventoryContainer.Name);
+                room.SendPlayers(string.Format("%d gets {0} from %o {1}.", itemLookup.Name, inventoryContainer.Name),
+                                 session.Player, null, session.Player);
+
+                Server.Current.Database.Save(inventoryContainer);
+                Server.Current.Database.Save(session.Player);
+                return;
+            }
+
+            if (groundContainer == null)
+            {
+                session.WriteLine("You can't find that.");
+                return;
+            }
+
+            if (groundContainer.ContainedItems.Count == 0)
+            {
+                session.WriteLine("There is nothing in there.");
+                return;
+            }
+
+            itemLookup = ItemHelper.FindItemInContainer(groundContainer, arg1);
+            if (itemLookup == null)
+            {
+                session.WriteLine("You can't find that.");
+                return;
+            }
+
+            if (session.Player.Weight + itemLookup.Weight > session.Player.MaxWeight)
+            {
+                session.WriteLine("You can't carry that much weight.");
+                return;
+            }
+
+            if (session.Player.Inventory.Count + 1 > session.Player.MaxInventory)
+            {
+                session.WriteLine("Your hands are full.");
+                return;
+            }
+
+            if (itemLookup.WearLocation == Wearlocation.Corpse && !itemLookup.AllowedToLoot.Contains(session.Player.Key))
+            {
+                session.WriteLine("You can't get anything from there.");
+                return;
+            }
+
+            groundContainer.ContainedItems.Remove(itemLookup.Key);
+            session.Player.Inventory.Add(itemLookup.Key, itemLookup.Name);
+            session.WriteLine("You get {0} from {1}.", itemLookup.Name, groundContainer.Name);
+            room.SendPlayers(string.Format("%d gets {0} from {1}.", itemLookup.Name, groundContainer.Name),
+                             session.Player, null, session.Player);
+
+            Server.Current.Database.Save(groundContainer);
+            Server.Current.Database.Save(session.Player);
+            return;
+        }
+
+        private void pickupGold(Session session, Room room)
+        {
+            var gold = room.Gold;
+            room.Gold = 0;
+            session.Player.Gold += room.Gold;
+            session.WriteLine("You pick up {0} coin{1}.", gold, gold > 1 ? "s" : string.Empty);
         }
     }
 
@@ -469,12 +650,12 @@ namespace FoxMud.Game.Command
         {
             try
             {
-                PlayerItem container = null;
+                PlayerItem container;
                 PlayerItem putItem = null;
-                bool containerFound = false;
                 bool itemFound = false;
                 string argContainer = context.Arguments[1];
                 string argItem = context.Arguments[0];
+                var room = RoomHelper.GetPlayerRoom(session.Player.Location);
 
                 // item in inevntory?
                 foreach (var key in session.Player.Inventory.Keys)
@@ -495,39 +676,13 @@ namespace FoxMud.Game.Command
                 }
 
                 // container in inventory?
-                foreach (var key in session.Player.Inventory.Keys)
-                {
-                    container = Server.Current.Database.Get<PlayerItem>(key);
-                    if (container != null
-                        && container.WearLocation == Wearlocation.Container
-                        && container.Keywords.Contains(argContainer))
-                    {
-                        containerFound = true;
-                        break;
-                    }
-                }
+                container = ItemHelper.FindInventoryItem(session.Player, argContainer, true);
 
                 // container on floor?
-                if (!containerFound)
-                {
-                    var room = Server.Current.Database.Get<Room>(session.Player.Location);
-                    if (room != null)
-                    {
-                        foreach (var key in room.Items.Keys)
-                        {
-                            container = Server.Current.Database.Get<PlayerItem>(key);
-                            if (container != null
-                                && container.WearLocation == Wearlocation.Container
-                                && container.Keywords.Contains(argContainer))
-                            {
-                                containerFound = true;
-                                break;
-                            }
-                        }
-                    }
-                }
+                if (container == null)
+                    container = ItemHelper.FindFloorItem(room, argContainer);
 
-                if (!containerFound)
+                if (container == null)
                 {
                     session.WriteLine("Can't find container: {0}", argContainer);
                     return;
@@ -580,7 +735,7 @@ namespace FoxMud.Game.Command
 
             Server.Current.Database.Save(session.Player);
             session.WriteLine("You empty {0}", container.Name);
-            room.SendPlayers(string.Format("%d empties {0}", container.Name), session.Player, null, session.Player);
+            room.SendPlayers(string.Format("%d empties %o {0}", container.Name), session.Player, null, session.Player);
         }
     }
 
@@ -669,9 +824,9 @@ namespace FoxMud.Game.Command
                         continue;
 
                     if (session.Player.Equipped.ContainsKey(location))
-                        session.WriteLine("{0,-15}{1}", "<" + StringHelpers.GetWearLocation(location) + ">", session.Player.Equipped[location].Name);
+                        session.WriteLine("`G{0,-15}{1}", "<" + StringHelpers.GetWearLocation(location) + ">", session.Player.Equipped[location].Name);
                     else
-                        session.WriteLine("{0,-15}Empty", "<" + StringHelpers.GetWearLocation(location) + ">");
+                        session.WriteLine("`G{0,-15}Empty", "<" + StringHelpers.GetWearLocation(location) + ">");
                 }
 
                 return;
@@ -738,7 +893,7 @@ namespace FoxMud.Game.Command
             foreach (var key in shopkeeper.Inventory.Keys)
             {
                 var item = Server.Current.Database.Get<PlayerItem>(key);
-                session.WriteLine("{0,-15}{1}", "[" + item.Value + "]", item.Name);
+                session.WriteLine("`G{0,-15}{1}", "[" + item.Value + "]", item.Name);
             }
         }
     }
@@ -782,7 +937,7 @@ namespace FoxMud.Game.Command
             foreach (var key in shopkeeper.Inventory.Keys)
             {
                 var template = Server.Current.Database.Get<PlayerItem>(key);
-                if (template.Keywords.Contains(context.Arguments[0]))
+                if (template.Keywords.Contains(context.Arguments[0].ToLower()))
                 {
                     item = template;
                     break;
@@ -810,7 +965,8 @@ namespace FoxMud.Game.Command
             for (int i = 0; i < qty; i++)
             {
                 var dupedItem = item.Copy();
-                if (session.Player.Inventory.Count + 1 <= session.Player.MaxInventory)
+                if (session.Player.Inventory.Count + 1 <= session.Player.MaxInventory
+                    && session.Player.Weight + dupedItem.Weight <= session.Player.MaxWeight)
                     session.Player.Inventory[dupedItem.Key] = dupedItem.Name;
                 else
                     room.AddItem(dupedItem);

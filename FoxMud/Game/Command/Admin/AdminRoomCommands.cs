@@ -172,68 +172,75 @@ namespace FoxMud.Game.Command.Admin
             var currentRoom = RoomHelper.GetRoom(session.Player.Location);
             if (currentRoom != null)
             {
-                string direction = context.Arguments[0];
-                context.Arguments.Remove(direction);
-
-                if (!DirectionHelper.isValidDirection(direction))
+                try
                 {
-                    session.WriteLine("{0} is not a valid direction", direction);
-                    PrintSyntax(session);
-                }
-                if (currentRoom.HasExit(direction))
-                {
-                    session.WriteLine("Room already has {0} exit", direction);
-                    PrintSyntax(session);
-                    return;
-                }
+                    string direction = context.Arguments[0];
+                    context.Arguments.Remove(direction);
 
-                // handle doors
-                string openClose = context.Arguments[0];
-                context.Arguments.Remove(openClose);
-                bool isDoor;
-                bool isOpen;
-                if (openClose == "<open>" || openClose == "<close>")
-                {
-                    isDoor = true;
-                    isOpen = openClose == "<open>";
-                }
-                else
-                {
-                    isDoor = false;
-                    isOpen = true;
-                }
-
-                // at this point, direction has been removed. all that remains if the new room key/name
-                string dstRoomKey = string.Join(" ", context.Arguments).Trim().ToLower();
-                var dstRoom = RoomHelper.GetRoom(dstRoomKey);
-                if (dstRoom == null)
-                {
-                    session.WriteLine("Room key not found: {0}", dstRoomKey);
-                    PrintSyntax(session);
-                    return;
-                }
-
-                // fixme: confirm dstRoom doesn't already have the opposite exit e.g. if creating
-                // north exit, dstRoom should not already have south exit
-
-                currentRoom.Exits.Add(direction, new RoomExit()
+                    if (!DirectionHelper.isValidDirection(direction))
                     {
-                        LeadsTo = dstRoomKey,
-                        IsDoor = isDoor,
-                        IsOpen = isOpen
-                    });
-
-                string oppositeDirection = DirectionHelper.GetOppositeDirection(direction);
-
-                dstRoom.Exits.Add(oppositeDirection, new RoomExit()
+                        session.WriteLine("{0} is not a valid direction", direction);
+                        PrintSyntax(session);
+                    }
+                    if (currentRoom.HasExit(direction))
                     {
-                        LeadsTo = currentRoom.Key,
-                        IsDoor = isDoor,
-                        IsOpen = isOpen
-                    });
-                
-                RoomHelper.SaveRoom(currentRoom);
-                RoomHelper.SaveRoom(dstRoom);
+                        session.WriteLine("Room already has {0} exit", direction);
+                        PrintSyntax(session);
+                        return;
+                    }
+
+                    // handle doors
+                    string openClose = context.Arguments[0];
+                    bool isDoor;
+                    bool isOpen;
+                    if (openClose == "<open>" || openClose == "<close>")
+                    {
+                        isDoor = true;
+                        isOpen = openClose == "<open>";
+                        context.Arguments.Remove(openClose);
+                    }
+                    else
+                    {
+                        isDoor = false;
+                        isOpen = true;
+                    }
+
+                    // at this point, direction has been removed. all that remains if the new room key/name
+                    string dstRoomKey = string.Join(" ", context.Arguments).Trim().ToLower();
+                    var dstRoom = RoomHelper.GetRoom(dstRoomKey);
+                    if (dstRoom == null)
+                    {
+                        session.WriteLine("Room key not found: {0}", dstRoomKey);
+                        PrintSyntax(session);
+                        return;
+                    }
+
+                    // fixme: confirm dstRoom doesn't already have the opposite exit e.g. if creating
+                    // north exit, dstRoom should not already have south exit
+
+                    currentRoom.Exits.Add(direction, new RoomExit()
+                        {
+                            LeadsTo = dstRoomKey,
+                            IsDoor = isDoor,
+                            IsOpen = isOpen
+                        });
+
+                    string oppositeDirection = DirectionHelper.GetOppositeDirection(direction);
+
+                    dstRoom.Exits.Add(oppositeDirection, new RoomExit()
+                        {
+                            LeadsTo = currentRoom.Key,
+                            IsDoor = isDoor,
+                            IsOpen = isOpen
+                        });
+
+                    RoomHelper.SaveRoom(currentRoom);
+                    RoomHelper.SaveRoom(dstRoom);
+                }
+                catch
+                {
+                    PrintSyntax(session);
+                }
             }
         }
     }

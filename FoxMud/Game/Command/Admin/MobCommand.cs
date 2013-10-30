@@ -32,6 +32,7 @@ namespace FoxMud.Game.Command.Admin
             template = new MobTemplate()
                 {
                     Aggro = false,
+                    AllowedRooms = new List<string>() {session.Player.Location},
                     BaseArmor = 0,
                     BaseCharisma = 0,
                     BaseConstitution = 0,
@@ -41,12 +42,12 @@ namespace FoxMud.Game.Command.Admin
                     BaseHp = 10,
                     BaseIntelligence = 0,
                     BaseLuck = 0,
-                    BaseStrength = 0, 
+                    BaseStrength = 0,
                     BaseWisdom = 0,
                     Description = "fix this description",
                     HitPoints = 10,
                     IsShopkeeper = false,
-                    Location = string.Empty,
+                    Location = session.Player.Location,
                     MinimumTalkInterval = 0,
                     Name = context.Arguments[0],
                     RespawnRoom = string.Empty,

@@ -166,12 +166,6 @@ namespace FoxMud.Game
         }
 
         [JsonIgnore]
-        public int Armor
-        {
-            get { return BaseArmor + Equipped.Sum(e => Server.Current.Database.Get<PlayerItem>(e.Value.Key).ArmorBonus); }
-        }
-
-        [JsonIgnore]
         public int MaxInventory
         {
             get { return Strength <= 10 ? 10 : Strength + 2; }

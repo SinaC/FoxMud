@@ -21,6 +21,7 @@ namespace FoxMud.Game
         public int BaseHitRoll { get; set; }
         public int BaseHp { get; set; }
         public int BaseArmor { get; set; }
+        public bool IsShopkeeper { get; set; }
 
         public Dictionary<string, string> Inventory { get; protected set; }
         public Dictionary<Wearlocation, WearSlot> Equipped { get; protected set; }
@@ -30,6 +31,9 @@ namespace FoxMud.Game
         {
             get
             {
+                if (IsShopkeeper)
+                    return int.MaxValue;
+
                 if (Equipped != null)
                     return BaseHp + Equipped.Sum(e => Server.Current.Database.Get<PlayerItem>(e.Value.Key).HpBonus);
 
@@ -42,6 +46,9 @@ namespace FoxMud.Game
         {
             get
             {
+                if (IsShopkeeper)
+                    return int.MaxValue;
+
                 if (Equipped != null)
                     return BaseArmor +
                            Equipped.Sum(e => Server.Current.Database.Get<PlayerItem>(e.Value.Key).ArmorBonus);
@@ -55,6 +62,9 @@ namespace FoxMud.Game
         {
             get
             {
+                if (IsShopkeeper)
+                    return int.MaxValue;
+
                 if (Equipped != null)
                     return BaseHitRoll +
                            Equipped.Sum(e => Server.Current.Database.Get<PlayerItem>(e.Value.Key).HitRoll);
@@ -68,6 +78,9 @@ namespace FoxMud.Game
         {
             get
             {
+                if (IsShopkeeper)
+                    return int.MaxValue;
+
                 if (Equipped != null)
                     return BaseDamRoll +
                            Equipped.Sum(e => Server.Current.Database.Get<PlayerItem>(e.Value.Key).DamRoll);

@@ -74,6 +74,14 @@ namespace FoxMud.Game.Command.Visual
             }
         }
 
+        private static void WriteGoldOnFloor(Session session, Room room)
+        {
+            if (room.Gold > 1)
+                session.WriteLine("`YA pile of coins lies here.");
+            else if (room.Gold > 0)
+                session.WriteLine("`YA single gold coin lies here.");
+        }
+
         private static void PerformLookAtRoom(Session session)
         {
             var room = Server.Current.Database.Get<Room>(session.Player.Location);
@@ -86,6 +94,7 @@ namespace FoxMud.Game.Command.Visual
 
             WriteRoomDescription(session, room);
             WriteAvailableExits(session, room);
+            WriteGoldOnFloor(session, room);
             WriteItemsOnFloor(session, room);
             WriteRoomPlayerList(session, room);
         }
@@ -152,14 +161,15 @@ namespace FoxMud.Game.Command.Visual
             }
 
             // find item to look at
-            foreach (var key in session.Player.Inventory.Keys.Union(room.Items.Keys))
+            var item = ItemHelper.FindInventoryItem(session.Player, context.ArgumentString);
+            
+            if (item == null)
+                item = ItemHelper.FindFloorItem(room, context.ArgumentString);
+
+            if (item != null)
             {
-                var item = Server.Current.Database.Get<PlayerItem>(key);
-                if (item != null && item.Keywords != null && item.Keywords.Contains(context.ArgumentString))
-                {
-                    item.LookAt(session);
-                    return;
-                }
+                item.LookAt(session);
+                return;
             }
 
             session.WriteLine("You couldn't find anything like that.");

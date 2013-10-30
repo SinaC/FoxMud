@@ -43,6 +43,8 @@ namespace FoxMud.Game.Item
         public int WisdomBonus { get; set; }
         public int CharismaBonus { get; set; }
         public int LuckBonus { get; set; }
+
+        public int Gold { get; set; }
     }
 
 
@@ -54,6 +56,7 @@ namespace FoxMud.Game.Item
     class PlayerItem : Storable, Equipable
     {
         private Guid _guid;
+        private int _gold;
 
         public string Key
         {
@@ -81,6 +84,19 @@ namespace FoxMud.Game.Item
         public int WisdomBonus { get; set; }
         public int CharismaBonus { get; set; }
         public int LuckBonus { get; set; }
+
+        public int Gold
+        {
+            get
+            {
+                return _gold;
+            }
+            set
+            {
+                if (WearLocation == Wearlocation.Container || WearLocation == Wearlocation.Corpse)
+                    _gold = value;
+            }
+        }
 
         [JsonIgnore]
         public string AllowedToLoot { get; set; }
@@ -169,11 +185,14 @@ namespace FoxMud.Game.Item
 
             if (WearLocation == Wearlocation.Container || WearLocation == Wearlocation.Corpse)
             {
-                if (ContainedItems.Count == 0)
+                if (ContainedItems.Count == 0 && Gold <= 0)
                 {
                     session.WriteLine("\tEmpty");
                     return;
                 }
+
+                if (Gold > 0)
+                    session.WriteLine("\t`Y{0} gold coin{1}", Gold, Gold > 1 ? "s" : string.Empty);
 
                 foreach (var itemLine in ContainedItems
                     .GroupBy(i => i.Value)

@@ -166,46 +166,32 @@ namespace FoxMud
             {
                 case Wearlocation.Arms:
                     return "Arms";
-                    break;
                 case Wearlocation.BothHands:
                     return "Both Hands";
-                    break;
                 case Wearlocation.Container:
                     return "Container";
-                    break;
                 case Wearlocation.Feet:
                     return "Feet";
-                    break;
                 case Wearlocation.Head:
                     return "Head";
-                    break;
                 case Wearlocation.Key:
                     return "Key";
-                    break;
                 case Wearlocation.LeftHand:
                     return "Left Hand";
-                    break;
                 case Wearlocation.Legs:
                     return "Legs";
-                    break;
                 case Wearlocation.None:
                     return "None";
-                    break;
                 case Wearlocation.RightHand:
                     return "Right Hand";
-                    break;
                 case Wearlocation.Shoulders:
                     return "Shoulders";
-                    break;
                 case Wearlocation.Torso:
                     return "Torso";
-                    break;
                 case Wearlocation.Waist:
                     return "Waist";
-                    break;
                 default:
                     return string.Empty;
-                    break;
             }
         }
     }

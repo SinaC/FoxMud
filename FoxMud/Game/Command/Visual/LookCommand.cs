@@ -35,25 +35,25 @@ namespace FoxMud.Game.Command.Visual
                 if (player == session.Player)
                     continue;
 
-                session.WriteLine("{0} is here.", session.Player.GetOtherPlayerDescription(player));
+                session.WriteLine("`M{0} is here.", session.Player.GetOtherPlayerDescription(player));
             }
 
             foreach (var npc in room.GetNpcs())
             {
-                session.WriteLine("{0} is here.", npc.Name);
+                session.WriteLine("`M{0} is here.", npc.Name);
             }
         }
 
         private static void WriteRoomDescription(Session session, Room room)
         {
-            session.WriteLine("{0}", room.Title);
-            session.WriteLine(room.Description);
+            session.WriteLine("`G{0}", room.Title);
+            session.WriteLine("`W{0}", room.Description);
         }
 
         private static void WriteAvailableExits(Session session, Room room)
         {
             StringBuilder builder = new StringBuilder();
-            builder.Append("Available exits: [ ");
+            builder.Append("`wAvailable exits: [ ");
 
             foreach (var exit in room.Exits.Keys)
             {
@@ -70,7 +70,7 @@ namespace FoxMud.Game.Command.Visual
             foreach (var item in room.Items)
             {
                 var actualItem = Server.Current.Database.Get<PlayerItem>(item.Key);
-                session.WriteLine("{0} lies here.", actualItem.Description);
+                session.WriteLine("`G{0} lies here.", actualItem.Description);
             }
         }
 
@@ -139,21 +139,21 @@ namespace FoxMud.Game.Command.Visual
 
             // todo: look at a directional exit
 
-            Room room = Server.Current.Database.Get<Room>(session.Player.Location);
+            var room = Server.Current.Database.Get<Room>(session.Player.Location);
             if (room == null)
             {
                 session.WriteLine("Couldn't find anything to look at");
                 return;
             }
 
-            Player player = room.LookUpPlayer(session.Player, context.ArgumentString);
+            var player = room.LookUpPlayer(session.Player, context.ArgumentString);
             if (player != null)
             {
                 PerformLookAtPlayer(session, room, player);
                 return;
             }
 
-            NonPlayer npc = room.LookUpNpc(context.ArgumentString);
+            var npc = room.LookUpNpc(context.ArgumentString);
             if (npc != null)
             {
                 PerformLookAtNpc(session, npc);

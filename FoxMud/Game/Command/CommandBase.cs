@@ -23,9 +23,4 @@ namespace FoxMud.Game.Command
         public abstract void PrintSyntax(Session session);
         public abstract void Execute(Session session, CommandContext context);
     }
-
-    abstract class CallbackCommand : PlayerCommand
-    {
-        public abstract void Execute(Session session, CommandContext context, out string callbackCommand);
-    }
 }

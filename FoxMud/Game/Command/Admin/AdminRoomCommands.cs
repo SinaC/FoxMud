@@ -69,7 +69,7 @@ namespace FoxMud.Game.Command.Admin
     /// admin command to jump to a specific room
     /// </summary>
     [Command("goto", true, TickDelay.Instant)]
-    class GotoCommand : CallbackCommand
+    class GotoCommand : PlayerCommand
     {
         public override void PrintSyntax(Session session)
         {
@@ -78,16 +78,6 @@ namespace FoxMud.Game.Command.Admin
 
         public override void Execute(Session session, CommandContext context)
         {
-            // this feels hacky, maybe could use an extension method here instead of interface inheritance
-            string dummyString;
-            Execute(session, context, out dummyString);
-        }
-
-        public override void Execute(Session session, CommandContext context, out string callbackCommand)
-        {
-            // make player "look" as cue to show the jump
-            callbackCommand = "look";
-
             var room = RoomHelper.GetRoom(context.ArgumentString);
 
             if (room != null)
@@ -102,6 +92,9 @@ namespace FoxMud.Game.Command.Admin
                 room.AddPlayer(session.Player);
                 session.Player.Location = context.ArgumentString;
             }
+
+            var commandInfo = Server.Current.CommandLookup.FindCommand("look", false);
+            commandInfo.Command.Execute(session, CommandContext.Create("look"));
         }
     }
 
@@ -152,7 +145,7 @@ namespace FoxMud.Game.Command.Admin
     /// example: makeexit south <close> awesome room
     /// </summary>
     [Command("makeexit", true, TickDelay.Instant)]
-    class MakeExitCommand : CallbackCommand
+    class MakeExitCommand : PlayerCommand
     {
         public override void PrintSyntax(Session session)
         {
@@ -161,14 +154,6 @@ namespace FoxMud.Game.Command.Admin
 
         public override void Execute(Session session, CommandContext context)
         {
-            string dummyString;
-            Execute(session, context, out dummyString);
-        }
-        
-        public override void Execute(Session session, CommandContext context, out string callbackCommand)
-        {
-            callbackCommand = "look";
-
             var currentRoom = RoomHelper.GetRoom(session.Player.Location);
             if (currentRoom != null)
             {
@@ -219,20 +204,20 @@ namespace FoxMud.Game.Command.Admin
                     // north exit, dstRoom should not already have south exit
 
                     currentRoom.Exits.Add(direction, new RoomExit()
-                        {
-                            LeadsTo = dstRoomKey,
-                            IsDoor = isDoor,
-                            IsOpen = isOpen
-                        });
+                    {
+                        LeadsTo = dstRoomKey,
+                        IsDoor = isDoor,
+                        IsOpen = isOpen
+                    });
 
                     string oppositeDirection = DirectionHelper.GetOppositeDirection(direction);
 
                     dstRoom.Exits.Add(oppositeDirection, new RoomExit()
-                        {
-                            LeadsTo = currentRoom.Key,
-                            IsDoor = isDoor,
-                            IsOpen = isOpen
-                        });
+                    {
+                        LeadsTo = currentRoom.Key,
+                        IsDoor = isDoor,
+                        IsOpen = isOpen
+                    });
 
                     RoomHelper.SaveRoom(currentRoom);
                     RoomHelper.SaveRoom(dstRoom);

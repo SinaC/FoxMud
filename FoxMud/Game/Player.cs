@@ -222,7 +222,7 @@ namespace FoxMud.Game
 
         public void WritePrompt()
         {
-            OutputWriter.WriteLine("<{0}/{1}hp ${2:N0}>", HitPoints, MaxHitPoints, Gold);
+            OutputWriter.WriteLine("`w<`GHP: {0}`g/`G{1} `Y${2:N0}`w>", HitPoints, MaxHitPoints, Gold);
         }
 
         public static string NameToKey(string name)

@@ -47,6 +47,7 @@ namespace FoxMud.Game.Command.Movement
         public override void Execute(Session session, CommandContext context)
         {
             // todo: messages per position e.g. "can't do that while sitting", "you're fighting" etc
+            Console.WriteLine("walk {0} {1}", direction, DateTime.Now.ToLongTimeString());
             if (session.Player.Status != GameStatus.Standing)
             {
                 session.WriteLine("You can't leave right now.");

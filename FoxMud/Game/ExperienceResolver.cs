@@ -17,9 +17,7 @@ namespace FoxMud.Game
 
         public static bool CanLevelUp(int level, int experience)
         {
-            int oldXp = Convert.ToInt32(A * Math.Exp(B * (level - 1)));
-            int newXp = Convert.ToInt32(A * Math.Exp(B * level));
-            return newXp - oldXp > experience;
+            return experience >= ExperienceRequired(level + 1);
         }
 
         public static int ExperienceRequired(int level)

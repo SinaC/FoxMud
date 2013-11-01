@@ -40,6 +40,7 @@ namespace FoxMud.Game.World
         public string Title { get; set; }
         public string Description { get; set; }
         public Dictionary<string, RoomExit> Exits { get; private set; }
+        public bool CanPracticeHere { get; set; }
 
         [JsonIgnore]
         public long Gold { get; set; }

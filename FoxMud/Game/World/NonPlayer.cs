@@ -45,6 +45,7 @@ namespace FoxMud.Game.World
             AllowedRooms = new List<string>();
             Inventory = new List<string>();
             Equipped = new Dictionary<Wearlocation, string>();
+            Skills = new Dictionary<string, double>();
         }
     }
 
@@ -82,7 +83,8 @@ namespace FoxMud.Game.World
         [JsonConstructor]
         private NonPlayer(string key, string name, GameStatus status, string[] keywords, string description, string respawnRoom, int hitPoints, bool aggro, int baseArmor, 
             string mobTemplateKey, int baseHitRoll, int baseDamRoll, List<string> allowedRooms, Dictionary<string, string> inventory, int gold, int maxGold, int minGold,
-            Dictionary<Wearlocation, WearSlot> equipped, string location, string[] phrases, double talkProbability, long minimumTalkInterval, bool isShopkeeper)
+            Dictionary<Wearlocation, WearSlot> equipped, string location, string[] phrases, double talkProbability, long minimumTalkInterval, bool isShopkeeper,
+            Dictionary<string,double> skills)
         {
             _guid = new Guid(key);
             
@@ -104,6 +106,7 @@ namespace FoxMud.Game.World
             AllowedRooms = allowedRooms ?? new List<string>();
             Inventory = inventory ?? new Dictionary<string, string>();
             Equipped = equipped ?? new Dictionary<Wearlocation, WearSlot>();
+            Skills = skills ?? new Dictionary<string, double>();
             _lastTimeTalked = DateTime.Now;
             _lastTimeWalked = DateTime.Now;
             IsShopkeeper = isShopkeeper;

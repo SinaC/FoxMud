@@ -85,7 +85,7 @@ namespace FoxMud.Game
         /// handles proper ordering of combat text for fighters only
         /// </summary>
         /// <returns>a dictionary with each relevant player's text</returns>
-        public Dictionary<Player, string> Print(List<Player> combatOrder)
+        public void Print(List<Player> combatOrder)
         {
             var result = new Dictionary<Player, string>();
 
@@ -138,7 +138,8 @@ namespace FoxMud.Game
                 throw ex;
             }
 
-            return result;
+            foreach (var player in result.Keys)
+                player.Send(result[player], null);
         }
 
         public void Print(Player player)
@@ -234,6 +235,16 @@ namespace FoxMud.Game
                 mobs.Add(npc);
         }
 
+        public void RemoveFromCombat(NonPlayer npc)
+        {
+            mobs.Remove(npc);
+        }
+
+        public void RemoveFromCombat(Player player)
+        {
+            fighters.Remove(player);
+        }
+
         internal void Start()
         {
             if (fighters.Count < 1 || mobs.Count < 1)
@@ -277,10 +288,7 @@ namespace FoxMud.Game
                 roundText += DoMobHits();
             }
 
-            var textToSend = roundText.Print(combatOrder);
-
-            foreach (var player in textToSend.Keys)
-                player.Send(textToSend[player], null);
+            roundText.Print(combatOrder);
 
             foreach (var removing in removeFromCombatLater)
                 combatOrder.Remove(removing);
@@ -350,7 +358,7 @@ namespace FoxMud.Game
                             round.AddText(playerToHit, groupText, CombatTextType.Group);
                             round.AddText(playerToHit, groupText, CombatTextType.Room);
 
-                            fighters.Remove(playerToHit);
+                            RemoveFromCombat(playerToHit);
                             removeFromCombatLater.Add(playerToHit);
 
                             if (fighters.Count == 0)
@@ -392,7 +400,7 @@ namespace FoxMud.Game
                         {
                             killedBy.Add(mobToHit, player);
                             // remove mob from combat, so it can't be hit any more
-                            mobs.Remove(mobToHit);
+                            RemoveFromCombat(mobToHit);
                             round += mobToHit.Die();
                             if (mobs.Count == 0)
                                 break; // stop fighting
@@ -499,6 +507,11 @@ namespace FoxMud.Game
             foreach (var fight in Fights)
                 if (fight.GetMobs().Any(m => m.Key == mobKey))
                     fight.AddFighter(player);
+        }
+
+        public Combat FindFight(Player player)
+        {
+            return Fights.FirstOrDefault(f => f.GetFighters().Contains(player));
         }
     }
 }

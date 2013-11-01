@@ -26,7 +26,7 @@ namespace FoxMud.Game.State
         {
             var commandContext = CommandContext.Create(input);
             var player = Server.Current.Database.Get<Player>(Session.Player.Key);
-            var commandInfo = Server.Current.CommandLookup.FindCommand(commandContext.CommandName, player.IsAdmin);
+            var commandInfo = Server.Current.CommandLookup.FindCommand(commandContext.CommandName, player);
 
             TryExecuteCommand(commandContext, commandInfo);
         }

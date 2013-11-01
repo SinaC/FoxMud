@@ -9,8 +9,10 @@ namespace FoxMud.Game.Command
     class CommandInfo
     {
         public bool IsAdmin { get; set; }
+        public int MinimumLevel { get; set; }
         public PlayerCommand Command { get; set; }
         public TickDelay TickLength { get; set; }
+        public string CommandName { get; set; }
     }
 
     class DynamicCommandLookup : CommandLookup
@@ -42,7 +44,9 @@ namespace FoxMud.Game.Command
                                      {
                                         Command = (PlayerCommand)Activator.CreateInstance(commandType, attribute.Parameters),
                                         IsAdmin = attribute.IsAdmin,
-                                        TickLength = attribute.TickLength
+                                        MinimumLevel = attribute.MinimumLevel,
+                                        TickLength = attribute.TickLength,
+                                        CommandName = StringHelpers.Capitalize(attribute.CommandName),
                                      });
                 }
             }           
@@ -50,10 +54,10 @@ namespace FoxMud.Game.Command
 
         public CommandInfo FindCommand(string commandName)
         {
-            return FindCommand(commandName, false);
+            return FindCommand(commandName, new Player() {});
         }
 
-        public CommandInfo FindCommand(string commandName, bool includeAdmin)
+        public CommandInfo FindCommand(string commandName, Player player)
         {
             if (string.IsNullOrWhiteSpace(commandName))
                 return null;
@@ -64,7 +68,11 @@ namespace FoxMud.Game.Command
             {
                 if (item.Key.StartsWith(commandName))
                 {
-                    if (item.Value.IsAdmin && !includeAdmin)
+                    // check minimum level if player isn't admin
+                    if (player.Level < item.Value.MinimumLevel && !player.IsAdmin)
+                        continue;
+                    
+                    if (item.Value.IsAdmin && !player.IsAdmin)
                         continue;
 
                     return item.Value;
@@ -72,6 +80,11 @@ namespace FoxMud.Game.Command
             }
 
             return null;
+        }
+
+        public IEnumerable<CommandInfo> FindCommands(int level)
+        {
+            return commandTable.Values.Where(c => c.MinimumLevel <= level);
         }
     }
 }

@@ -47,7 +47,8 @@ namespace FoxMud.Game
         private Player(
             string name, string passwordHash, bool isAdmin, string prompt, Dictionary<string,string> rememberedNames, Dictionary<string, string> inventory, int hitPoints,
             long gold, int experience, Dictionary<Wearlocation, WearSlot> equipped, GameStatus status, int hitRoll, int damRoll, int level, string respawnRoom, 
-            int strength, int dexterity, int constitution, int intelligence, int wisdom, int charisma, int luck, int age, int baseHp)
+            int strength, int dexterity, int constitution, int intelligence, int wisdom, int charisma, int luck, int age, int baseHp, Dictionary<string, double> skills,
+            int skillPoints)
         {
             Forename = name;
             _passwordHash = passwordHash;
@@ -60,6 +61,7 @@ namespace FoxMud.Game
             RememberedNames = rememberedNames ?? new Dictionary<string, string>();
             Inventory = inventory ?? new Dictionary<string, string>();
             Equipped = equipped ?? new Dictionary<Wearlocation, WearSlot>();
+            Skills = skills ?? new Dictionary<string, double>();
             Status = status;
             BaseHitRoll = hitRoll;
             BaseDamRoll = damRoll;
@@ -73,6 +75,7 @@ namespace FoxMud.Game
             BaseWisdom = wisdom;
             BaseCharisma = charisma;
             BaseLuck = luck;
+            SkillPoints = skillPoints;
         }
 
         public Player()
@@ -91,6 +94,7 @@ namespace FoxMud.Game
             _hitPoints = BaseHp;
             Inventory = new Dictionary<string, string>();
             Equipped = new Dictionary<Wearlocation, WearSlot>();
+            Skills = new Dictionary<string, double>();
         }
 
         public string Key
@@ -112,6 +116,7 @@ namespace FoxMud.Game
         public int Level { get; set; }
         public int Age { get; set; }
         public string RespawnRoom { get; set; }
+        public int SkillPoints { get; set; }
 
         [JsonIgnore]
         public OutputTextWriter OutputWriter { get; set; }

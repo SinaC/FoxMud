@@ -194,5 +194,13 @@ namespace FoxMud
                     return string.Empty;
             }
         }
+
+        public static string Capitalize(string text)
+        {
+            if (string.IsNullOrEmpty(text))
+                return text;
+
+            return text.Substring(0, 1).ToUpper() + text.Substring(1);
+        }
     }
 }

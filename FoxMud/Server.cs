@@ -69,6 +69,7 @@ namespace FoxMud
             Database = new Database(DataDir);
             CommandLookup = new DynamicCommandLookup();
             Areas = Database.GetAll<Area>();
+            CombatSkills = Database.GetAll<CombatSkill>();
             RepopHandler = new RepopHandler(TickTime);
             CombatHandler = new CombatHandler(CombatTickRate);
             RegenHandler = new RegenHandler(RegenTime);
@@ -88,6 +89,7 @@ namespace FoxMud
         public RegenHandler RegenHandler { get; private set; }
         public RepopHandler RepopHandler { get; private set; }
         public IEnumerable<Area> Areas { get; private set; }
+        public IEnumerable<CombatSkill> CombatSkills { get; private set; }
         public Random Random { get; private set; }
 
         public void Start()

@@ -52,12 +52,14 @@
   </ItemGroup>
   <ItemGroup>
     <Compile Include="Game\CombatHandler.cs" />
+    <Compile Include="Game\CombatSkill.cs" />
     <Compile Include="Game\Command\Admin\AdminItemCommand.cs" />
     <Compile Include="Game\Command\Admin\AdminRoomCommands.cs" />
     <Compile Include="Game\Command\Admin\MobCommand.cs" />
     <Compile Include="Game\Command\Admin\ShutdownCommand.cs" />
     <Compile Include="Game\Command\ArgumentType.cs" />
     <Compile Include="Game\Command\Combat\KillCommand.cs" />
+    <Compile Include="Game\Command\Combat\SkillCommands.cs" />
     <Compile Include="Game\Command\CommandAttribute.cs" />
     <Compile Include="Game\Command\CommandBase.cs" />
     <Compile Include="Game\Command\CommandContext.cs" />
@@ -74,6 +76,7 @@
     <Compile Include="Game\Command\Movement\MoveCommand.cs" />
     <Compile Include="Game\Command\Movement\PositionCommand.cs" />
     <Compile Include="Game\Command\SaveCommand.cs" />
+    <Compile Include="Game\Command\Skill\PracticeCommand.cs" />
     <Compile Include="Game\Command\Stat\LevelCommand.cs" />
     <Compile Include="Game\Command\Stat\ScorecardCommand.cs" />
     <Compile Include="Game\Command\Stat\WhoisCommand.cs" />

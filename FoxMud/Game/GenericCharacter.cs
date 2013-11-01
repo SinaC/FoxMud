@@ -25,6 +25,7 @@ namespace FoxMud.Game
 
         public Dictionary<string, string> Inventory { get; protected set; }
         public Dictionary<Wearlocation, WearSlot> Equipped { get; protected set; }
+        public Dictionary<string, double> Skills { get; protected set; }
 
         [JsonIgnore]
         public int MaxHitPoints

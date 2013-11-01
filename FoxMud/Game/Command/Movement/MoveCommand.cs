@@ -83,7 +83,7 @@ namespace FoxMud.Game.Command.Movement
 
                 // emit "event" for aggro mobs
                 Server.Current.CombatHandler.EnterRoom(session.Player, newRoom);
-                var commandInfo = Server.Current.CommandLookup.FindCommand("look", false);
+                var commandInfo = Server.Current.CommandLookup.FindCommand("look", session.Player);
                 commandInfo.Command.Execute(session, CommandContext.Create("look"));
             }
             else

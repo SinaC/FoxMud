@@ -93,7 +93,7 @@ namespace FoxMud.Game.Command.Admin
                 session.Player.Location = context.ArgumentString;
             }
 
-            var commandInfo = Server.Current.CommandLookup.FindCommand("look", false);
+            var commandInfo = Server.Current.CommandLookup.FindCommand("look", session.Player);
             commandInfo.Command.Execute(session, CommandContext.Create("look"));
         }
     }

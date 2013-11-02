@@ -475,7 +475,7 @@ namespace FoxMud.Game
 
         private void DoCombat(object sender, ElapsedEventArgs e)
         {
-            _timer.Stop();
+            //Server.Current.Log("DoCombat");
             foreach (var combat in Fights.ToArray())
             {
                 try
@@ -494,7 +494,6 @@ namespace FoxMud.Game
                     Fights.Remove(combat);
                 }
             }
-            _timer.Start();
         }
 
         public void Start()

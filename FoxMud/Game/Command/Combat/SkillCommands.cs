@@ -7,9 +7,9 @@ using FoxMud.Game.Command.Admin;
 
 namespace FoxMud.Game.Command.Combat
 {
-    [Command("punch", false, TickDelay.Single, 1, "punch")]
+    [Command("punch", false, TickDelay.Double, 1, "punch")]
     [Command("kick", false, TickDelay.Double, 1, "kick")]
-    [Command("pummel", false, TickDelay.Triple, 2, "pummel")]
+    [Command("pummel", false, TickDelay.Quadruple, 2, "pummel")]
     class SkillCommands : PlayerCommand
     {
         private readonly string realCommandName;
@@ -74,7 +74,7 @@ namespace FoxMud.Game.Command.Combat
             }
 
             // do it
-            if (Server.Current.Random.Next() < session.Player.Skills[skill.Key])
+            if (Server.Current.Random.NextDouble() < session.Player.Skills[skill.Key])
             {
                 // get damage
                 var damage = Server.Current.Random.Next(skill.MinDamage, skill.MaxDamage + 1);
@@ -88,7 +88,7 @@ namespace FoxMud.Game.Command.Combat
                                                             : 0;
 
                 // message
-                session.WriteLine("You {0} {1} for {2} damage!", context.CommandName.ToLower(), target.Name, damage);
+                session.WriteLine("You {0} {1} for {2} damage!", realCommandName, target.Name, damage);
                 // room message
                 room.SendPlayers(
                     string.Format("{0}{1} {2} hits {3}!", session.Player.Forename,
@@ -110,7 +110,7 @@ namespace FoxMud.Game.Command.Combat
             else
             {
                 // message
-                session.WriteLine("Your {0} misses {1}!", context.CommandName.ToLower(), target.Name);
+                session.WriteLine("Your {0} misses {1}!", realCommandName, target.Name);
                 // room message
                 room.SendPlayers(string.Format("{0}{1} {2} misses {3}!", session.Player.Forename,
                                                session.Player.Forename.ToLower().EndsWith("s") ? "'" : "s", skill.Key,

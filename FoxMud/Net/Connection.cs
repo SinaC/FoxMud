@@ -161,15 +161,21 @@ namespace FoxMud
 
             // this loop will parse multiple commands from advanced mud clients e.g.
             // in Zmud, look;look will send two new lines, so need to queue up both
+            var skip = 0;
             while (inputBufferLength > 0)
             {
-                // Get line contents            
+                // Get line contents
                 string input = Encoding.ASCII.GetString(inputBuffer, 0, indexOfNewLine);
                 // Remove line from buffer
                 inputBufferLength -= indexOfEndOfNewLine;
                 Buffer.BlockCopy(inputBuffer, indexOfEndOfNewLine, inputBuffer, 0, inputBufferLength);
                 // Trigger line recieved event
+                Console.WriteLine("COMMAND: {0}", input);
                 OnLineRecieved(input);
+
+                // reset indices to get next command
+                indexOfNewLine = IndexOfNewLine(inputBuffer, inputBufferLength);
+                indexOfEndOfNewLine = indexOfNewLine + 2;
             }
         }
 
@@ -178,7 +184,9 @@ namespace FoxMud
             for (int i = 0; i < length - 1; i++)
             {
                 if (buffer[i] == '\r' && buffer[i + 1] == '\n')
+                {
                     return i;
+                }
             }
 
             return -1;

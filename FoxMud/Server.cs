@@ -25,11 +25,16 @@ namespace FoxMud
     public enum TickDelay
     {
         Instant = 1,
-        Single = 500,
+        Single = 650,
         Double = Single * 2,
         Triple = Single * 3,
         Quadruple = Single * 4,
         Quintuple = Single * 5,
+        Sextuple = Single * 6,
+        Septuple = Single * 7,
+        Octuple = Single * 8,
+        Nonuple = Single * 9,
+        Decuple = Single * 10,
     }
 
     class Server : IDisposable
@@ -156,6 +161,12 @@ namespace FoxMud
             Stop();
             ConnectionListener.Dispose();
             wait.Dispose();
+        }
+
+        public void Log(string message)
+        {
+            Console.WriteLine("{0,-10}: {1}", DateTime.Now.ToString("mm:ss.fff"), message);
+                
         }
     }
 }

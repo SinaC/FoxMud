@@ -23,6 +23,11 @@ namespace FoxMud
         public TextTransformer OutputTransformer { get; set; }
         public Player Player { get; set; }
 
+        public void Echo(bool echo)
+        {
+            connection.Echo(echo);
+        }
+
         private SessionStateBase CurrentState
         {
             get

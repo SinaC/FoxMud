@@ -6,7 +6,7 @@ using System.Net.Sockets;
 
 namespace FoxMud
 {
-    class Connection
+    internal class Connection
     {
         private const int OutputBufferSize = 8192;
         private const int InputBufferSize = 4096;
@@ -25,7 +25,7 @@ namespace FoxMud
             this.inputBuffer = new byte[InputBufferSize];
             this.inputBufferLength = 0;
         }
-        
+
         public Socket Socket { get; private set; }
 
         public static explicit operator Socket(Connection connection)
@@ -34,6 +34,7 @@ namespace FoxMud
         }
 
         public event EventHandler<LineReceivedEventArgs> LineRecieved;
+
         private void OnLineRecieved(string line)
         {
             var ev = LineRecieved;
@@ -43,6 +44,7 @@ namespace FoxMud
         }
 
         public event EventHandler Closed;
+
         private void OnClosed()
         {
             var ev = Closed;
@@ -83,7 +85,7 @@ namespace FoxMud
             {
                 if (readBuffer[i] == '\b')
                 {
-                    if (inputBufferLength > 0 && 
+                    if (inputBufferLength > 0 &&
                         (inputBuffer[inputBufferLength - 1] != '\r' ||
                          inputBuffer[inputBufferLength - 1] != '\n'))
                         inputBufferLength--;
@@ -147,7 +149,7 @@ namespace FoxMud
             // Check for line ending            
             int indexOfNewLine = IndexOfNewLine(inputBuffer, inputBufferLength);
             int indexOfEndOfNewLine = indexOfNewLine + 2;
-            
+
             // If no line ending, we don't need to do anything
             if (indexOfNewLine == -1)
             {
@@ -190,7 +192,7 @@ namespace FoxMud
             }
 
             return -1;
-        }    
+        }
 
         public void Write(string value)
         {
@@ -208,6 +210,19 @@ namespace FoxMud
         public void WriteLine(string value)
         {
             Write(value + "\r\n");
+        }
+
+        public void Echo(bool echo)
+        {
+            var echoBit = echo ? 0xFC : 0xFB;
+            var bytes = new byte[]
+                {
+                    0xFF,
+                    (byte)echoBit,
+                    0x01
+                };
+
+            Socket.Send(bytes);
         }
     }
 }

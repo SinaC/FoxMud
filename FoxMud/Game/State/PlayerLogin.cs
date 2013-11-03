@@ -34,6 +34,7 @@ namespace FoxMud.Game.State
                 case State.RequestPassword:
                     // todo bug#28 turn off echo for password input
                     Session.Write("Password: ");
+                    Session.Echo(false);
                     break;
             }
         }
@@ -88,6 +89,7 @@ namespace FoxMud.Game.State
 
                 case State.RequestPassword:
                     password = input;
+                    Session.Echo(true);
                     if (!player.CheckPassword(password))
                     {
                         Session.WriteLine("Invalid password");

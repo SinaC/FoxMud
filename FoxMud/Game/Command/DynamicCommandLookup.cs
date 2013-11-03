@@ -52,12 +52,12 @@ namespace FoxMud.Game.Command
             }           
         }
 
-        public CommandInfo FindCommand(string commandName)
+        public CommandInfo FindCommand(string commandName, bool isNpc = false)
         {
-            return FindCommand(commandName, new Player() {});
+            return FindCommand(commandName, new Player() {}, isNpc);
         }
 
-        public CommandInfo FindCommand(string commandName, Player player)
+        public CommandInfo FindCommand(string commandName, Player player, bool isNpc = false)
         {
             if (string.IsNullOrWhiteSpace(commandName))
                 return null;
@@ -68,6 +68,10 @@ namespace FoxMud.Game.Command
             {
                 if (item.Key.StartsWith(commandName))
                 {
+                    // if npc, ignore level/admin checks etc
+                    if (isNpc)
+                        return item.Value;
+
                     // check minimum level if player isn't admin
                     if (player.Level < item.Value.MinimumLevel && !player.IsAdmin)
                         continue;

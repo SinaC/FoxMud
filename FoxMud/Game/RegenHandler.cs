@@ -29,6 +29,13 @@ namespace FoxMud.Game
                     if (player.HitPoints < Server.IncapacitatedHitPoints)
                     {
                         player.HitPoints -= 1;
+
+                        if (player.HitPoints < Server.DeadHitPoints)
+                        {
+                            player.DieForReal();
+                            continue;
+                        }
+
                         player.Send("You will die soon if unaided...", null);
                     }
                     else

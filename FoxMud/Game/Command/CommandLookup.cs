@@ -7,8 +7,8 @@ namespace FoxMud.Game.Command
 {
     interface CommandLookup
     {
-        CommandInfo FindCommand(string commandName);
-        CommandInfo FindCommand(string commandName, Player player);
+        CommandInfo FindCommand(string commandName, bool isNpc = false);
+        CommandInfo FindCommand(string commandName, Player player, bool isNpc = false);
         IEnumerable<CommandInfo> FindCommands(int level);
     }
 }

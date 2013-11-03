@@ -4,6 +4,7 @@ using System.IO;
 using System.Linq;
 using System.Text;
 using System.Threading.Tasks;
+using System.Timers;
 using AutoMapper;
 using FoxMud.Db;
 using FoxMud.Game.Item;
@@ -36,6 +37,7 @@ namespace FoxMud.Game.World
         public List<string> AllowedRooms { get; set; }
         public new List<string> Inventory { get; private set; }
         public new Dictionary<Wearlocation, string> Equipped { get; private set; }
+        public new Dictionary<string, Tuple<double, double>> Skills { get; private set; }
         public int Gold { get; set; }
         public int MaxGold { get; set; }
         public int MinGold { get; set; }
@@ -45,7 +47,7 @@ namespace FoxMud.Game.World
             AllowedRooms = new List<string>();
             Inventory = new List<string>();
             Equipped = new Dictionary<Wearlocation, string>();
-            Skills = new Dictionary<string, double>();
+            Skills = new Dictionary<string, Tuple<double, double>>();
         }
     }
 
@@ -57,6 +59,8 @@ namespace FoxMud.Game.World
         private Guid _guid;
         private DateTime _lastTimeTalked;
         private DateTime _lastTimeWalked;
+        private bool _skillLoopStarted;
+        private bool _skillReady;
 
         public string Key
         {
@@ -79,12 +83,14 @@ namespace FoxMud.Game.World
         public int Gold { get; set; }
         public int MaxGold { get; set; }
         public int MinGold { get; set; }
+        // hack: slightly overrides the Player-style Skills property
+        public new Dictionary<string, Tuple<double, double>> Skills { get; private set; }
 
         [JsonConstructor]
         private NonPlayer(string key, string name, GameStatus status, string[] keywords, string description, string respawnRoom, int hitPoints, bool aggro, int baseArmor, 
             string mobTemplateKey, int baseHitRoll, int baseDamRoll, List<string> allowedRooms, Dictionary<string, string> inventory, int gold, int maxGold, int minGold,
             Dictionary<Wearlocation, WearSlot> equipped, string location, string[] phrases, double talkProbability, long minimumTalkInterval, bool isShopkeeper,
-            Dictionary<string,double> skills)
+            Dictionary<string,Tuple<double, double>> skills)
         {
             _guid = new Guid(key);
             
@@ -106,7 +112,8 @@ namespace FoxMud.Game.World
             AllowedRooms = allowedRooms ?? new List<string>();
             Inventory = inventory ?? new Dictionary<string, string>();
             Equipped = equipped ?? new Dictionary<Wearlocation, WearSlot>();
-            Skills = skills ?? new Dictionary<string, double>();
+            Skills = skills ?? new Dictionary<string, Tuple<double, double>>();
+            _skillReady = true;
             _lastTimeTalked = DateTime.Now;
             _lastTimeWalked = DateTime.Now;
             IsShopkeeper = isShopkeeper;
@@ -231,7 +238,115 @@ namespace FoxMud.Game.World
                 round.AddText(player, groupText, CombatTextType.Group);
             }
 
+            if (!_skillLoopStarted && Skills.Count > 0)
+                doSkillLoop(null, null);
+
             return round;
+        }
+
+        private void doSkillLoop(object sender, ElapsedEventArgs e)
+        {
+            _skillLoopStarted = true;
+            _skillReady = true;
+
+            if (HitPoints > 0) // don't try to hit if dead
+            {
+                // get random skill and delay
+                var keys = new List<string>(Skills.Keys);
+                var size = Skills.Count;
+                var skillKey = keys[Server.Current.Random.Next(size)];
+                var skill = Server.Current.CombatSkills.FirstOrDefault(s => s.Key == skillKey);
+                var command = Server.Current.CommandLookup.FindCommand(skillKey, true);
+                
+                if (skill == null || command == null)
+                {
+                    Server.Current.Log(string.Format("Can't find NPC skill: {0}", skillKey));
+                    return;
+                }
+
+                var frequency = Skills[skillKey].Item1;
+                var effectiveness = Skills[skillKey].Item2;
+                // if frequency check hits
+                if (Server.Current.Random.NextDouble() < frequency)
+                {
+                    // find the fight
+                    var fight = Server.Current.CombatHandler.FindFight(this);
+                    // get random player to hit
+                    var playerToHit = fight.GetFighters().OrderBy(x => Guid.NewGuid()).FirstOrDefault();
+                    // get room
+                    var room = RoomHelper.GetPlayerRoom(playerToHit.Location);
+
+                    // if effectiveness hits
+                    if (Server.Current.Random.NextDouble() < effectiveness)
+                    {
+                        // do skill hit
+                        var damage = Server.Current.Random.Next(skill.MinDamage, skill.MaxDamage + 1);
+
+                        // message
+                        playerToHit.Send(string.Format("{0}{1} {2} hits you for {3} damage!", Name, Name.EndsWith("s") ? "'" : "'s", skillKey.ToLower(), damage), null);
+                        playerToHit.HitPoints -= damage;
+                        
+                        room.SendPlayers(
+                            string.Format("{0} {1}{2} {3}", Name, skillKey.ToLower(),
+                                          skillKey.EndsWith("s") ? "es" : "s", playerToHit.Forename), playerToHit, null,
+                            playerToHit);
+
+                        // check if player dead
+                        if (playerToHit.HitPoints <= 0)
+                        {
+                            // almost identical code used in combat handler when mob kills player in normal combat
+                            playerToHit.Die(); // changes status
+
+                            var statusText = Player.GetStatusText(playerToHit.Status).ToUpper();
+
+                            var playerText = string.Format("You are {0}!!!", statusText);
+                            if (playerToHit.HitPoints < Server.DeadHitPoints)
+                            {
+                                playerText += " You have respawned, but you're in a different location.\n" +
+                                              "Your corpse will remain for a short while, but you'll want to retrieve your\n" +
+                                              "items in short order.";
+
+                                playerToHit.DieForReal();
+                            }
+
+                            var groupText = string.Format("{0} is {1}!!!", playerToHit.Forename, statusText);
+
+                            playerToHit.Send(playerText, null);
+                            room.SendPlayers(groupText, playerToHit, null, playerToHit);
+
+                            fight.RemoveFromCombat(playerToHit);
+
+                            if (!fight.GetFighters().Any())
+                            {
+                                fight.End();
+                                return; // so timer doesn't start again
+                            }
+                        }
+                    }
+                    else
+                    {
+                        // miss message
+                        playerToHit.Send(string.Format("{0}{1} {2} misses you!", Name, Name.EndsWith("s") ? "'" : "'s", skillKey.ToLower()), null);
+                        room.SendPlayers(
+                            string.Format("{0}{1} {2} misses {3}", Name, skillKey.EndsWith("s") ? "'" : "'s",
+                                          skillKey.ToLower(),
+                                          playerToHit.Forename), playerToHit, null,
+                            playerToHit);
+                    }
+                }
+
+                _skillReady = false;
+
+                // set delay and call this method again
+                var t = new Timer()
+                    {
+                        AutoReset = false,
+                        Interval = (long) command.TickLength,
+                    };
+
+                t.Elapsed += doSkillLoop;
+                t.Start();
+            }
         }
 
         public void TalkOrWalk()

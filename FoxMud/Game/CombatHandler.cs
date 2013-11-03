@@ -206,12 +206,12 @@ namespace FoxMud.Game
 
         public IEnumerable<Player> GetFighters()
         {
-            return fighters.AsEnumerable();
+            return fighters.ToList();
         }
 
         public IEnumerable<NonPlayer> GetMobs()
         {
-            return mobs.AsEnumerable();
+            return mobs.ToList();
         }
 
         public bool Fighting
@@ -480,7 +480,8 @@ namespace FoxMud.Game
             {
                 try
                 {
-                    combat.Round(_combatTickRate);
+                    if (combat.Fighting) // could've ended on another thread
+                        combat.Round(_combatTickRate);
                 }
                 catch (Exception ex)
                 {
@@ -511,6 +512,11 @@ namespace FoxMud.Game
         public Combat FindFight(Player player)
         {
             return Fights.FirstOrDefault(f => f.GetFighters().Contains(player));
+        }
+
+        public Combat FindFight(NonPlayer npc)
+        {
+            return Fights.FirstOrDefault(f => f.GetMobs().Contains(npc));
         }
     }
 }

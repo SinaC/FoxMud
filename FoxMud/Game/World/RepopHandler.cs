@@ -33,14 +33,21 @@ namespace FoxMud.Game.World
             {
                 // copy into NonPlayer, mapping generates inventory and equipped
                 var npc = Mapper.Map<NonPlayer>(mob);
-                Server.Current.Database.Save(npc); // do we even need to persist NonPlayer objects, or can they be managed in memory?
 
                 // get room, put in room
                 RoomHelper.GetPlayerRoom(npc.RespawnRoom).AddNpc(npc);
             }
 
             foreach (var area in Server.Current.Areas)
+            {
                 area.LastRepop = DateTime.Now;
+                foreach (var roomKey in area.Rooms)
+                {
+                    var room = Server.Current.Database.Get<Room>(roomKey);
+                    room.RepopItems();
+                }
+            }
+                
         }
 
         private void DoRepop(object sender, ElapsedEventArgs e)
@@ -55,8 +62,13 @@ namespace FoxMud.Game.World
                     {
                         // broadcast repop message to players in area
                         foreach (var roomKey in area.Rooms)
-                            foreach (var player in RoomHelper.GetPlayerRoom(roomKey).GetPlayers())
+                        {
+                            var room = RoomHelper.GetPlayerRoom(roomKey);
+                            room.RepopItems();
+                            foreach (var player in room.GetPlayers())
                                 player.Send(area.RepopMessage, null);
+                        }
+                            
 
                         foreach (var key in area.RepopQueue.ToArray())
                         {

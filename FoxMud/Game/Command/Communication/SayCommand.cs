@@ -7,7 +7,7 @@ using FoxMud.Game.World;
 
 namespace FoxMud.Game.Command.Communication
 {
-    [Command("say", false)]
+    [Command("say", false, 0)]
     class SayCommand : PlayerCommand
     {
         public override void PrintSyntax(Session session)

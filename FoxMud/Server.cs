@@ -35,6 +35,7 @@ namespace FoxMud
         Octuple = Single * 8,
         Nonuple = Single * 9,
         Decuple = Single * 10,
+        Reroll = Single * 20,
     }
 
     class Server : IDisposable
@@ -44,8 +45,9 @@ namespace FoxMud
         // config values
         // not yet sure of the value in using a Configuration object to contain these
         public static string DataDir { get { return "Data"; } }
-        public static bool AutoApprovedEnabled { get { return true; } }
-        public static string StartRoom { get { return "the square corner"; } }
+        public static bool AutoApprovedEnabled { get { return false; } }
+        public static string WelcomeRoom { get { return "welcome room"; } }
+        public static string StartRoom { get { return "the academy"; } }
         public static int Port = 9999;
         public static int CorpseDecayTime { get { return 10*60*1000; } } // 10 minutes
         public static int MobWalkInterval { get { return 5*60*1000; } } // 5 minutes
@@ -163,10 +165,9 @@ namespace FoxMud
             wait.Dispose();
         }
 
-        public void Log(string message)
+        public void Log(string message, bool newLine = true)
         {
-            Console.WriteLine("{0,-10}: {1}", DateTime.Now.ToString("mm:ss.fff"), message);
-                
+            Console.Write("{0,-10}: {1}{2}", DateTime.Now.ToString("mm:ss.fff"), message, newLine ? "\n" : string.Empty);
         }
     }
 }

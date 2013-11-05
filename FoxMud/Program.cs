@@ -21,7 +21,8 @@ namespace FoxMud
     {
         static void Main(string[] args)
         {
-            Mapper.CreateMap<Template, PlayerItem>();
+            Mapper.CreateMap<Template, PlayerItem>()
+                  .ForMember(dst => dst.TemplateKey, opt => opt.MapFrom(src => src.Key));
             Mapper.CreateMap<MobTemplate, NonPlayer>()
                   .ForMember(dst => dst.Inventory, opt => opt.ResolveUsing<NonPlayerInventoryResolver>())
                   .ForMember(dst => dst.Equipped, opt => opt.ResolveUsing<NonPlayerEquippedResolver>())

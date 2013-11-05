@@ -7,7 +7,7 @@ using FoxMud.Game.Command.Admin;
 
 namespace FoxMud.Game.Command.Stat
 {
-    [Command("scorecard", false)]
+    [Command("scorecard", false, 0)]
     class ScorecardCommand : PlayerCommand
     {
         public override void PrintSyntax(Session session)

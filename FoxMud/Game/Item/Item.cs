@@ -28,6 +28,8 @@ namespace FoxMud.Game.Item
         public int Weight { get; set; }
         public int Value { get; set; }
         public Wearlocation WearLocation { get; set; }
+        public bool CanPull { get; set; }
+        public double RepopPercent { get; set; }
 
         // in-game item attributes
         public int HpBonus { get; set; }
@@ -69,6 +71,7 @@ namespace FoxMud.Game.Item
         public int Weight { get; set; }
         public int Value { get; set; }
         public Wearlocation WearLocation { get; set; }
+        public bool CanPull { get; set; }
 
         // in-game item attributes
         public int HpBonus { get; set; }
@@ -99,6 +102,9 @@ namespace FoxMud.Game.Item
         }
 
         [JsonIgnore]
+        public string TemplateKey { get; set; }
+
+        [JsonIgnore]
         public string AllowedToLoot { get; set; }
 
         [JsonIgnore]
@@ -126,7 +132,7 @@ namespace FoxMud.Game.Item
         [JsonConstructor]
         private PlayerItem(string key, string name, string description, string[] keywords, int weight, int value, Wearlocation wearLocation,
             int hpBonus, int armorBonus, int strengthBonus, int dexterityBonus, int constitutionBonus, int intelligenceBonus, int wisdomBonus, 
-            int charismaBonus, int luckBonus)
+            int charismaBonus, int luckBonus, bool canPull)
         {
             try
             {
@@ -143,6 +149,7 @@ namespace FoxMud.Game.Item
             Weight = weight;
             Value = value;
             WearLocation = wearLocation;
+            CanPull = canPull;
             HpBonus = hpBonus;
             ArmorBonus = armorBonus;
             StrengthBonus = strengthBonus;

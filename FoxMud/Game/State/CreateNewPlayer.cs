@@ -87,13 +87,13 @@ namespace FoxMud.Game.State
                     break;
 
                 case State.Finished:
-                    CreateAndSavePlayer();
+                    CreatePlayer();
                     Session.PushState(new EnterWorld(player));
                     break;
             }
         }
 
-        private void CreateAndSavePlayer()
+        private void CreatePlayer()
         {
             player = new Player()
             {
@@ -101,19 +101,19 @@ namespace FoxMud.Game.State
                 PasswordHash = password, // this actually hashes the password once in the mutator
                 ShortDescription = shortDescription,
                 Description = description,
-                Location = Server.StartRoom,
+                Location = Server.WelcomeRoom,
                 Approved = Server.AutoApprovedEnabled,
                 Gender = gender,
                 Prompt = ">",
                 Age = 1,
                 Gold = 10,
-                Level = 1,
-                Experience = ExperienceResolver.FirstLevel,
+                Level = 0,
+                Experience = 0,
                 RespawnRoom = Server.StartRoom,
                 Status = GameStatus.Standing,
             };
 
-            Server.Current.Database.Save(player);
+            Server.Current.Database.Put(player);
         }
 
         public override void OnStateEnter()
@@ -156,7 +156,7 @@ namespace FoxMud.Game.State
                         break;
                     }
 
-                    forename = capitalizeForename(input);
+                    forename = StringHelpers.Capitalize(input);
                     changeStateTo(State.EnterPassword);
                     break;
 
@@ -190,18 +190,6 @@ namespace FoxMud.Game.State
             }
 
             base.OnInput(input);
-        }
-
-        private string capitalizeForename(string input)
-        {
-            if (!string.IsNullOrWhiteSpace(input))
-            {
-                string newFirstCharacter = input[0].ToString().ToUpper();
-                string newRestOfName = input.Substring(1).ToLower();
-                return newFirstCharacter + newRestOfName;
-            }
-
-            return input;
         }
     }
 }

@@ -32,13 +32,17 @@ namespace FoxMud.Game.Command
                                                                          .Where(f => !f.IsAbstract)
                                                                          .Where(f => typeof(PlayerCommand).IsAssignableFrom(f));
 
-            foreach (Type commandType in commandTypes)
+            Server.Current.Log("Loading commands...");
+
+            foreach (var commandType in commandTypes)
             {
                 var attributes = commandType.GetCustomAttributes(typeof(CommandAttribute), false)
                                             .Cast<CommandAttribute>();
 
                 foreach (var attribute in attributes)
                 {
+                    Server.Current.Log(string.Format("{0}...", attribute.CommandName), false);
+
                     commandTable.Add(attribute.CommandName,
                                      new CommandInfo()
                                      {
@@ -48,6 +52,8 @@ namespace FoxMud.Game.Command
                                         TickLength = attribute.TickLength,
                                         CommandName = StringHelpers.Capitalize(attribute.CommandName),
                                      });
+
+                    Server.Current.Log("done");
                 }
             }           
         }

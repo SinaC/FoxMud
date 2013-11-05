@@ -8,9 +8,9 @@ using FoxMud.Game.World;
 
 namespace FoxMud.Game.Command.Visual
 {
-    [Command("look", false, TickDelay.Instant)]
-    [Command("l", false, TickDelay.Instant)]
-    [Command("examine", false, TickDelay.Instant)]
+    [Command("look", false, TickDelay.Instant, 0)]
+    [Command("l", false, TickDelay.Instant, 0)]
+    [Command("examine", false, TickDelay.Instant, 0)]
     class LookCommand : PlayerCommand
     {
         public override void PrintSyntax(Session session)

@@ -373,6 +373,9 @@ namespace FoxMud.Game.State
                     case "c":
                         lines.Clear();
                         break;
+                    default:
+                        lines.Add(input);
+                        break;
                 }
             }
             else

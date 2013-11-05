@@ -95,6 +95,7 @@ namespace FoxMud.Game
             Inventory = new Dictionary<string, string>();
             Equipped = new Dictionary<Wearlocation, WearSlot>();
             Skills = new Dictionary<string, double>();
+            RememberedNames = new Dictionary<string, string>();
         }
 
         public string Key

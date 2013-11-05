@@ -54,6 +54,7 @@
     <Compile Include="Game\CombatHandler.cs" />
     <Compile Include="Game\CombatSkill.cs" />
     <Compile Include="Game\Command\Admin\AdminItemCommand.cs" />
+    <Compile Include="Game\Command\Admin\AdminPlayerCommands.cs" />
     <Compile Include="Game\Command\Admin\AdminRoomCommands.cs" />
     <Compile Include="Game\Command\Admin\MobCommand.cs" />
     <Compile Include="Game\Command\Admin\ShutdownCommand.cs" />
@@ -75,10 +76,12 @@
     <Compile Include="Game\Command\Movement\DoorCommand.cs" />
     <Compile Include="Game\Command\Movement\MoveCommand.cs" />
     <Compile Include="Game\Command\Movement\PositionCommand.cs" />
+    <Compile Include="Game\Command\Movement\PullCommand.cs" />
     <Compile Include="Game\Command\PasswordCommand.cs" />
     <Compile Include="Game\Command\SaveCommand.cs" />
     <Compile Include="Game\Command\Skill\PracticeCommand.cs" />
     <Compile Include="Game\Command\Stat\LevelCommand.cs" />
+    <Compile Include="Game\Command\Stat\RerollCommand.cs" />
     <Compile Include="Game\Command\Stat\ScorecardCommand.cs" />
     <Compile Include="Game\Command\Stat\WhoisCommand.cs" />
     <Compile Include="Game\Command\Visual\ColorCommand.cs" />

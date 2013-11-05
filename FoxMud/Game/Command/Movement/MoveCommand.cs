@@ -46,15 +46,37 @@ namespace FoxMud.Game.Command.Movement
 
         public override void Execute(Session session, CommandContext context)
         {
-            // todo: messages per position e.g. "can't do that while sitting", "you're fighting" etc
-            Console.WriteLine("walk {0} {1}", direction, DateTime.Now.ToLongTimeString());
             if (session.Player.Status != GameStatus.Standing)
             {
-                session.WriteLine("You can't leave right now.");
+                switch (session.Player.Status)
+                {
+                    case GameStatus.Dead:
+                        session.WriteLine("You're dead.");
+                        break;
+                    case GameStatus.Fighting:
+                        session.WriteLine("You're fighting.");
+                        break;
+                    case GameStatus.Incapacitated:
+                        session.WriteLine("You're incapacitated.");
+                        break;
+                    case GameStatus.MortallyWounded:
+                        session.WriteLine("You're mortally wounded.");
+                        break;
+                    case GameStatus.Sitting:
+                        session.WriteLine("You're sitting.");
+                        break;
+                    case GameStatus.Sleeping:
+                        session.WriteLine("You're sleeping.");
+                        break;
+                    default:
+                        session.WriteLine("You can't leave right now.");
+                        break;
+                }
+                
                 return;
             }
 
-            Room room = Server.Current.Database.Get<Room>(session.Player.Location);
+            var room = Server.Current.Database.Get<Room>(session.Player.Location);
 
             if (room == null)
             {
@@ -65,7 +87,7 @@ namespace FoxMud.Game.Command.Movement
             if (room.HasExit(direction))
             {
                 var exitTo = room.GetExit(direction);
-                Room newRoom = Server.Current.Database.Get<Room>(exitTo.LeadsTo);
+                var newRoom = Server.Current.Database.Get<Room>(exitTo.LeadsTo);
 
                 if (exitTo.IsDoor && !exitTo.IsOpen)
                 {
@@ -77,9 +99,9 @@ namespace FoxMud.Game.Command.Movement
                 newRoom.AddPlayer(session.Player);
                 session.Player.Location = newRoom.Key;
 
-                room.SendPlayers("%d heads " + direction, session.Player, null, session.Player);
-                newRoom.SendPlayers("%d arrives", session.Player, null, session.Player);
-                session.Player.Send("you head " + direction, session.Player);
+                room.SendPlayers("%d heads " + direction + ".", session.Player, null, session.Player);
+                newRoom.SendPlayers("%d arrives.", session.Player, null, session.Player);
+                session.Player.Send("you head " + direction + ".", session.Player);
 
                 // emit "event" for aggro mobs
                 Server.Current.CombatHandler.EnterRoom(session.Player, newRoom);

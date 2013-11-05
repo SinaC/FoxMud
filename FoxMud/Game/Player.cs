@@ -41,7 +41,6 @@ namespace FoxMud.Game
         private string _passwordHash;
         private int _weight;
         private int _experience;
-        private int _hitPoints;
 
         [JsonConstructor]
         private Player(
@@ -121,12 +120,6 @@ namespace FoxMud.Game
 
         [JsonIgnore]
         public OutputTextWriter OutputWriter { get; set; }
-
-        public int HitPoints
-        {
-            get { return _hitPoints; }
-            set { _hitPoints = value; }
-        }
 
         public string PasswordHash
         {

@@ -32,7 +32,6 @@ namespace FoxMud.Game.World
         public string[] Phrases { get; set; }
         public double TalkProbability { get; set; }
         public long MinimumTalkInterval { get; set; }
-        public int HitPoints { get; set; }
         public bool Aggro { get; set; }
         public List<string> AllowedRooms { get; set; }
         public new List<string> Inventory { get; private set; }
@@ -79,7 +78,6 @@ namespace FoxMud.Game.World
         public long MinimumTalkInterval { get; set; }
         public bool Aggro { get; set; }
         public List<string> AllowedRooms { get; private set; }
-        public int HitPoints { get; set; }
         public int Gold { get; set; }
         public int MaxGold { get; set; }
         public int MinGold { get; set; }
@@ -104,7 +102,7 @@ namespace FoxMud.Game.World
             Phrases = phrases;
             TalkProbability = talkProbability;
             MinimumTalkInterval = minimumTalkInterval;
-            HitPoints = hitPoints;
+            _hitPoints = hitPoints;
             Aggro = aggro;
             BaseArmor = baseArmor;
             BaseHitRoll = baseHitRoll;

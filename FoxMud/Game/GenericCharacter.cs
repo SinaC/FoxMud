@@ -10,6 +10,8 @@ namespace FoxMud.Game
 {
     abstract class GenericCharacter
     {
+        protected int _hitPoints;
+
         public int BaseStrength { get; set; }
         public int BaseDexterity { get; set; }
         public int BaseConstitution { get; set; }
@@ -22,6 +24,12 @@ namespace FoxMud.Game
         public int BaseHp { get; set; }
         public int BaseArmor { get; set; }
         public bool IsShopkeeper { get; set; }
+        
+        public int HitPoints
+        {
+            get { return _hitPoints; }
+            set { _hitPoints = value; }
+        }
 
         public Dictionary<string, string> Inventory { get; protected set; }
         public Dictionary<Wearlocation, WearSlot> Equipped { get; protected set; }
@@ -178,6 +186,43 @@ namespace FoxMud.Game
                            Equipped.Sum(e => Server.Current.Database.Get<PlayerItem>(e.Value.Key).LuckBonus);
 
                 return BaseLuck;
+            }
+        }
+
+        [JsonIgnore]
+        public string HitPointDescription
+        {
+            get
+            {
+                if (HitPoints >= MaxHitPoints)
+                    return "is perfectly healthy";
+
+                var hp = HitPoints / (double)MaxHitPoints;
+
+                if (hp >= 0.9)
+                    return "has a few scratches";
+                if (hp >= 0.8)
+                    return "has some cuts";
+                if (hp >= 0.7)
+                    return "has a big gash";
+                if (hp >= 0.6)
+                    return "has several wounds";
+                if (hp >= 0.5)
+                    return "is bleeding heavily";
+                if (hp >= 0.4)
+                    return "is gushing blood";
+                if (hp >= 0.3)
+                    return "is pouring blood everywhere";
+                if (hp >= 0.2)
+                    return "is leaking guts";
+                if (hp >= 0.1)
+                    return "is bleeding from every orifice possible";
+                if (hp >= 0)
+                    return "is about to die";
+                if (hp >= Server.IncapacitatedHitPoints)
+                    return "is incapacitated";
+
+                return "is mortally wounded";
             }
         }
     }

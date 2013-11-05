@@ -8,11 +8,19 @@ using FoxMud.Game.World;
 
 namespace FoxMud.Game.Command.Visual
 {
-    [Command("look", false, TickDelay.Instant, 0)]
-    [Command("l", false, TickDelay.Instant, 0)]
-    [Command("examine", false, TickDelay.Instant, 0)]
+    [Command("look", false, TickDelay.Instant, 0, "look")]
+    [Command("l", false, TickDelay.Instant, 0, "look")]
+    [Command("examine", false, TickDelay.Instant, 0, "examine")]
+    [Command("glance", false, TickDelay.Instant, 0, "examine")]
     class LookCommand : PlayerCommand
     {
+        private readonly string realCommandName;
+
+        public LookCommand(string realCommandName)
+        {
+            this.realCommandName = realCommandName;
+        }
+
         public override void PrintSyntax(Session session)
         {
             session.WriteLine("Syntax: look");
@@ -52,7 +60,7 @@ namespace FoxMud.Game.Command.Visual
 
         private static void WriteAvailableExits(Session session, Room room)
         {
-            StringBuilder builder = new StringBuilder();
+            var builder = new StringBuilder();
             builder.Append("`wAvailable exits: [ ");
 
             foreach (var exit in room.Exits.Keys)
@@ -101,15 +109,30 @@ namespace FoxMud.Game.Command.Visual
 
         private void PerformLookAtPlayer(Session session, Room room, Player player)
         {
-            session.Player.Send("You look at %d", player);
+            session.Player.Send("You look at %d.", player);
             session.WriteLine(player.Description);
             player.Send("%d looks at you.", session.Player);
-            room.SendPlayers("%d looks at %D", session.Player, player, session.Player, player);
+            room.SendPlayers("%d looks at %D.", session.Player, player, session.Player, player);
         }
 
-        private void PerformLookAtNpc(Session session, NonPlayer npc)
+        private void PerformExaminePlayer(Session session, Room room, Player player)
         {
-            session.WriteLine("You look at {0}", npc.Name);
+            session.Player.Send("You glance at %d.", player);
+            session.WriteLine("{0} {1}.", player.Forename, player.HitPointDescription);
+            player.Send("%d glances at you.", session.Player);
+            room.SendPlayers("%d glances at %D.", session.Player, player, session.Player, player);
+        }
+
+        private void PerformExamineNpc(Session session, Room room, NonPlayer npc)
+        {
+            session.WriteLine("You glance at {0}.", npc.Name);
+            session.WriteLine("{0} {1}.", npc.Name, npc.HitPointDescription);
+            room.SendPlayers(string.Format("{0} glances at {1}.", session.Player.Forename, npc.Name), session.Player, null, session.Player);
+        }
+
+        private void PerformLookAtNpc(Session session, Room room, NonPlayer npc)
+        {
+            session.WriteLine("You look at {0}.", npc.Name);
             session.WriteLine("{0}", npc.Description);
 
             if (npc.IsShopkeeper)
@@ -125,6 +148,8 @@ namespace FoxMud.Game.Command.Visual
                     session.WriteLine("\tNothing");
                 }
             }
+
+            room.SendPlayers(string.Format("{0} looks at {1}", session.Player.Forename, npc.Name), session.Player, null, session.Player);
 
             session.WriteLine(string.Empty);
         }
@@ -149,14 +174,20 @@ namespace FoxMud.Game.Command.Visual
             var player = room.LookUpPlayer(session.Player, context.ArgumentString);
             if (player != null)
             {
-                PerformLookAtPlayer(session, room, player);
+                if (realCommandName == "look")
+                    PerformLookAtPlayer(session, room, player);
+                else
+                    PerformExaminePlayer(session, room, player);
                 return;
             }
 
             var npc = room.LookUpNpc(context.ArgumentString);
             if (npc != null)
             {
-                PerformLookAtNpc(session, npc);
+                if (realCommandName == "look")
+                    PerformLookAtNpc(session, room, npc);
+                else
+                    PerformExamineNpc(session, room, npc);
                 return;
             }
 

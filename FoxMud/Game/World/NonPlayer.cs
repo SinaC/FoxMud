@@ -7,6 +7,7 @@ using System.Threading.Tasks;
 using System.Timers;
 using AutoMapper;
 using FoxMud.Db;
+using FoxMud.Game.Command;
 using FoxMud.Game.Item;
 using Newtonsoft.Json;
 
@@ -158,7 +159,10 @@ namespace FoxMud.Game.World
                     .Select(i => new KeyValuePair<string, string>(i.Key, i.Value))
                     .Union(Equipped.Values.Select(e => new KeyValuePair<string, string>(e.Key, e.Name))))
                 {
-                    dupedCorpse.ContainedItems[item.Key] = item.Value;
+                    var itemToDupe = Server.Current.Database.Get<PlayerItem>(item.Key);
+                    var dupedItem = ItemHelper.DeepClone(itemToDupe);
+                    Server.Current.Database.Save(dupedItem);
+                    dupedCorpse.ContainedItems[dupedItem.Key] = dupedItem.Name;
                 }
 
                 dupedCorpse.Name = string.Format("The corpse of {0}", Name);
@@ -192,7 +196,7 @@ namespace FoxMud.Game.World
             {
                 // delete inventory/equipped items' .db files
                 foreach (var key in Inventory.Keys.Union(Equipped.Values.Select(e => e.Key)))
-                    Server.Current.Database.Delete<PlayerItem>(key);
+                    ItemHelper.DeleteItem(key);
             }
 
             // delete .db file

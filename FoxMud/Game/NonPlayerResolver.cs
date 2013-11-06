@@ -16,13 +16,13 @@ namespace FoxMud.Game
     {
         protected override Dictionary<string, string> ResolveCore(MobTemplate source)
         {
-            Dictionary<string, string> items = new Dictionary<string, string>();
+            var items = new Dictionary<string, string>();
 
             foreach (var key in source.Inventory)
             {
                 var item = Server.Current.Database.Get<Template>(key);
                 var dupedItem = Mapper.Map<PlayerItem>(item);
-                Server.Current.Database.Save(dupedItem);
+                Server.Current.Database.Put(dupedItem);
                 items[dupedItem.Key] = dupedItem.Name;
             }
 
@@ -34,13 +34,13 @@ namespace FoxMud.Game
     {
         protected override Dictionary<Wearlocation, WearSlot> ResolveCore(MobTemplate source)
         {
-            Dictionary<Wearlocation, WearSlot> items = new Dictionary<Wearlocation, WearSlot>();
+            var items = new Dictionary<Wearlocation, WearSlot>();
 
             foreach (var item in source.Equipped)
             {
                 var template = Server.Current.Database.Get<Template>(item.Value);
                 var dupedItem = Mapper.Map<PlayerItem>(template);
-                Server.Current.Database.Save(dupedItem);
+                Server.Current.Database.Put(dupedItem);
                 items[item.Key] = new WearSlot()
                 {
                     Key = dupedItem.Key,

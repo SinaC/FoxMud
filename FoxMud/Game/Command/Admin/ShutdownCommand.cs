@@ -41,8 +41,12 @@ namespace FoxMud.Game.Command.Admin
 
             session.WriteLine("Destroying items on floor, corpses, etc...");
             foreach (var room in Server.Current.Database.GetAll<Room>())
-               foreach (var item in room.Items)
+                foreach (var item in room.Items)
+                {
                     ItemHelper.DeleteItem(item.Key);
+                    Server.Current.Log(string.Format("deleted item: {0}", item.Key));
+                }
+                    
 
             session.WriteLine("Shutting down now.");
 

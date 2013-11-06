@@ -36,6 +36,7 @@ namespace FoxMud.Game.World
 
                 // get room, put in room
                 RoomHelper.GetPlayerRoom(npc.RespawnRoom).AddNpc(npc);
+                Server.Current.Database.Save(npc);
             }
 
             foreach (var area in Server.Current.Areas)

@@ -104,13 +104,16 @@ namespace FoxMud.Game.Command
         {
             var itemToDelete = Server.Current.Database.Get<PlayerItem>(itemKey);
 
-            // delete contained items
-            if (itemToDelete.ContainedItems.Count > 0)
-                foreach (var containedItem in itemToDelete.ContainedItems)
-                    DeleteItem(containedItem.Key);
+            if (itemToDelete != null)
+            {
+                // delete contained items
+                if (itemToDelete.ContainedItems.Count > 0)
+                    foreach (var containedItem in itemToDelete.ContainedItems)
+                        DeleteItem(containedItem.Key);
 
-            // delete parent item
-            Server.Current.Database.Delete<PlayerItem>(itemKey);
+                // delete parent item
+                Server.Current.Database.Delete<PlayerItem>(itemKey);
+            }
         }
     }
 

@@ -37,7 +37,7 @@ namespace FoxMud.Game.State
             {
                 if (!ready)
                 {
-                    Server.Current.Log(string.Format("not ready. queueing event: {0}", commandContext.CommandName));
+                    //Server.Current.Log(string.Format("not ready. queueing event: {0}", commandContext.CommandName));
                     // queue command
                     queuedCommands.Enqueue(new SpammedCommand()
                     {
@@ -48,7 +48,7 @@ namespace FoxMud.Game.State
                 }
 
                 ready = false;
-                Server.Current.Log(string.Format("executing command: {0}", commandContext.CommandName));
+                //Server.Current.Log(string.Format("executing command: {0}", commandContext.CommandName));
                 commandInfo.Command.Execute(Session, commandContext);
                 Session.Player.WritePrompt();
                 if (queuedCommands.Count > 0)
@@ -58,13 +58,13 @@ namespace FoxMud.Game.State
             }
             else
             {
-                Session.WriteLine("Command not recognized");
+                Session.WriteLine("`wCommand not recognized.");
             }
         }
 
         private void setTimeout(TickDelay tickDelay)
         {
-            Server.Current.Log("generic timeout");
+            //Server.Current.Log("generic timeout");
             var t = new System.Timers.Timer()
                 {
                     Interval = (long) tickDelay,
@@ -77,7 +77,7 @@ namespace FoxMud.Game.State
 
         private void setTimeout(SpammedCommand command, TickDelay tickLength)
         {
-            Server.Current.Log(string.Format("command timeout: {0}", command.Context.CommandName));
+            //Server.Current.Log(string.Format("command timeout: {0}", command.Context.CommandName));
             var t = new System.Timers.Timer()
             {
                 Interval = (long)tickLength,
@@ -90,7 +90,7 @@ namespace FoxMud.Game.State
 
         private void nextCommand(object sender, System.Timers.ElapsedEventArgs e, SpammedCommand command)
         {
-            Server.Current.Log(string.Format("nextCommand: {0}", command.Context.CommandName));
+            //Server.Current.Log(string.Format("nextCommand: {0}", command.Context.CommandName));
             ready = true;
             TryExecuteCommand(command.Context, command.Info);
         }
@@ -104,7 +104,7 @@ namespace FoxMud.Game.State
 
             // a command was entered in the interim
             var command = queuedCommands.Dequeue();
-            Server.Current.Log(string.Format("makeReady command: {0}", command.Context.CommandName));
+            //Server.Current.Log(string.Format("makeReady command: {0}", command.Context.CommandName));
             TryExecuteCommand(command.Context, command.Info);
         }
 

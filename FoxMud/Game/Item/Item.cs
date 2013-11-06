@@ -141,6 +141,7 @@ namespace FoxMud.Game.Item
             catch
             {
                 _guid = Guid.NewGuid(); // item is being mapped for the first time
+                Server.Current.Log(string.Format("item created KEY: {0} NAME: {1}", _guid, name));
             }
             
             Name = name;

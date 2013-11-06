@@ -46,7 +46,7 @@ namespace FoxMud.Game
         private Player(
             string name, string passwordHash, bool isAdmin, string prompt, Dictionary<string,string> rememberedNames, Dictionary<string, string> inventory, int hitPoints,
             long gold, int experience, Dictionary<Wearlocation, WearSlot> equipped, GameStatus status, int hitRoll, int damRoll, int level, string respawnRoom, 
-            int strength, int dexterity, int constitution, int intelligence, int wisdom, int charisma, int luck, int age, int baseHp, Dictionary<string, double> skills,
+            int strength, int dexterity, int constitution, int intelligence, int wisdom, int charisma, int luck, int minutesPlayed, int baseHp, Dictionary<string, double> skills,
             int skillPoints)
         {
             Forename = name;
@@ -65,7 +65,7 @@ namespace FoxMud.Game
             BaseHitRoll = hitRoll;
             BaseDamRoll = damRoll;
             Level = level;
-            Age = age;
+            MinutesPlayed = minutesPlayed;
             RespawnRoom = respawnRoom;
             BaseStrength = strength;
             BaseDexterity = dexterity;
@@ -114,12 +114,9 @@ namespace FoxMud.Game
         public long Gold { get; set; }
         public GameStatus Status { get; set; }
         public int Level { get; set; }
-        public int Age { get; set; }
+        public int MinutesPlayed { get; set; }
         public string RespawnRoom { get; set; }
         public int SkillPoints { get; set; }
-
-        [JsonIgnore]
-        public OutputTextWriter OutputWriter { get; set; }
 
         public string PasswordHash
         {
@@ -140,6 +137,9 @@ namespace FoxMud.Game
                     ExperienceResolver.LevelUp(this);
             }
         }
+
+        [JsonIgnore]
+        public OutputTextWriter OutputWriter { get; set; }
 
         [JsonIgnore]
         public int Weight
@@ -174,6 +174,20 @@ namespace FoxMud.Game
         public int MaxWeight
         {
             get { return Strength <= 10 ? 100 : (Strength*50) - 400; }
+        }
+
+        [JsonIgnore]
+        public bool LoggedIn { get; set; }
+
+        [JsonIgnore]
+        public int Age
+        {
+            get { return MinutesPlayed/120 + 1; }
+        }
+
+        public void Grow(int multiplier = 1)
+        {
+            MinutesPlayed += 1*multiplier;
         }
 
         private static string Hash(string value)
@@ -327,7 +341,7 @@ namespace FoxMud.Game
         {
             var result = new StringBuilder();
 
-            result.AppendLine(string.Format("{0} is a level {1} player.", Forename, Level));
+            result.AppendLine(string.Format("{0} is a {1} year old, level {2} player.", Forename, Age, Level));
             result.AppendLine(string.Format("{0} is currently in {1}.",
                                             Gender == PlayerGender.Male
                                                 ? "He"

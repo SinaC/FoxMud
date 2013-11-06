@@ -110,6 +110,9 @@ namespace FoxMud.Game.State
 
         public override void OnStateEnter()
         {
+            if (Session.Player != null)
+                Session.Player.LoggedIn = true;
+
             TryExecuteCommand("look");
             base.OnStateEnter();
         }
@@ -124,8 +127,19 @@ namespace FoxMud.Game.State
             base.OnInput(input);
         }
 
+        public override void OnStateLeave()
+        {
+            if (Session.Player != null)
+                Session.Player.LoggedIn = false;
+
+            base.OnStateLeave();
+        }
+
         public override void OnStateShutdown()
         {
+            if (Session.Player != null)
+                Session.Player.LoggedIn = false;
+
             Server.Current.Database.Save(Session.Player);
             var room = Server.Current.Database.Get<Room>(Session.Player.Location);
             room.RemovePlayer(Session.Player);

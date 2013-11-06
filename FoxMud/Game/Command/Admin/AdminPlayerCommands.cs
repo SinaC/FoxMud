@@ -52,4 +52,20 @@ namespace FoxMud.Game.Command.Admin
             player.WritePrompt();
         }
     }
+
+    [Command("stats", true, TickDelay.Instant)]
+    class StatsCommand : PlayerCommand
+    {
+        public override void PrintSyntax(Session session)
+        {
+            session.WriteLine("Syntax: stats");
+        }
+
+        public override void Execute(Session session, CommandContext context)
+        {
+            session.WriteLine("Status: {0}\r\nMinutes: {1}\r\nLoggedIn: {2}", session.Player.Status,
+                              session.Player.MinutesPlayed, session.Player.LoggedIn);
+        }
+    }
+
 }

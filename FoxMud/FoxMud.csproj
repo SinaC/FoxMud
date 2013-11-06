@@ -51,6 +51,7 @@
     <Reference Include="System.Xml" />
   </ItemGroup>
   <ItemGroup>
+    <Compile Include="Game\AgeHandler.cs" />
     <Compile Include="Game\CombatHandler.cs" />
     <Compile Include="Game\CombatSkill.cs" />
     <Compile Include="Game\Command\Admin\AdminItemCommand.cs" />

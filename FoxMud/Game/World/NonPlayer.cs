@@ -184,7 +184,7 @@ namespace FoxMud.Game.World
                 room.RemoveNpc(this);
                 Server.Current.Database.Delete<NonPlayer>(Key);
 
-                round.AddText(null, string.Format("{0} is DEAD!!!", Name), CombatTextType.Room);
+                round.AddText(null, string.Format("`R{0} is DEAD!!!", Name), CombatTextType.Room);
 
                 // get area from this.RespawnRoom
                 var area = Server.Current.Areas.FirstOrDefault(a => a.Key == room.Area);

@@ -486,6 +486,12 @@ namespace FoxMud.Game.Command
                         return;
                     }
 
+                    if (groundContainer.Gold <= 0 && groundContainer.ContainedItems.Count <= 0)
+                    {
+                        session.WriteLine("There's nothing in there.");
+                        return;
+                    }
+
                     // get gold from container
                     if (groundContainer.Gold > 0)
                     {
@@ -494,7 +500,7 @@ namespace FoxMud.Game.Command
                         session.Player.Gold += gold;
                         session.WriteLine("`YYou get {0} coin{1} from {2}", gold, gold > 1 ? "s" : string.Empty,
                                           groundContainer.Name);
-                    }
+                    } 
 
                     // use ground container and check weight
                     foreach (var containerItem in groundContainer.ContainedItems.ToArray())

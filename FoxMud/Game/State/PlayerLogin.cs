@@ -109,11 +109,20 @@ namespace FoxMud.Game.State
                     }
 
                     Session.Player = player;
+                    player.LoggedIn = true;
                     Session.PushState(new EnterWorld(player));
                     break;
             }
 
             base.OnInput(input);
+        }
+
+        public override void OnStateLeave()
+        {
+            if (player != null)
+                player.LoggedIn = false;
+
+            base.OnStateLeave();
         }
 
         public static bool ValidateUsername(string input)

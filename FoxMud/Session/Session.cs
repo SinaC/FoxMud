@@ -178,6 +178,9 @@ namespace FoxMud
 
         public void End()
         {
+            if (Player != null)
+                Player.LoggedIn = false;
+
             foreach (var session in sessionStates)
             {                
                 session.OnStateShutdown();

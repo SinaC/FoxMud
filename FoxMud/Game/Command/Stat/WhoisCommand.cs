@@ -23,7 +23,7 @@ namespace FoxMud.Game.Command.Stat
             }
 
             var target = Server.Current.Database.Get<Player>(context.ArgumentString.ToLower());
-            if (target == null)
+            if (target == null || !target.LoggedIn)
             {
                 session.WriteLine("You couldn't find them.");
                 return;

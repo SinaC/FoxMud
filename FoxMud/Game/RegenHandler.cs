@@ -38,7 +38,7 @@ namespace FoxMud.Game
 
                         player.Send("You will die soon if unaided...", null);
                     }
-                    else
+                    else if (player.LoggedIn)
                     {
                         var hpToGain = deltaHp(player);
                         if (player.HitPoints + hpToGain > player.MaxHitPoints)

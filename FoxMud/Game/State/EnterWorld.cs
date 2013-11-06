@@ -19,6 +19,10 @@ namespace FoxMud.Game.State
         public override void OnStateInitialize()
         {
             Session.Player = this.character;
+
+            if (Session.Player != null)
+                Session.Player.LoggedIn = true;
+
             character.OutputWriter = Session;
 
             var room = Server.Current.Database.Get<Room>(character.Location);
@@ -31,6 +35,9 @@ namespace FoxMud.Game.State
 
         public override void OnStateEnter()
         {
+            if (Session.Player != null)
+                Session.Player.LoggedIn = true;
+
             Session.Write("\f");
             Session.PushState(new PlayingState());
             var room = Server.Current.Database.Get<Room>(Session.Player.Location);
@@ -41,6 +48,22 @@ namespace FoxMud.Game.State
             }
 
             base.OnStateEnter();
+        }
+
+        public override void OnStateLeave()
+        {
+            if (Session.Player != null)
+                Session.Player.LoggedIn = false;
+
+            base.OnStateLeave();
+        }
+
+        public override void OnStateShutdown()
+        {
+            if (Session.Player != null)
+                Session.Player.LoggedIn = false;
+
+            base.OnStateShutdown();
         }
     }
 }

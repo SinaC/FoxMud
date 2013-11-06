@@ -126,7 +126,7 @@ namespace FoxMud.Game
                         if (player.HitPoints > 0)
                         {
                             // player killed mob
-                            result[player] += "You killed " +
+                            result[player] += "`RYou killed " +
                                               killingBlowText[player].Replace("is DEAD!!!", string.Empty).Trim() + "!!!";
                         }
                         // else don't print anything, as player has already been advised of their status
@@ -412,7 +412,7 @@ namespace FoxMud.Game
                 {
                     foreach (var kb in killedBy)
                     {
-                        round.AddText(kb.Value, string.Format("{0} is DEAD!!!\n", kb.Key.Name), CombatTextType.KillingBlow);
+                        round.AddText(kb.Value, string.Format("`R{0} is DEAD!!!\n", kb.Key.Name), CombatTextType.KillingBlow);
                     }
                 }
             }

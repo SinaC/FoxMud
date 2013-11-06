@@ -102,7 +102,7 @@ namespace FoxMud.Game.Command.Combat
                 {
                     fight.RemoveFromCombat(target);
                     target.Die();
-                    var deadText = string.Format("{0} is DEAD!!!", target.Name);
+                    var deadText = string.Format("`R{0} is DEAD!!!", target.Name);
                     session.WriteLine(deadText);
                     room.SendPlayers(deadText, session.Player, null, session.Player);
                 }

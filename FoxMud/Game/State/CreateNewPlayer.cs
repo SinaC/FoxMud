@@ -105,7 +105,6 @@ namespace FoxMud.Game.State
                 Approved = Server.AutoApprovedEnabled,
                 Gender = gender,
                 Prompt = ">",
-                Age = 1,
                 Gold = 10,
                 Level = 0,
                 Experience = 0,

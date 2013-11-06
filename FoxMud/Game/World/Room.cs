@@ -213,12 +213,15 @@ namespace FoxMud.Game.World
             foreach (var roomItem in Items)
             {
                 var item = Server.Current.Database.Get<PlayerItem>(roomItem.Key);
-                if (PopItems.ContainsKey(item.TemplateKey))
+                if (item != null)
                 {
-                    if (inRoom.ContainsKey(item.TemplateKey))
-                        inRoom[item.TemplateKey]++;
-                    else
-                        inRoom[item.TemplateKey] = 1; 
+                    if (PopItems.ContainsKey(item.TemplateKey))
+                    {
+                        if (inRoom.ContainsKey(item.TemplateKey))
+                            inRoom[item.TemplateKey]++;
+                        else
+                            inRoom[item.TemplateKey] = 1;
+                    }
                 }
             }
 

@@ -16,9 +16,9 @@ namespace FoxMud.Game.Command.Movement
 
         public override void Execute(Session session, CommandContext context)
         {
-            if (session.Player.Status != GameStatus.Sitting)
+            if (session.Player.Status != GameStatus.Sitting && session.Player.Status != GameStatus.Sleeping)
             {
-                session.WriteLine("You're not currently sitting.");
+                session.WriteLine("You're not currently sitting or sleeping.");
                 return;
             }
 
@@ -37,16 +37,43 @@ namespace FoxMud.Game.Command.Movement
 
         public override void Execute(Session session, CommandContext context)
         {
-            if (session.Player.Status != GameStatus.Standing)
+            if (session.Player.Status != GameStatus.Standing && session.Player.Status != GameStatus.Sleeping)
             {
-                session.WriteLine("You're not currently standing.");
+                session.WriteLine("You're not standing or sleeping.");
                 return;
             }
 
+            if (session.Player.Status == GameStatus.Standing)
+                session.WriteLine("You sit down.");
+            else // sleeping
+                session.WriteLine("You wake and sit up.");
+
             session.Player.Status = GameStatus.Sitting;
-            session.WriteLine("You sit down.");
         }
     }
 
-    // todo: sleep command
+    [Command("sleep", false, TickDelay.Instant)]
+    class SleepCommand : PlayerCommand
+    {
+        public override void PrintSyntax(Session session)
+        {
+            session.WriteLine("Syntax: sleep");
+        }
+
+        public override void Execute(Session session, CommandContext context)
+        {
+            if (session.Player.Status != GameStatus.Standing && session.Player.Status != GameStatus.Sitting)
+            {
+                session.WriteLine("You're not standing or sitting.");
+                return;
+            }
+
+            if (session.Player.Status == GameStatus.Standing)
+                session.WriteLine("You lay down to sleep.");
+            else // sitting
+                session.WriteLine("You fall over asleep..");
+
+            session.Player.Status = GameStatus.Sleeping;
+        }
+    }
 }

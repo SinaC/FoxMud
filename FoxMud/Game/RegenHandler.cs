@@ -74,6 +74,12 @@ namespace FoxMud.Game
             else
                 hp = Convert.ToInt32(player.MaxHitPoints * 0.05);
 
+            // sit/sleep bonus
+            if (player.Status == GameStatus.Sitting)
+                hp += Convert.ToInt32(hp*0.03);
+            if (player.Status == GameStatus.Sleeping)
+                hp += Convert.ToInt32(hp*0.10);
+
             return hp;
         }
 

@@ -131,7 +131,7 @@ namespace FoxMud.Game.Command.Admin
             var room = RoomHelper.GetRoom(session.Player.Location);
             if (room != null)
             {
-                room.Description = context.ArgumentString;
+                room.Description = StringHelpers.AutoTruncate(context.ArgumentString);
                 RoomHelper.SaveRoom(room);
                 session.WriteLine("Room description changed...");
             }

@@ -159,10 +159,8 @@ namespace FoxMud.Game.World
                     .Select(i => new KeyValuePair<string, string>(i.Key, i.Value))
                     .Union(Equipped.Values.Select(e => new KeyValuePair<string, string>(e.Key, e.Name))))
                 {
-                    var itemToDupe = Server.Current.Database.Get<PlayerItem>(item.Key);
-                    var dupedItem = ItemHelper.DeepClone(itemToDupe);
-                    Server.Current.Database.Save(dupedItem);
-                    dupedCorpse.ContainedItems[dupedItem.Key] = dupedItem.Name;
+                    var corpseItem = Server.Current.Database.Get<PlayerItem>(item.Key);
+                    dupedCorpse.ContainedItems[corpseItem.Key] = corpseItem.Name;
                 }
 
                 dupedCorpse.Name = string.Format("The corpse of {0}", Name);

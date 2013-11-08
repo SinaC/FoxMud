@@ -202,5 +202,22 @@ namespace FoxMud
 
             return text.Substring(0, 1).ToUpper() + text.Substring(1);
         }
+
+        public static string AutoTruncate(string text)
+        {
+            if (string.IsNullOrEmpty(text))
+                return text;
+
+            // get substring <= 80, remove from text, .trim() + "\r\n"
+            if (!string.IsNullOrEmpty(text) && text.Length < 80)
+                return text;
+
+            var line = text.Substring(0, 80);
+            line = line.Substring(0, line.LastIndexOf(' ')).Trim();
+            // remove from text
+            text = text.Remove(0, line.Length).Trim();
+
+            return line + "\r\n" + AutoTruncate(text);
+        }
     }
 }

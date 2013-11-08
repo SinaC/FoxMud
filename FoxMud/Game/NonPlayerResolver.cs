@@ -22,7 +22,7 @@ namespace FoxMud.Game
             {
                 var item = Server.Current.Database.Get<Template>(key);
                 var dupedItem = Mapper.Map<PlayerItem>(item);
-                Server.Current.Database.Put(dupedItem);
+                Server.Current.Database.Save(dupedItem);
                 items[dupedItem.Key] = dupedItem.Name;
             }
 
@@ -40,7 +40,7 @@ namespace FoxMud.Game
             {
                 var template = Server.Current.Database.Get<Template>(item.Value);
                 var dupedItem = Mapper.Map<PlayerItem>(template);
-                Server.Current.Database.Put(dupedItem);
+                Server.Current.Database.Save(dupedItem);
                 items[item.Key] = new WearSlot()
                 {
                     Key = dupedItem.Key,

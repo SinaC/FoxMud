@@ -7,20 +7,6 @@ using FoxMud.Game.World;
 
 namespace FoxMud.Game.Command.Admin
 {
-    class RoomHelper
-    {
-        public static Room GetRoom(string key)
-        {
-            var room = Server.Current.Database.Get<Room>(key);
-            return room;
-        }
-
-        public static void SaveRoom(Room room)
-        {
-            Server.Current.Database.Save(room);
-        }
-    }
-
     /// <summary>
     /// admin command to create a room
     /// </summary>
@@ -49,16 +35,35 @@ namespace FoxMud.Game.Command.Admin
                 return;
             }
 
+            // get player area
+            var playerRoom = RoomHelper.GetRoom(session.Player.Location);
+            var areaKey = string.Empty;
+            Area area = null;
+            if (playerRoom != null)
+            {
+                areaKey = playerRoom.Area;
+                if (!string.IsNullOrEmpty(areaKey))
+                {
+                    area = RoomHelper.GetArea(areaKey);
+                }
+            }
+
             // create room
             room = new Room()
             {
                 Key = context.ArgumentString.ToLower(),
                 Title = context.ArgumentString,
-                Description = "This exitless room has no description."
+                Description = "This exitless room has no description.",
+                Area = areaKey,
             };
 
             // save room
             Server.Current.Database.Save<Room>(room);
+            if (area != null)
+            {
+                area.Rooms.Add(room.Key);
+                Server.Current.Database.Save<Area>(area);
+            }
 
             // tell the admin player what the id is, so they can get to it
             session.WriteLine(string.Format("Room created: {0}", context.ArgumentString));

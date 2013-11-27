@@ -15,7 +15,24 @@ namespace FoxMud.Game.World
 
         public static Room GetPlayerRoom(string key)
         {
-            return Server.Current.Database.Get<Room>(key);
+            return GetRoom(key);
+        }
+
+        public static Room GetRoom(string key)
+        {
+            var room = Server.Current.Database.Get<Room>(key);
+            return room;
+        }
+
+        public static void SaveRoom(Room room)
+        {
+            Server.Current.Database.Save(room);
+        }
+
+        public static Area GetArea(string key)
+        {
+            var area = Server.Current.Database.Get<Area>(key);
+            return area;
         }
     }
 }

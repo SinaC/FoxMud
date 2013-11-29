@@ -23,6 +23,8 @@ namespace FoxMud.Game
             _timer.Stop();
             foreach (var player in Server.Current.Database.GetAll<Player>())
             {
+                var playerStatus = player.Status;
+
                 if (player.HitPoints != player.MaxHitPoints)
                 {
                     // based on con, regenerate or lose some hp
@@ -45,6 +47,9 @@ namespace FoxMud.Game
                             player.HitPoints = player.MaxHitPoints;
                         else
                             player.HitPoints += hpToGain;
+
+                        if (playerStatus == GameStatus.Incapacitated && player.HitPoints > 0)
+                            player.Status = GameStatus.Sitting;
                     }
                 }
             }

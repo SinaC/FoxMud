@@ -32,7 +32,7 @@ namespace FoxMud.Game.Command.Admin
             template = new MobTemplate()
                 {
                     Aggro = false,
-                    AllowedRooms = new List<string>() {session.Player.Location},
+                    AllowedRooms = new List<string>() { session.Player.Location },
                     BaseArmor = 0,
                     BaseCharisma = 0,
                     BaseConstitution = 0,
@@ -50,7 +50,7 @@ namespace FoxMud.Game.Command.Admin
                     Location = session.Player.Location,
                     MinimumTalkInterval = 0,
                     Name = context.Arguments[0],
-                    RespawnRoom = string.Empty,
+                    RespawnRoom = new string[] { },
                     Status = GameStatus.Standing,
                 };
 

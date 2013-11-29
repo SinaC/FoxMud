@@ -32,11 +32,14 @@ namespace FoxMud.Game.World
             foreach (var mob in Server.Current.Database.GetAll<MobTemplate>())
             {
                 // copy into NonPlayer, mapping generates inventory and equipped
-                var npc = Mapper.Map<NonPlayer>(mob);
+                foreach(var location in mob.RespawnRoom)
+                {
+                    var npc = Mapper.Map<NonPlayer>(mob);
 
-                // get room, put in room
-                RoomHelper.GetPlayerRoom(npc.RespawnRoom).AddNpc(npc);
-                Server.Current.Database.Save(npc);
+                    // get room, put in room
+                    RoomHelper.GetPlayerRoom(location).AddNpc(npc);
+                    Server.Current.Database.Save(npc);
+                }
             }
 
             foreach (var area in Server.Current.Areas)
@@ -75,7 +78,7 @@ namespace FoxMud.Game.World
                         {
                             var mob = Server.Current.Database.Get<MobTemplate>(key);
                             var npc = Mapper.Map<NonPlayer>(mob);
-                            RoomHelper.GetPlayerRoom(npc.RespawnRoom).AddNpc(npc);
+                            RoomHelper.GetPlayerRoom(npc.GetRespawnRoom()).AddNpc(npc);
                             area.RepopQueue.Remove(key);
                         }
 

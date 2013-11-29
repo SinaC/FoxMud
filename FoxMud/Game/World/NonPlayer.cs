@@ -28,7 +28,7 @@ namespace FoxMud.Game.World
         public string Name { get; set; }
         public string[] Keywords { get; set; }
         public string Description { get; set; }
-        public string RespawnRoom { get; set; }
+        public string[] RespawnRoom { get; set; }
         public string Location { get; set; }
         public string[] Phrases { get; set; }
         public double TalkProbability { get; set; }
@@ -72,7 +72,7 @@ namespace FoxMud.Game.World
         public string MobTemplateKey { get; set; }
         public string[] Keywords { get; set; }
         public string Description { get; set; }
-        public string RespawnRoom { get; set; }
+        public string[] RespawnRoom { get; set; }
         public string Location { get; set; }
         public string[] Phrases { get; set; }
         public double TalkProbability { get; set; }
@@ -86,7 +86,7 @@ namespace FoxMud.Game.World
         public new Dictionary<string, Tuple<double, double>> Skills { get; private set; }
 
         [JsonConstructor]
-        private NonPlayer(string key, string name, GameStatus status, string[] keywords, string description, string respawnRoom, int hitPoints, bool aggro, int baseArmor, 
+        private NonPlayer(string key, string name, GameStatus status, string[] keywords, string description, string[] respawnRoom, int hitPoints, bool aggro, int baseArmor, 
             string mobTemplateKey, int baseHitRoll, int baseDamRoll, List<string> allowedRooms, Dictionary<string, string> inventory, int gold, int maxGold, int minGold,
             Dictionary<Wearlocation, WearSlot> equipped, string location, string[] phrases, double talkProbability, long minimumTalkInterval, bool isShopkeeper,
             Dictionary<string,Tuple<double, double>> skills)
@@ -144,6 +144,17 @@ namespace FoxMud.Game.World
 
                 return false;
             }
+        }
+
+        public string GetRespawnRoom()
+        {
+            if (RespawnRoom == null || RespawnRoom.Length == 0)
+                return string.Empty;
+
+            if (RespawnRoom != null && RespawnRoom.Length > 1)
+                return RespawnRoom[Server.Current.Random.Next(0, RespawnRoom.Length)];
+
+            return RespawnRoom[0];
         }
 
         public CombatRound Die(bool shutdown = false)
@@ -271,8 +282,16 @@ namespace FoxMud.Game.World
                 {
                     // find the fight
                     var fight = Server.Current.CombatHandler.FindFight(this);
+
+                    if (fight == null)
+                        return;
+
                     // get random player to hit
                     var playerToHit = fight.GetFighters().OrderBy(x => Guid.NewGuid()).FirstOrDefault();
+
+                    if (playerToHit == null)
+                        return;
+                    
                     // get room
                     var room = RoomHelper.GetPlayerRoom(playerToHit.Location);
 

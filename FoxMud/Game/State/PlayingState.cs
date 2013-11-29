@@ -123,6 +123,11 @@ namespace FoxMud.Game.State
             {
                 TryExecuteCommand(input);
             }
+            else
+            {
+                // handles when player just hits enter
+                Session.Player.WritePrompt();
+            }
 
             base.OnInput(input);
         }

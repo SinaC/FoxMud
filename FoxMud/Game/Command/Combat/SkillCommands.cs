@@ -11,6 +11,7 @@ namespace FoxMud.Game.Command.Combat
     [Command("punch", false, TickDelay.Double, 1, "punch")]
     [Command("kick", false, TickDelay.Double, 1, "kick")]
     [Command("pummel", false, TickDelay.Quadruple, 2, "pummel")]
+    [Command("nuke", true, TickDelay.Single, 1, "nuke")]
     class SkillCommands : PlayerCommand
     {
         private readonly string realCommandName;

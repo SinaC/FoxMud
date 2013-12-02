@@ -43,7 +43,9 @@ namespace FoxMud.Game.Command.Visual
                 if (player == session.Player)
                     continue;
 
-                session.WriteLine("`M{0} is here.", session.Player.GetOtherPlayerDescription(player));
+                session.WriteLine("`K{0}`M{1} is here.", 
+                    player.Status == GameStatus.Trade ? "[TRADING] " : string.Empty,
+                    session.Player.GetOtherPlayerDescription(player));
             }
 
             foreach (var npc in room.GetNpcs())

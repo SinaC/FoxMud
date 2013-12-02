@@ -28,6 +28,7 @@ namespace FoxMud.Game
         Incapacitated, // something like >= -3 hp
         MortallyWounded, // will die if unaided
         Dead,
+        Trade,
     }
 
     struct WearSlot

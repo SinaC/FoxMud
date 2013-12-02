@@ -82,6 +82,7 @@ namespace FoxMud
             CombatHandler = new CombatHandler(CombatTickRate);
             RegenHandler = new RegenHandler(RegenTime);
             AgeHandler = new AgeHandler(AgeTime);
+            OpenTrades = new Dictionary<Session, string>();
             
             // Setup services
             ConnectionListener.ConnectionHandler = new StartupConnectionHandler(ConnectionMonitor, SessionMonitor);
@@ -100,6 +101,7 @@ namespace FoxMud
         public AgeHandler AgeHandler { get; private set; }
         public IEnumerable<Area> Areas { get; private set; }
         public IEnumerable<CombatSkill> CombatSkills { get; private set; }
+        public Dictionary<Session, string> OpenTrades { get; private set; }
         public Random Random { get; private set; }
 
         public void Start()

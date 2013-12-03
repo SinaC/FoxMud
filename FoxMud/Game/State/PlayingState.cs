@@ -134,9 +134,6 @@ namespace FoxMud.Game.State
 
         public override void OnStateLeave()
         {
-            if (Session.Player != null)
-                Session.Player.LoggedIn = false;
-
             base.OnStateLeave();
         }
 

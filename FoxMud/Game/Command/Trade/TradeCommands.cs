@@ -70,15 +70,18 @@ namespace FoxMud.Game.Command.Trade
                     targetSession.WriteLine(text);
 
                     // start the trade
-                    var tradeState = new TradeState(targetSession, session);
+                    var trade = new Game.State.Trade(targetSession.Player.Key, session.Player.Key);
+
+                    var tradeState = new TradeState(trade, session);
                     targetSession.PushState(tradeState);
-                    session.PushState(tradeState);
+                    var otherTradeState = new TradeState(trade, targetSession);
+                    session.PushState(otherTradeState);
                 }
                 else
                 {
                     // new trade request
                     Server.Current.OpenTrades.Add(session, target.Key);
-                    session.WriteLine("Your trade request has been sent to {0}", context.ArgumentString);
+                    session.WriteLine("Your trade request has been sent to {0}...", targetSession.Player.Forename);
                     targetSession.WriteLine("{0} would like to start a trade with you...", session.Player.Forename);
                     targetSession.WriteLine("Type `wtrade {0}`g to begin the trade.", session.Player.Forename);
                 }

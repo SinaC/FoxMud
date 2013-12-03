@@ -8,25 +8,98 @@ using FoxMud.Game.Item;
 
 namespace FoxMud.Game.State
 {
+    class TradeElement
+    {
+        public bool Approved { get; set; }
+        public int Gold { get; set; }
+        public List<string> Items { get; set; }
+    }
+
+    class Trade
+    {
+        public Dictionary<string, TradeElement> Props;
+
+        public Trade(string trader, string tradee)
+        {
+            Props = new Dictionary<string, TradeElement>();
+            Props[trader] = new TradeElement()
+            {
+                Approved = false,
+                Gold = 0,
+                Items = new List<string>()
+            };
+            Props[tradee] = new TradeElement()
+            {
+                Approved = false,
+                Gold = 0,
+                Items = new List<string>()
+            };
+        }
+
+        internal string GetTraderKey()
+        {
+            return Props.Keys.First();
+        }
+
+        internal string GetTradeeKey()
+        {
+            return Props.Keys.Skip(1).First();
+        }
+
+        public bool Approved(string key)
+        {
+            return Props[key].Approved;
+        }
+
+        public bool IsApproved
+        {
+            get
+            {
+                return Props[GetTraderKey()].Approved && Props[GetTradeeKey()].Approved;
+            }
+            
+        }
+
+        public int Gold(string key)
+        {
+            return Props[key].Gold;
+        }
+
+        public void AddGold(string key, int gold)
+        {
+            Props[key].Gold += gold;
+        }
+
+        public void AddItem(string key, string item)
+        {
+            Props[key].Items.Add(item);
+        }
+
+        public void Approve(string key)
+        {
+            Props[key].Approved = true;
+        }
+
+        public void ResetApproval()
+        {
+            foreach (var item in Props)
+                item.Value.Approved = false;
+        }
+    }
+
     class TradeState : SessionStateBase
     {
-        private bool TraderApproved;
-        private bool TradeeApproved;
-        private int TraderGold;
-        private int TradeeGold;
-        private Session TraderSession;
-        private Session TradeeSession;
-        private List<string> TraderItems;
-        private List<string> TradeeItems;
+        private Trade _trade;
+        private Session _otherSession;
+        private string _trader;
+        private string _tradee;
 
-        public TradeState(Session traderSession, Session tradeeSession)
+        public TradeState(Trade trade, Session otherSession)
         {
-            TraderApproved = TradeeApproved = false;
-            TraderGold = TradeeGold = 0;
-            TraderSession = traderSession;
-            TradeeSession = tradeeSession;
-            TraderItems = new List<string>();
-            TradeeItems = new List<string>();
+            _tradee = trade.GetTradeeKey();
+            _trader = trade.GetTraderKey();
+            _trade = trade;
+            _otherSession = otherSession;
         }
 
         public override string ToString()
@@ -34,14 +107,17 @@ namespace FoxMud.Game.State
             var result = string.Empty;
 
             result += "`Y---\n";
-            result += TraderSession.Player.Forename + " items:\n";
-            result += "Gold: " + TraderGold + "\n";
-            TraderItems.ForEach(x => string.Format("{0}\n", x));
-            result += "---\n";
-            result += TradeeSession.Player.Forename + " items:\n";
-            result += "Gold: " + TradeeGold + "\n";
-            TradeeItems.ForEach(x => string.Format("{0}\n", x));
-            result += "---\n";
+            foreach (var traderKey in _trade.Props.Keys)
+            {
+                var player = Server.Current.Database.Get<Player>(traderKey);
+                result += player.Forename + " items:\n";
+                result += "Gold: " + _trade.Gold(traderKey) + "\n";
+                _trade.Props[traderKey].Items.ForEach(x => result += x + "\n");
+                result += "---\n";
+            }
+
+            foreach (var traderKey in _trade.Props.Keys)
+                result += string.Format("`W{0,-20}: {1}\n", Server.Current.Database.Get<Player>(traderKey).Forename, _trade.Props[traderKey].Approved ? "`GAPPROVED" : "`RNOT APPROVED");
 
             return result;
         }
@@ -56,10 +132,7 @@ namespace FoxMud.Game.State
             }
 
             if (reprint)
-            {
-                TraderSession.WriteLine(this);
-                TradeeSession.WriteLine(this);
-            }
+                Session.WriteLine(this);
 
             base.OnInput(input);
         }
@@ -90,14 +163,21 @@ namespace FoxMud.Game.State
                 case "ok":
                 case "o":
                     Approve(commandContext);
+                    reprint = false;
                     break;
                 case "cancel":
                 case "c":
                     Cancel();
+                    reprint = false;
                     break;
                 case "help":
                 case "h":
                     PrintHelp();
+                    reprint = false;
+                    break;
+                case "print":
+                case "p":
+                    Session.WriteLine(this);
                     reprint = false;
                     break;
                 default:
@@ -113,69 +193,70 @@ namespace FoxMud.Game.State
         {
             Session.WriteLine("`YTrade Interface Commands");
             Session.WriteLine("`Y---");
-            Session.WriteLine("`Wh`Yelp - print this reference");
-            Session.WriteLine("`Wa`Ydd <item> - add an item to the trade");
-            Session.WriteLine("`Wr`Yemove <item> - remove an item from the trade");
-            Session.WriteLine("`Wg`Yold <amount> - add an amount of gold (can use negative numbers)");
-            Session.WriteLine("`Wo`Yk - approve the trade");
-            Session.WriteLine("`Wc`Yancel - exit the trade interface");
-            Session.WriteLine("`YNote: any time gold or items are added, trade must be ok'ed by both parties.");
+            Session.WriteLine("`Rh`welp - print this reference");
+            Session.WriteLine("`Ra`wdd <item> - add an item to the trade");
+            Session.WriteLine("`Rr`wemove <item> - remove an item from the trade");
+            Session.WriteLine("`Rg`wold <amount> - add an amount of gold (can use negative numbers)");
+            Session.WriteLine("`Ro`wk - approve the trade");
+            Session.WriteLine("`Rc`wancel - exit the trade interface");
+            Session.WriteLine("`Rp`wrint - print the current trade status");
             Session.WriteLine("`Y---");
-            Session.WriteLine("`W{0}: {1}", TraderSession.Player.Forename, TraderApproved ? "`GAPPROVED" : "`RNOT APPROVED");
-            Session.WriteLine("`W{0}: {1}", TradeeSession.Player.Forename, TradeeApproved ? "`GAPPROVED" : "`RNOT APPROVED");
+            Session.WriteLine("`RNote: any time gold or items are added, trade must be ok'ed by both parties.");
+            Session.WriteLine("`Y---");
+
+            foreach (var traderKey in _trade.Props.Keys)
+                Session.WriteLine("`W{0,-20}: {1}", Server.Current.Database.Get<Player>(traderKey).Forename, _trade.Props[traderKey].Approved ? "`GAPPROVED" : "`RNOT APPROVED");
         }
 
         private void Cancel()
         {
-            // return items
-            foreach (var itemKey in TraderItems)
+            foreach (var traderKey in _trade.Props.Keys)
             {
-                var item = Server.Current.Database.Get<PlayerItem>(itemKey);
-                TraderSession.Player.Inventory.Add(item.Key, item.Name);
-            }
+                var player = Server.Current.Database.Get<Player>(traderKey);
+                player.Gold += _trade.Gold(traderKey);
 
-            foreach (var itemKey in TradeeItems)
-            {
-                var item = Server.Current.Database.Get<PlayerItem>(itemKey);
-                TradeeSession.Player.Inventory.Add(item.Key, item.Name);
+                // return items
+                foreach (var itemKey in _trade.Props[traderKey].Items)
+                {
+                    var item = Server.Current.Database.Get<PlayerItem>(itemKey);
+                    player.Inventory.Add(item.Key, item.Name);
+                }
             }
-
-            // return gold
-            TraderSession.Player.Gold += TraderGold;
-            TradeeSession.Player.Gold += TradeeGold;
 
             Session.WriteLine("You have canceled the trade.");
-            
-            if (Session == TraderSession)
-                TradeeSession.WriteLine("`R{0} `whas canceled the trade.", TraderSession.Player.Forename);
-            else
-                TraderSession.WriteLine("`R{0} `whas canceled the trade.", TradeeSession.Player.Forename);
+            _otherSession.WriteLine("`R{0} `whas canceled the trade.", Session.Player.Forename);
 
             Cleanup();
         }
 
         private void Cleanup()
         {
-            TraderSession.PopState();
-            TradeeSession.PopState();
-            Server.Current.OpenTrades.Remove(TraderSession);
+            Session.PopState();
+            _otherSession.PopState();
+            // one of these will work
+            Server.Current.OpenTrades.Remove(Session);
+            Server.Current.OpenTrades.Remove(_otherSession);
         }
 
         private void Approve(CommandContext commandContext)
         {
-            TraderApproved = true;
-            Session.WriteLine("You have approved the trade.");
+            _trade.Approve(Session.Player.Key);
 
-            if (TradeeApproved && TraderApproved)
+            Session.WriteLine("You approve the trade.");
+            _otherSession.WriteLine("{0} approved the trade.", Session.Player.Forename);
+
+            if (_trade.IsApproved)
             {
                 FinalizeTrade();
                 Cleanup();
             }
-                
         }
 
         private void FinalizeTrade()
         {
+            Console.WriteLine("finalize: {0} {1}", Session.Player.Key, _otherSession.Player.Key);
+            Console.WriteLine("trade: trader gold {0} tradee gold {1}", _trade.Gold(_trade.GetTraderKey()), _trade.Gold(_trade.GetTradeeKey()));
+
             SendToBothParties("`GYou have both approved the trade.");
 
             if (!ValidateTrade())
@@ -184,39 +265,47 @@ namespace FoxMud.Game.State
                 return;
             }
 
-            // swap items, gold, etc
-            foreach (var itemKey in TraderItems)
+            // check who accepted the trade last, swap _trader and _tradee is necessary
+            if (Session.Player.Key != _trader)
             {
-                var item = Server.Current.Database.Get<PlayerItem>(itemKey);
-                TradeeSession.Player.Inventory.Add(item.Key, item.Name);
+                var temp = _trader;
+                _trader = _tradee;
+                _tradee = temp;
             }
 
-            TradeeSession.Player.Gold += TraderGold;
+            // normal trade of tradee vs trader
+            foreach (var itemKey in _trade.Props[_trader].Items)
+            {
+                var item = Server.Current.Database.Get<PlayerItem>(itemKey);
+                _otherSession.Player.Inventory.Add(item.Key, item.Name);
+            }
 
-            foreach (var itemKey in TradeeItems)
+            _otherSession.Player.Gold += _trade.Gold(_trader);
+
+            foreach (var itemKey in _trade.Props[_tradee].Items)
             {
                 var item = Server.Current.Database.Get<PlayerItem>(itemKey);
                 Session.Player.Inventory.Add(item.Key, item.Name);
             }
 
-            Session.Player.Gold += TradeeGold;
+            Session.Player.Gold += _trade.Gold(_tradee);
 
-            SendToBothParties("You swap items and complete the trade.");
+            SendToBothParties("`gYou swap items and complete the trade.");
         }
 
         private bool ValidateTrade()
         {
             var traderItemsWeight = 0;
-            TraderItems.ForEach(x => traderItemsWeight += Server.Current.Database.Get<PlayerItem>(x).Weight);
+            _trade.Props[_trader].Items.ForEach(x => traderItemsWeight += Server.Current.Database.Get<PlayerItem>(x).Weight);
             
             var tradeeItemsWeight = 0;
-            TradeeItems.ForEach(x => tradeeItemsWeight += Server.Current.Database.Get<PlayerItem>(x).Weight);
+            _trade.Props[_tradee].Items.ForEach(x => tradeeItemsWeight += Server.Current.Database.Get<PlayerItem>(x).Weight);
 
             return
                 Session.Player.Weight + tradeeItemsWeight <= Session.Player.MaxWeight &&
-                TradeeSession.Player.Weight + traderItemsWeight <= TradeeSession.Player.MaxWeight &&
-                Session.Player.Inventory.Count + TradeeItems.Count <= Session.Player.MaxInventory &&
-                TradeeSession.Player.Inventory.Count + TraderItems.Count <= TradeeSession.Player.MaxInventory;
+                _otherSession.Player.Weight + traderItemsWeight <= _otherSession.Player.MaxWeight &&
+                Session.Player.Inventory.Count + _trade.Props[_trader].Items.Count <= Session.Player.MaxInventory &&
+                _otherSession.Player.Inventory.Count + _trade.Props[_tradee].Items.Count <= _otherSession.Player.MaxInventory;
         }
 
         private void Gold(CommandContext commandContext)
@@ -237,7 +326,7 @@ namespace FoxMud.Game.State
             // player is attempting to remove gold from the trade
             if (gold < 0)
             {
-                if(TraderGold < Math.Abs(gold) || TraderGold + gold < 0)
+                if (_trade.Gold(Session.Player.Key) < Math.Abs(gold) || _trade.Gold(Session.Player.Key) + gold < 0)
                 {
                     SendToSessionParty("You can't remove that much gold.");
                     return;
@@ -255,107 +344,74 @@ namespace FoxMud.Game.State
 
         private void AddOrRemoveGold(int gold, bool isAdding)
         {
-            Console.WriteLine("session: {0}; gold: {1}; isAdding: {2}", Session.Player.Forename, gold, isAdding);
-            if (Session == TraderSession)
-            {
-                TraderSession.Player.Gold += isAdding ? gold * -1 : gold;
-                TraderGold += gold;
-                
-                SendToSessionParty(string.Format("You {0} {1} gold {2} the trade.", 
-                    isAdding ? "add" : "remove", 
-                    Math.Abs(gold),
-                    isAdding ? "to" : "from"));
+            //Console.WriteLine("session: {0}; gold: {1}; isAdding: {2}", Session.Player.Forename, gold, isAdding);
 
-                SendToOppsiteParty(string.Format("{0} {1} {2} gold {3} the trade.",
-                    TraderSession.Player.Forename,
-                    isAdding ? "added" : "removed",
-                    Math.Abs(gold),
-                    isAdding ? "to" : "from"));
-            }
-            else
-            {
-                TradeeSession.Player.Gold += isAdding ? gold * -1 : gold;
-                TradeeGold += gold;
+            _trade.AddGold(Session.Player.Key, gold);
 
-                SendToSessionParty(string.Format("You {0} {1} gold {2} the trade.",
+            SendToSessionParty(string.Format("You {0} {1} gold {2} the trade.",
                     isAdding ? "add" : "remove",
                     Math.Abs(gold),
                     isAdding ? "to" : "from"));
 
-                SendToOppsiteParty(string.Format("{0} {1} {2} gold {3} the trade.",
-                    TradeeSession.Player.Forename,
-                    isAdding ? "added" : "removed",
-                    Math.Abs(gold),
-                    isAdding ? "to" : "from"));
-            }
+            SendToOppsiteParty(string.Format("{0} {1} {2} gold {3} the trade.",
+                Session.Player.Forename,
+                isAdding ? "added" : "removed",
+                Math.Abs(gold),
+                isAdding ? "to" : "from"));
         }
 
         private void SendToSessionParty(string text)
         {
-            if (Session == TraderSession)
-                TraderSession.WriteLine(text);
-            else
-                TradeeSession.WriteLine(text);
+            Session.WriteLine(text);
         }
 
         private void SendToOppsiteParty(string text)
         {
-            if (Session == TraderSession)
-                TradeeSession.WriteLine(text);
-            else
-                TraderSession.WriteLine(text);
+            _otherSession.WriteLine(text);
         }
 
         private void ResetTradeApproval()
         {
-            TraderApproved = TradeeApproved = false;
+            _trade.ResetApproval();
         }
 
         private void Remove(CommandContext commandContext)
         {
-            var thisSession = Session == TraderSession ? TraderSession : TradeeSession;
-            var otherSession = Session == TraderSession ? TradeeSession : TraderSession;
-            var thisItems = Session == TraderSession ? TraderItems : TradeeItems;
-
-            var item = ItemHelper.LookForItem(thisItems, commandContext.ArgumentString);
+            var item = ItemHelper.LookForItem(_trade.Props[Session.Player.Key].Items, commandContext.ArgumentString);
 
             if(item == null)
             {
-                thisSession.WriteLine("Couldn't find the item to remove.");
+                Session.WriteLine("Couldn't find the item to remove.");
                 return;
             }
 
             // remove and add to inventory (no weight checks)
-            thisItems.Remove(item.Key);
-            thisSession.Player.Inventory.Add(item.Key, item.Name);
+            _trade.Props[Session.Player.Key].Items.Remove(item.Key);
+            Session.Player.Inventory.Add(item.Key, item.Name);
 
-            thisSession.WriteLine("You remove {0} from the trade.", item.Name);
-            otherSession.WriteLine("{0} removed {1} from the trade.", thisSession.Player.Forename, item.Name);
+            Session.WriteLine("You remove {0} from the trade.", item.Name);
+            _otherSession.WriteLine("{0} removed {1} from the trade.", Session.Player.Forename, item.Name);
 
             ResetTradeApproval();
         }
 
         private void Add(CommandContext commandContext)
         {
-            var thisSession = Session == TraderSession ? TraderSession : TradeeSession;
-            var otherSession = Session == TraderSession ? TradeeSession : TraderSession;
-            var thisItems = Session == TraderSession ? TraderItems : TradeeItems;
-
             // find item in inventory
-            var item = ItemHelper.FindInventoryItem(thisSession.Player, commandContext.ArgumentString);
+            var item = ItemHelper.FindInventoryItem(Session.Player, commandContext.ArgumentString);
 
             if (item == null)
             {
-                thisSession.WriteLine("You don't have that item");
+                Session.WriteLine("You don't have that item");
                 return;
             }
 
             // add to traderitems
-            thisSession.Player.Inventory.Remove(item.Key);
-            thisItems.Add(item.Key);
+            Session.Player.Inventory.Remove(item.Key);
+            _trade.AddItem(Session.Player.Key, item.Key);
 
-            thisSession.WriteLine("You add {0} to the trade.", item.Name);
-            otherSession.WriteLine("{0} added {1} to the trade.", thisSession.Player.Forename, item.Name);
+            Session.WriteLine("You add {0} to the trade.", item.Name);
+            _otherSession.WriteLine("{0} added {1} to the trade.", Session.Player.Forename, item.Name);
 
             ResetTradeApproval();
         }
@@ -372,13 +428,13 @@ namespace FoxMud.Game.State
         private void SendToBothParties(string text)
         {
             Session.WriteLine(text);
-            TradeeSession.WriteLine(text);
+            _otherSession.WriteLine(text);
         }
 
         public override void OnStateLeave()
         {
-            TraderSession.Player.Status = GameStatus.Standing;
-            TradeeSession.Player.Status = GameStatus.Standing;
+            Session.Player.Status = GameStatus.Standing;
+            _otherSession.Player.Status = GameStatus.Standing;
 
             base.OnStateLeave();
         }

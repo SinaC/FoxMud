@@ -231,7 +231,6 @@ namespace FoxMud.Game
         public void Send(string format, Player subject, Player target)
         {
             OutputWriter.WriteLine(StringHelpers.BuildString(format, this, subject, target));
-            WritePrompt();
         }
 
         public void WritePrompt()

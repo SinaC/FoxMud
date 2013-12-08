@@ -57,7 +57,6 @@ namespace FoxMud.Game.State
             {
                 return Props[GetTraderKey()].Approved && Props[GetTradeeKey()].Approved;
             }
-            
         }
 
         public int Gold(string key)

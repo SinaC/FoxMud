@@ -35,6 +35,7 @@ namespace FoxMud.Game.World
                 foreach(var location in mob.RespawnRoom)
                 {
                     var npc = Mapper.Map<NonPlayer>(mob);
+                    npc.Location = location;
 
                     // get room, put in room
                     RoomHelper.GetPlayerRoom(location).AddNpc(npc);
@@ -78,7 +79,9 @@ namespace FoxMud.Game.World
                         {
                             var mob = Server.Current.Database.Get<MobTemplate>(key);
                             var npc = Mapper.Map<NonPlayer>(mob);
-                            RoomHelper.GetPlayerRoom(npc.GetRespawnRoom()).AddNpc(npc);
+                            var repopRoom = npc.GetRespawnRoom();
+                            npc.Location = repopRoom;
+                            RoomHelper.GetPlayerRoom(repopRoom).AddNpc(npc);
                             area.RepopQueue.Remove(key);
                         }
 

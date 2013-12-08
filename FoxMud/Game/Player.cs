@@ -257,12 +257,14 @@ namespace FoxMud.Game
                 // apply experience
                 ExperienceResolver.ApplyExperience(this, damage);
 
+                var damageAction = CombatHelper.GetDamageAction(mob, damage);
+
                 // player text
-                var playerText = string.Format("You hit {0} for {1} damage!\n", mob.Name, damage);
+                var playerText = string.Format("You {0} {1} for {2} damage!\n", damageAction.Singular, mob.Name, damage);
                 round.AddText(this, playerText, CombatTextType.Player);
 
                 // group text (excludes player)
-                var groupText = string.Format("{0} hits {1}!\n", Forename, mob.Name);
+                var groupText = string.Format("{0} {1} {2}!\n", Forename, damageAction.Plural, mob.Name);
                 round.AddText(this, groupText, CombatTextType.Group);
             }
             else
@@ -270,7 +272,7 @@ namespace FoxMud.Game
                 var playerText = string.Format("You miss {0}!\n", mob.Name);
                 round.AddText(this, playerText, CombatTextType.Player);
 
-                var groupText = string.Format("{0} hits {1}!\n", Forename, mob.Name);
+                var groupText = string.Format("{0} misses {1}!\n", Forename, mob.Name);
                 round.AddText(this, groupText, CombatTextType.Group);
             }
 

@@ -89,13 +89,16 @@ namespace FoxMud.Game.Command.Combat
                                                             ? skill.KillingBlowEffectivenessIncrease
                                                             : 0;
 
+                var damageAction = CombatHelper.GetDamageAction(target, damage);
+
                 // message
-                session.WriteLine("You {0} {1} for {2} damage!", realCommandName, target.Name, damage);
+                session.WriteLine("Your {0} {1} {2} for {3} damage!", realCommandName, damageAction.Plural, target.Name, damage);
                 // room message
                 room.SendPlayers(
-                    string.Format("{0}{1} {2} hits {3}!", session.Player.Forename,
-                                  session.Player.Forename.ToLower().EndsWith("s") ? "'" : "s", skill.Key, target.Name),
-                    session.Player, null,
+                    string.Format("{0}{1} {2} {3} {4}!", session.Player.Forename,
+                        session.Player.Forename.ToLower().EndsWith("s") ? "'" : "s", skill.Key, damageAction.Plural, target.Name),
+                    session.Player, 
+                    null,
                     session.Player);
 
                 // dead check

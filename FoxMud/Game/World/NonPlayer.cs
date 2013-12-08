@@ -232,11 +232,13 @@ namespace FoxMud.Game.World
                 // hit
                 var damage = Server.Current.Random.Next(DamRoll) + 1;
                 player.HitPoints -= damage;
-                
-                var playerText = string.Format("{0} hits you for {1} damage!\n", Name, damage);
+
+                var damageAction = CombatHelper.GetDamageAction(player, damage);
+
+                var playerText = string.Format("{0} {1} you for {2} damage!\n", Name, damageAction.Plural, damage);
                 round.AddText(player, playerText, CombatTextType.Player);
 
-                var groupText = string.Format("{0} hits {1}!\n", Name, player.Forename);
+                var groupText = string.Format("{0} {1} {2}!\n", Name, damageAction.Plural, player.Forename);
                 round.AddText(player, groupText, CombatTextType.Group);
             }
             else
@@ -300,15 +302,17 @@ namespace FoxMud.Game.World
                     {
                         // do skill hit
                         var damage = Server.Current.Random.Next(skill.MinDamage, skill.MaxDamage + 1);
+                        var damageAction = CombatHelper.GetDamageAction(playerToHit, damage);
 
                         // message
-                        playerToHit.Send(string.Format("{0}{1} {2} hits you for {3} damage!", Name, Name.EndsWith("s") ? "'" : "'s", skillKey.ToLower(), damage), null);
+                        playerToHit.Send(string.Format("{0}{1} {2} {3} you for {4} damage!", Name, Name.EndsWith("s") ? "'" : "'s", skillKey.ToLower(), damageAction.Plural, damage), null);
                         playerToHit.HitPoints -= damage;
                         
                         room.SendPlayers(
-                            string.Format("{0} {1}{2} {3}", Name, skillKey.ToLower(),
-                                          skillKey.EndsWith("s") ? "es" : "s", playerToHit.Forename), playerToHit, null,
-                            playerToHit);
+                            string.Format("{0}{1} {2} {3} {4}", 
+                                Name, Name.EndsWith("s") ? "'" : "'s", skillKey.ToLower(), damageAction.Plural, playerToHit.Forename), 
+                            playerToHit, null, playerToHit);
+
 
                         // check if player dead
                         if (playerToHit.HitPoints <= 0)

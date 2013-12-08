@@ -19,6 +19,53 @@ namespace FoxMud.Game
         Room
     }
 
+    class DamageActionPair
+    {
+        public string Singular { get; set; }
+        public string Plural { get; set; }
+    }
+
+    class CombatHelper
+    {
+        public static DamageActionPair GetDamageAction(GenericCharacter target, int damage)
+        {
+            var pair = new DamageActionPair();
+            pair.Singular = "hit";
+            pair.Plural = "hits";
+
+            if (target == null)
+                pair.Plural = "hits";
+
+            if (target.HitPoints - damage < target.MaxHitPoints * 0.1)
+                pair.Plural = new string[] { "annihilates", "eviscerates" }[Server.Current.Random.Next(2)];
+            else if (target.HitPoints - damage < target.MaxHitPoints * 0.2)
+                pair.Plural = new string[] { "devastates", "destroys" }[Server.Current.Random.Next(2)];
+            else if (target.HitPoints - damage < target.MaxHitPoints * 0.3)
+                pair.Plural = new string[] { "bludgeons", "lacerates" }[Server.Current.Random.Next(2)];
+            else if (target.HitPoints - damage < target.MaxHitPoints * 0.4)
+                pair.Plural = new string[] { "mauls", "bashes" }[Server.Current.Random.Next(2)];
+            else if (target.HitPoints - damage < target.MaxHitPoints * 0.5)
+                pair.Plural = new string[] { "pounds", "clobbers" }[Server.Current.Random.Next(2)];
+            else if (target.HitPoints - damage < target.MaxHitPoints * 0.6)
+                pair.Plural = new string[] { "hits", "wallops" }[Server.Current.Random.Next(2)];
+            else if (target.HitPoints - damage < target.MaxHitPoints * 0.7)
+                pair.Plural = new string[] { "whacks", "smacks" }[Server.Current.Random.Next(2)];
+            else if (target.HitPoints - damage < target.MaxHitPoints * 0.8)
+                pair.Plural = new string[] { "scratches", "grazes" }[Server.Current.Random.Next(2)];
+            else if (target.HitPoints - damage < target.MaxHitPoints * 0.9)
+                pair.Plural = new string[] { "dents", "nicks" }[Server.Current.Random.Next(2)];
+            else
+                pair.Plural = new string[] { "nicks", "barely hits" }[Server.Current.Random.Next(2)];
+
+            pair.Singular = pair.Plural.EndsWith("es") ? 
+                pair.Plural.Length >= 4 && new string[] { "sh", "ch"}.Contains(pair.Plural.Substring(pair.Plural.Length - 4, 2))  ?
+                pair.Plural.Substring(0, pair.Plural.Length - 2) : pair.Plural.Substring(0, pair.Plural.Length - 1) :
+                pair.Plural.Substring(0, pair.Plural.Length - 1);
+
+            return pair;
+        }
+    }
+
     class CombatRound
     {
         private Dictionary<Player, string> playerText { get; set; }

@@ -80,6 +80,7 @@
     <Compile Include="Game\Command\Movement\PullCommand.cs" />
     <Compile Include="Game\Command\Movement\WhereCommand.cs" />
     <Compile Include="Game\Command\PasswordCommand.cs" />
+    <Compile Include="Game\Command\SacrificeCommand.cs" />
     <Compile Include="Game\Command\SaveCommand.cs" />
     <Compile Include="Game\Command\Skill\PracticeCommand.cs" />
     <Compile Include="Game\Command\Stat\LevelCommand.cs" />

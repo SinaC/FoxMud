@@ -101,7 +101,7 @@ namespace FoxMud.Game.Command.Movement
 
                 room.SendPlayers("%d heads " + direction + ".", session.Player, null, session.Player);
                 newRoom.SendPlayers("%d arrives.", session.Player, null, session.Player);
-                session.Player.Send("you head " + direction + ".", session.Player);
+                session.Player.Send("you head " + direction + ".\n", session.Player);
 
                 // emit "event" for aggro mobs
                 Server.Current.CombatHandler.EnterRoom(session.Player, newRoom);

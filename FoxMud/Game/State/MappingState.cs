@@ -98,7 +98,7 @@ namespace FoxMud.Game.State
                 {
                     Area = room.Area,
                     Description = RoomHelper.GetDefaultRoomDescription(),
-                    Key = calculatedKey,
+                    Key = calculatedKey.ToLower(),
                     Title = input,
                 };
 

@@ -34,5 +34,22 @@ namespace FoxMud.Game.World
             var area = Server.Current.Database.Get<Area>(key);
             return area;
         }
+
+        public static string GetDefaultRoomDescription()
+        {
+            return "This exitless room has no description.";
+        }
+
+        public static string GenerateKey(string key)
+        {
+            int index = 2;
+
+            while (Server.Current.Database.Get<Room>(key.ToLower() + index.ToString()) != null)
+            {
+                index++;
+            }
+
+            return key + index.ToString(); ;
+        }
     }
 }

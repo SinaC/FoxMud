@@ -57,6 +57,7 @@
     <Compile Include="Game\Command\Admin\AdminItemCommand.cs" />
     <Compile Include="Game\Command\Admin\AdminPlayerCommands.cs" />
     <Compile Include="Game\Command\Admin\AdminRoomCommands.cs" />
+    <Compile Include="Game\Command\Admin\MappingCommand.cs" />
     <Compile Include="Game\Command\Admin\MobCommand.cs" />
     <Compile Include="Game\Command\Admin\ShutdownCommand.cs" />
     <Compile Include="Game\Command\ArgumentType.cs" />
@@ -100,6 +101,7 @@
     <Compile Include="Game\RegenHandler.cs" />
     <Compile Include="Game\State\CreateNewPlayer.cs" />
     <Compile Include="Game\State\EnterWorld.cs" />
+    <Compile Include="Game\State\MappingState.cs" />
     <Compile Include="Game\State\PlayerLogin.cs" />
     <Compile Include="Game\State\PlayingState.cs" />
     <Compile Include="Game\State\SplashState.cs" />

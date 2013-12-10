@@ -53,7 +53,7 @@ namespace FoxMud.Game.Command.Admin
             {
                 Key = context.ArgumentString.ToLower(),
                 Title = context.ArgumentString,
-                Description = "This exitless room has no description.",
+                Description = RoomHelper.GetDefaultRoomDescription(),
                 Area = areaKey,
             };
 
